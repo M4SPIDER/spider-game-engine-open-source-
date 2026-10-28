@@ -182,8 +182,9 @@
     <section class="max-w-7xl mx-auto px-6 pt-16 pb-24">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         
-        <div class="lg:col-span-6 space-y-6">
-          <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-emerald-200/80 text-xs font-bold text-slate-800 shadow-sm float-badge">
+        <!-- Hero Left Column in Green Frosted Glass Card -->
+        <div class="lg:col-span-6 p-8 sm:p-10 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/20 shadow-xl space-y-6">
+          <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-emerald-300 text-xs font-bold text-slate-800 shadow-sm float-badge">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
             Multimodal Autonomous 3D Game Engine
           </div>
@@ -193,17 +194,17 @@
             <span class="bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-600 bg-clip-text text-transparent">Autonomously by AI</span>
           </h1>
 
-          <p class="text-slate-600 text-lg leading-relaxed">
+          <p class="text-slate-700 text-lg leading-relaxed font-medium">
             Powered by <strong>React Three Fiber</strong>, <strong>Three.js</strong>, and <strong>MCP</strong>. Spider Engine enables multimodal models like Meta Llama and Muse AI to synthesize, live-mount, inspect via screenshot vision, and debug 3D games entirely in real time.
           </p>
 
           <!-- Command snippet with glow effect -->
-          <div class="p-3.5 bg-white/30 backdrop-blur-md rounded-2xl border border-slate-300/60 shadow-sm flex items-center justify-between font-mono text-sm group hover:border-emerald-400 transition">
+          <div class="p-3.5 bg-white/70 backdrop-blur-md rounded-2xl border border-emerald-200/80 shadow-sm flex items-center justify-between font-mono text-sm group hover:border-emerald-400 transition">
             <div class="flex items-center gap-2 text-slate-700 overflow-x-auto">
               <span class="text-emerald-600 font-bold">$</span>
               <span class="select-all">git clone https://github.com/M4SPIDER/spider-game-engine-open-source-</span>
             </div>
-            <button onclick="navigator.clipboard.writeText('git clone https://github.com/M4SPIDER/spider-game-engine-open-source-'); alert('Copied to clipboard!')" class="ml-3 shrink-0 text-emerald-700 hover:text-emerald-800 font-sans font-bold text-xs px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition shadow-xs">
+            <button onclick="navigator.clipboard.writeText('git clone https://github.com/M4SPIDER/spider-game-engine-open-source-'); alert('Copied to clipboard!')" class="ml-3 shrink-0 text-emerald-800 hover:text-emerald-900 font-sans font-bold text-xs px-3 py-1.5 rounded-lg bg-emerald-100 border border-emerald-300 hover:bg-emerald-200 transition shadow-xs">
               Copy
             </button>
           </div>
@@ -212,21 +213,21 @@
             <a href="#showcase" class="px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold transition flex items-center gap-2.5 shadow-lg shadow-emerald-600/25 hover:scale-[1.02]">
               <i data-lucide="play" class="w-4 h-4 fill-current"></i> Explore Showcase Games
             </a>
-            <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="px-7 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 font-bold border border-slate-300 transition flex items-center gap-2.5 shadow-sm hover:scale-[1.02]">
+            <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="px-7 py-3.5 rounded-2xl bg-white/80 hover:bg-white text-slate-900 font-bold border border-emerald-300 transition flex items-center gap-2.5 shadow-sm hover:scale-[1.02]">
               <i data-lucide="external-link" class="w-4 h-4"></i> GitHub Repository
             </a>
           </div>
         </div>
 
-        <!-- Live 3D Interactive WebGL Hero Canvas -->
+        <!-- Live 3D Interactive WebGL Hero Canvas in Matching Green Card -->
         <div class="lg:col-span-6 relative">
-          <div class="rounded-3xl border border-slate-300/60 bg-white/20 backdrop-blur-md overflow-hidden shadow-2xl relative glow-border">
-            <div class="absolute top-4 left-4 z-10 bg-white/70 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-slate-300/60 text-xs font-mono text-slate-800 flex items-center gap-2.5 shadow-sm">
+          <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-xl overflow-hidden shadow-2xl relative glow-border">
+            <div class="absolute top-4 left-4 z-10 bg-white/80 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-emerald-200/80 text-xs font-mono text-slate-800 flex items-center gap-2.5 shadow-sm">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Live 3D WebGL Canvas (Orbit & Roll Die)
             </div>
             <div id="hero-3d-container" class="w-full h-[470px] cursor-grab active:cursor-grabbing bg-transparent"></div>
-            <div class="p-4 bg-white/40 backdrop-blur-md border-t border-slate-200/60 flex items-center justify-between text-xs text-slate-700">
+            <div class="p-4 bg-white/60 backdrop-blur-md border-t border-emerald-200/60 flex items-center justify-between text-xs text-slate-700">
               <span class="font-semibold flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-cyan-500"></span> Tournament Studio Lighting • Zero Z-Fighting
               </span>
@@ -255,25 +256,25 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         
         <!-- Card 1: 3D Tournament Ludo -->
-        <div class="tilt-card bg-white/20 backdrop-blur-lg rounded-3xl border border-slate-300/60 overflow-hidden hover:border-emerald-500 hover:bg-white/35 transition-all duration-300 shadow-sm hover:shadow-2xl group flex flex-col justify-between">
+        <div class="tilt-card bg-emerald-500/10 backdrop-blur-xl rounded-3xl border border-emerald-500/20 overflow-hidden hover:border-emerald-400 hover:bg-emerald-500/15 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
           <div>
             <div class="overflow-hidden h-56 bg-transparent relative">
               <img src="./images/ludo_tournament.png" alt="3D Ludo Board Tournament" class="w-full h-full object-cover group-hover:scale-108 transition duration-700 ease-out">
-              <div class="absolute bottom-3 right-3 bg-white/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-emerald-800 border border-slate-200/60 shadow-sm">
+              <div class="absolute bottom-3 right-3 bg-white/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-emerald-800 border border-emerald-300/60 shadow-sm">
                 Photorealistic 3D
               </div>
             </div>
             <div class="p-6 space-y-3">
               <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
                 3D Ludo Tournament Board
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-100/80 text-amber-900 font-mono font-bold">52 Tiles</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-mono font-bold">52 Tiles</span>
               </h3>
-              <p class="text-sm text-slate-700 leading-relaxed">
+              <p class="text-sm text-slate-700 leading-relaxed font-medium">
                 Folding cardboard board geometry with zero Z-fighting, realistic mahogany table, dice cup, pawn tokens, and soft directional shadows.
               </p>
             </div>
           </div>
-          <div class="px-6 pb-6 pt-3 border-t border-slate-200/50 flex items-center justify-between text-xs text-slate-600 font-medium">
+          <div class="px-6 pb-6 pt-3 border-t border-emerald-200/40 flex items-center justify-between text-xs text-slate-600 font-semibold">
             <span>Staggered Y-elevations</span>
             <span class="text-emerald-700 font-bold flex items-center gap-1">
               <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Verified 60 FPS
@@ -282,25 +283,25 @@
         </div>
 
         <!-- Card 2: Autonomous AI Ludo by Muse -->
-        <div class="tilt-card bg-white/20 backdrop-blur-lg rounded-3xl border border-slate-300/60 overflow-hidden hover:border-teal-500 hover:bg-white/35 transition-all duration-300 shadow-sm hover:shadow-2xl group flex flex-col justify-between">
+        <div class="tilt-card bg-emerald-500/10 backdrop-blur-xl rounded-3xl border border-emerald-500/20 overflow-hidden hover:border-teal-400 hover:bg-emerald-500/15 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
           <div>
             <div class="overflow-hidden h-56 bg-transparent relative">
               <img src="./images/muse_autonomous.png" alt="Autonomous 3D Ludo by Muse AI" class="w-full h-full object-cover group-hover:scale-108 transition duration-700 ease-out">
-              <div class="absolute bottom-3 right-3 bg-white/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-teal-800 border border-slate-200/60 shadow-sm">
+              <div class="absolute bottom-3 right-3 bg-white/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-teal-800 border border-emerald-300/60 shadow-sm">
                 100% Autonomous AI
               </div>
             </div>
             <div class="p-6 space-y-3">
               <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
                 AI-Synthesized Ludo
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-teal-100/80 text-teal-900 font-mono font-bold">Muse 1.3</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-900 font-mono font-bold">Muse 1.3</span>
               </h3>
-              <p class="text-sm text-slate-700 leading-relaxed">
+              <p class="text-sm text-slate-700 leading-relaxed font-medium">
                 Synthesized completely from scratch by <strong>muse-spark-1.3-contributor</strong>. Caught its own runtime error, re-architected non-overlapping geometry, and self-verified error-free.
               </p>
             </div>
           </div>
-          <div class="px-6 pb-6 pt-3 border-t border-slate-200/50 flex items-center justify-between text-xs text-slate-600 font-medium">
+          <div class="px-6 pb-6 pt-3 border-t border-emerald-200/40 flex items-center justify-between text-xs text-slate-600 font-semibold">
             <span>Zero Human Edits</span>
             <span class="text-teal-700 font-bold flex items-center gap-1">
               <span class="w-2 h-2 rounded-full bg-teal-500"></span> ReAct Loop
@@ -308,26 +309,26 @@
           </div>
         </div>
 
-        <!-- Card 3: 3D Classical Chess -->
-        <div class="tilt-card bg-white/20 backdrop-blur-lg rounded-3xl border border-slate-300/60 overflow-hidden hover:border-purple-500 hover:bg-white/35 transition-all duration-300 shadow-sm hover:shadow-2xl group flex flex-col justify-between">
+        <!-- Card 3: 3D Classical Chess (Last Image Card) -->
+        <div class="tilt-card bg-emerald-500/10 backdrop-blur-xl rounded-3xl border border-emerald-500/20 overflow-hidden hover:border-purple-400 hover:bg-emerald-500/15 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
           <div>
             <div class="overflow-hidden h-56 bg-transparent relative">
               <img src="./images/chess_tournament.png" alt="3D Chess Tournament" class="w-full h-full object-cover group-hover:scale-108 transition duration-700 ease-out">
-              <div class="absolute bottom-3 right-3 bg-white/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-purple-800 border border-slate-200/60 shadow-sm">
+              <div class="absolute bottom-3 right-3 bg-white/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-purple-800 border border-emerald-300/60 shadow-sm">
                 Full Rules Engine
               </div>
             </div>
             <div class="p-6 space-y-3">
               <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
                 3D Tournament Chess
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100/80 text-purple-900 font-mono font-bold">chess.js</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 font-mono font-bold">chess.js</span>
               </h3>
-              <p class="text-sm text-slate-700 leading-relaxed">
+              <p class="text-sm text-slate-700 leading-relaxed font-medium">
                 Full 64-square board with legal chess move calculation, check/checkmate detection, interactive piece selection, and tournament stage lighting.
               </p>
             </div>
           </div>
-          <div class="px-6 pb-6 pt-3 border-t border-slate-200/50 flex items-center justify-between text-xs text-slate-600 font-medium">
+          <div class="px-6 pb-6 pt-3 border-t border-emerald-200/40 flex items-center justify-between text-xs text-slate-600 font-semibold">
             <span>Dual Lighting</span>
             <span class="text-purple-700 font-bold flex items-center gap-1">
               <span class="w-2 h-2 rounded-full bg-purple-500"></span> Interactive Move
@@ -454,7 +455,6 @@
           <span>Created & Maintained by <strong class="text-slate-900">M4SPIDER</strong> (<a href="mailto:support@m4spider.com" class="text-emerald-700 font-semibold hover:underline">support@m4spider.com</a>)</span>
         </div>
         <div class="flex items-center gap-6">
-          <span>Lineage: <strong class="text-slate-900">Vivek / Venom / Quick / Qucik</strong></span>
           <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="text-emerald-700 font-bold hover:underline flex items-center gap-1.5">
             GitHub Repo <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
           </a>
@@ -610,6 +610,7 @@
     })();
   </script>
 
+  <script>
     // 3D Tilt Cards effect
     document.querySelectorAll('.tilt-card').forEach(card => {
       card.addEventListener('mousemove', e => {
@@ -635,13 +636,14 @@
       if (!container) return;
 
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xf8fafc);
+      // Transparent background so 3D oscillating wave is visible through canvas
 
       const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
       camera.position.set(0, 8, 9.5);
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true, alpha: true });
       renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setClearColor(0x000000, 0);
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
@@ -679,15 +681,7 @@
       ringGroup.add(ringMesh2);
       scene.add(ringGroup);
 
-      // Floor & Table
-      const floorGeo = new THREE.PlaneGeometry(30, 30);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.95 });
-      const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = -Math.PI / 2;
-      floor.position.y = -0.5;
-      floor.receiveShadow = true;
-      scene.add(floor);
-
+      // Elevated 3D Floating Table
       const tableGeo = new THREE.BoxGeometry(6.6, 0.4, 6.6);
       const tableMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 });
       const table = new THREE.Mesh(tableGeo, tableMat);
