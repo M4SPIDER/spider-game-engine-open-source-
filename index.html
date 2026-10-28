@@ -3,7 +3,7 @@
 <head>
   <!--
     ============================================================================
-    SPIDER GAME ENGINE SHOWCASE
+    SPIDER GAME ENGINE SHOWCASE — NEXT-GEN HI-TECH
     ============================================================================
     Provenance Fingerprint: [M4-SPIDER-GENESIS-FINGERPRINT-0x535049444552]
     Lineage Authors: vivek / venom / quick / qucik / m4spider
@@ -26,310 +26,555 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
   <style>
+    :root {
+      --primary-glow: rgba(16, 185, 129, 0.4);
+      --secondary-glow: rgba(6, 182, 212, 0.4);
+    }
     body {
       background-color: #ffffff;
       color: #0f172a;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
     }
-    .grid-bg {
-      background-size: 40px 40px;
-      background-image: 
-        linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+
+    /* Hi-Tech Animated Background Canvas */
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.85;
+    }
+
+    /* Floating Ambient Glowing Orbs */
+    .orb-1 {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+      top: -100px;
+      left: -150px;
+      border-radius: 50%;
+      filter: blur(50px);
+      animation: floatOrb 18s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    .orb-2 {
+      position: absolute;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+      top: 20%;
+      right: -200px;
+      border-radius: 50%;
+      filter: blur(60px);
+      animation: floatOrb 22s ease-in-out infinite alternate-reverse;
+      pointer-events: none;
+    }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(80px, 60px) scale(1.1); }
+      100% { transform: translate(-60px, 120px) scale(0.95); }
+    }
+
+    /* Cyber Scanline for Terminal */
+    .scanline-container {
+      position: relative;
+      overflow: hidden;
+    }
+    .scanline-container::after {
+      content: "";
+      position: absolute;
+      top: -100%;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, transparent 0%, rgba(16, 185, 129, 0.12) 50%, transparent 100%);
+      animation: scanline 4s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes scanline {
+      0% { top: -100%; }
+      100% { top: 200%; }
+    }
+
+    /* Hi-Tech Pulsing Glow Borders */
+    .glow-border {
+      position: relative;
+    }
+    .glow-border::before {
+      content: '';
+      position: absolute;
+      inset: -1.5px;
+      border-radius: inherit;
+      padding: 1.5px;
+      background: linear-gradient(90deg, #10b981, #06b6d4, #3b82f6, #10b981);
+      background-size: 300% 300%;
+      animation: borderGlow 6s linear infinite;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    @keyframes borderGlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* 3D Tilt Card */
+    .tilt-card {
+      transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.2s ease;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    /* Floating Badges */
+    .float-badge {
+      animation: floatBadge 3.5s ease-in-out infinite alternate;
+    }
+    @keyframes floatBadge {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-7px); }
     }
   </style>
 </head>
-<body class="grid-bg min-h-screen selection:bg-emerald-200 selection:text-emerald-950">
+<body class="min-h-screen selection:bg-emerald-200 selection:text-emerald-950 relative">
 
-  <!-- Navbar -->
-  <nav class="sticky top-0 z-50 backdrop-blur-md bg-white/90 border-b border-slate-200/90 px-6 py-4">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center font-black text-white text-xl shadow-md">
-          🕷️
-        </div>
-        <div>
-          <span class="font-extrabold text-xl tracking-tight text-slate-950">SPIDER<span class="text-emerald-600">ENGINE</span></span>
-          <span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">v0.9.0 OPEN SOURCE</span>
-        </div>
-      </div>
-      <div class="flex items-center gap-5">
-        <a href="#showcase" class="text-sm font-semibold text-slate-600 hover:text-slate-950 transition">Showcase</a>
-        <a href="#features" class="text-sm font-semibold text-slate-600 hover:text-slate-950 transition">Capabilities</a>
-        <a href="#agent-loop" class="text-sm font-semibold text-slate-600 hover:text-slate-950 transition">AI Agent Loop</a>
-        <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-sm">
-          <i data-lucide="github" class="w-4 h-4"></i> Star on GitHub
-        </a>
-      </div>
-    </div>
-  </nav>
+  <!-- Interactive Spider-Tech Particle Background Canvas -->
+  <canvas id="bg-canvas"></canvas>
 
-  <!-- Hero Section with Live 3D Interactive Canvas -->
-  <section class="max-w-7xl mx-auto px-6 pt-16 pb-20">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-      <div class="lg:col-span-6 space-y-6">
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          Multimodal Closed-Loop 3D Game Engine
-        </div>
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-950 leading-tight tracking-tight">
-          Next-Gen 3D Games Built <span class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">Autonomously by AI</span>
-        </h1>
-        <p class="text-slate-600 text-lg leading-relaxed">
-          Powered by <strong>React Three Fiber</strong>, <strong>Three.js</strong>, and <strong>MCP</strong>. Spider Engine allows multimodal models like Meta Llama and Muse AI to synthesize, mount, inspect via screenshot vision, and debug 3D games live in real time.
-        </p>
+  <!-- Ambient Light Orbs -->
+  <div class="orb-1"></div>
+  <div class="orb-2"></div>
 
-        <!-- Command snippet -->
-        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between font-mono text-sm">
-          <span class="text-slate-700 select-all">git clone https://github.com/M4SPIDER/spider-game-engine-open-source-</span>
-          <button onclick="navigator.clipboard.writeText('git clone https://github.com/M4SPIDER/spider-game-engine-open-source-'); alert('Copied to clipboard!')" class="text-emerald-700 hover:text-emerald-800 font-sans font-bold text-xs px-2.5 py-1 rounded bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition">
-            Copy
-          </button>
-        </div>
+  <!-- Main Content Wrap -->
+  <div class="relative z-10">
 
-        <div class="flex flex-wrap gap-4 pt-2">
-          <a href="#showcase" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition flex items-center gap-2 shadow-md shadow-emerald-600/20">
-            <i data-lucide="play" class="w-4 h-4 fill-current"></i> Explore Showcase Games
-          </a>
-          <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="px-6 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-bold border border-slate-300 transition flex items-center gap-2 shadow-sm">
-            <i data-lucide="external-link" class="w-4 h-4"></i> GitHub Repository
-          </a>
-        </div>
-      </div>
-
-      <!-- Live 3D Interactive WebGL Hero Canvas -->
-      <div class="lg:col-span-6 relative">
-        <div class="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden shadow-xl relative">
-          <div class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono text-slate-800 flex items-center gap-2 shadow-sm">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-            Live 3D WebGL Canvas (Click & Drag to Orbit)
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/80 px-6 py-4 transition duration-300">
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center font-black text-white text-xl shadow-lg relative overflow-hidden group">
+            <span class="relative z-10">🕷️</span>
+            <div class="absolute inset-0 bg-gradient-to-tr from-emerald-500/30 to-cyan-500/30 opacity-0 group-hover:opacity-100 transition duration-300"></div>
           </div>
-          <div id="hero-3d-container" class="w-full h-[440px] cursor-grab active:cursor-grabbing bg-slate-100"></div>
-          <div class="p-4 bg-white border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
-            <span class="font-medium">Tournament Studio Lighting • Zero Z-Fighting Engine</span>
-            <button id="roll-dice-btn" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition flex items-center gap-1.5 shadow-sm">
-              🎲 Roll 3D Die
+          <div>
+            <span class="font-extrabold text-xl tracking-tight text-slate-950">SPIDER<span class="text-emerald-600">ENGINE</span></span>
+            <span class="ml-2 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 tracking-wider">v0.9.0 OPEN SOURCE</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-6">
+          <a href="#showcase" class="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition">Showcase</a>
+          <a href="#features" class="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition">Capabilities</a>
+          <a href="#agent-loop" class="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition">AI Agent Loop</a>
+          <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="flex items-center gap-2 bg-slate-950 hover:bg-slate-800 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hover:shadow-emerald-500/10">
+            <i data-lucide="github" class="w-4 h-4"></i> Star on GitHub
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section with Live 3D Interactive Canvas -->
+    <section class="max-w-7xl mx-auto px-6 pt-16 pb-24">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <div class="lg:col-span-6 space-y-6">
+          <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-emerald-200/80 text-xs font-bold text-slate-800 shadow-sm float-badge">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+            Multimodal Autonomous 3D Game Engine
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-950 leading-[1.1] tracking-tight">
+            Next-Gen 3D Games Built <br>
+            <span class="bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-600 bg-clip-text text-transparent">Autonomously by AI</span>
+          </h1>
+
+          <p class="text-slate-600 text-lg leading-relaxed">
+            Powered by <strong>React Three Fiber</strong>, <strong>Three.js</strong>, and <strong>MCP</strong>. Spider Engine enables multimodal models like Meta Llama and Muse AI to synthesize, live-mount, inspect via screenshot vision, and debug 3D games entirely in real time.
+          </p>
+
+          <!-- Command snippet with glow effect -->
+          <div class="p-3.5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-sm flex items-center justify-between font-mono text-sm group hover:border-emerald-400 transition">
+            <div class="flex items-center gap-2 text-slate-700 overflow-x-auto">
+              <span class="text-emerald-600 font-bold">$</span>
+              <span class="select-all">git clone https://github.com/M4SPIDER/spider-game-engine-open-source-</span>
+            </div>
+            <button onclick="navigator.clipboard.writeText('git clone https://github.com/M4SPIDER/spider-game-engine-open-source-'); alert('Copied to clipboard!')" class="ml-3 shrink-0 text-emerald-700 hover:text-emerald-800 font-sans font-bold text-xs px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition shadow-xs">
+              Copy
             </button>
           </div>
+
+          <div class="flex flex-wrap gap-4 pt-2">
+            <a href="#showcase" class="px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold transition flex items-center gap-2.5 shadow-lg shadow-emerald-600/25 hover:scale-[1.02]">
+              <i data-lucide="play" class="w-4 h-4 fill-current"></i> Explore Showcase Games
+            </a>
+            <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="px-7 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 font-bold border border-slate-300 transition flex items-center gap-2.5 shadow-sm hover:scale-[1.02]">
+              <i data-lucide="external-link" class="w-4 h-4"></i> GitHub Repository
+            </a>
+          </div>
         </div>
+
+        <!-- Live 3D Interactive WebGL Hero Canvas -->
+        <div class="lg:col-span-6 relative">
+          <div class="rounded-3xl border border-slate-200 bg-white/95 backdrop-blur-xl overflow-hidden shadow-2xl relative glow-border">
+            <div class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 flex items-center gap-2.5 shadow-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live 3D WebGL Canvas (Orbit & Roll Die)
+            </div>
+            <div id="hero-3d-container" class="w-full h-[470px] cursor-grab active:cursor-grabbing bg-slate-50"></div>
+            <div class="p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+              <span class="font-semibold flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-500"></span> Tournament Studio Lighting • Zero Z-Fighting
+              </span>
+              <button id="roll-dice-btn" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white font-bold transition flex items-center gap-2 shadow-md shadow-emerald-600/20 active:scale-95">
+                🎲 Roll 3D Die
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Showcase Gallery (Games Created with Spider Engine) -->
-  <section id="showcase" class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200">
-    <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
-      <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-950">Showcase Games & Simulations</h2>
-      <p class="text-slate-600">
-        Every game shown below runs cleanly at 60 FPS directly within Spider Engine's live React Three Fiber runtime.
-      </p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      
-      <!-- Card 1: 3D Tournament Ludo -->
-      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-emerald-500 transition shadow-sm hover:shadow-xl group flex flex-col justify-between">
-        <div>
-          <div class="overflow-hidden h-52 bg-slate-100 relative">
-            <img src="./images/ludo_tournament.png" alt="3D Ludo Board Tournament" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-            <div class="absolute bottom-2 right-2 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded text-xs font-bold text-emerald-700 border border-slate-200 shadow-sm">
-              Photorealistic 3D
-            </div>
-          </div>
-          <div class="p-6 space-y-3">
-            <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
-              3D Ludo Tournament Board
-              <span class="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-mono font-semibold">52 Tiles</span>
-            </h3>
-            <p class="text-sm text-slate-600">
-              Folding cardboard board geometry with zero Z-fighting, realistic mahogany table, dice cup, pawn tokens, and soft directional shadows.
-            </p>
-          </div>
+    <!-- Showcase Gallery (Games Created with Spider Engine) -->
+    <section id="showcase" class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200/80">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-xs font-bold text-slate-800 border border-slate-200">
+          🎮 Production-Ready 3D Builds
         </div>
-        <div class="px-6 pb-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
-          <span>Staggered Y-elevations</span>
-          <span class="text-emerald-700 font-semibold">Verified 60 FPS</span>
-        </div>
-      </div>
-
-      <!-- Card 2: Autonomous AI Ludo by Muse -->
-      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-teal-500 transition shadow-sm hover:shadow-xl group flex flex-col justify-between">
-        <div>
-          <div class="overflow-hidden h-52 bg-slate-100 relative">
-            <img src="./images/muse_autonomous.png" alt="Autonomous 3D Ludo by Muse AI" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-            <div class="absolute bottom-2 right-2 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded text-xs font-bold text-teal-700 border border-slate-200 shadow-sm">
-              100% Autonomous AI
-            </div>
-          </div>
-          <div class="p-6 space-y-3">
-            <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
-              AI-Synthesized Ludo
-              <span class="text-xs px-2 py-0.5 rounded bg-teal-100 text-teal-800 font-mono font-semibold">Muse 1.3</span>
-            </h3>
-            <p class="text-sm text-slate-600">
-              Synthesized completely from scratch by <strong>muse-spark-1.3-contributor</strong>. Caught its own runtime error, re-architected non-overlapping geometry, and self-verified error-free.
-            </p>
-          </div>
-        </div>
-        <div class="px-6 pb-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
-          <span>Zero Human Edits</span>
-          <span class="text-teal-700 font-semibold">ReAct Loop</span>
-        </div>
-      </div>
-
-      <!-- Card 3: 3D Classical Chess -->
-      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-purple-500 transition shadow-sm hover:shadow-xl group flex flex-col justify-between">
-        <div>
-          <div class="overflow-hidden h-52 bg-slate-100 relative">
-            <img src="./images/chess_tournament.png" alt="3D Chess Tournament" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-            <div class="absolute bottom-2 right-2 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded text-xs font-bold text-purple-700 border border-slate-200 shadow-sm">
-              Full Rules Engine
-            </div>
-          </div>
-          <div class="p-6 space-y-3">
-            <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
-              3D Tournament Chess
-              <span class="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-mono font-semibold">chess.js</span>
-            </h3>
-            <p class="text-sm text-slate-600">
-              Full 64-square board with legal chess move calculation, check/checkmate detection, interactive piece selection, and tournament stage lighting.
-            </p>
-          </div>
-        </div>
-        <div class="px-6 pb-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
-          <span>Dual Lighting</span>
-          <span class="text-purple-700 font-semibold">Interactive Move</span>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Autonomous ReAct Agent Loop Section -->
-  <section id="agent-loop" class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-      <div class="lg:col-span-5 space-y-6">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-xs font-bold text-emerald-800 border border-emerald-200">
-          <i data-lucide="cpu" class="w-3.5 h-3.5"></i> Model Context Protocol (MCP)
-        </div>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-950">How Autonomous 3D Creation Works</h2>
-        <p class="text-slate-600 leading-relaxed">
-          Spider Engine doesn't just guess code. It embeds a local MCP server on port <code class="text-emerald-700 bg-slate-100 px-1.5 py-0.5 rounded font-mono font-semibold">9287</code> that gives LLMs eyes and hands on the 3D canvas:
-        </p>
-
-        <ul class="space-y-4 text-sm text-slate-700">
-          <li class="flex items-start gap-3">
-            <div class="w-6 h-6 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
-            <div><strong>Tool: check3DView</strong> — Inspects compilation errors, actor trees, and 60 FPS animation health.</div>
-          </li>
-          <li class="flex items-start gap-3">
-            <div class="w-6 h-6 rounded-full bg-teal-100 border border-teal-300 text-teal-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
-            <div><strong>Tool: captureScreenshot</strong> — Takes instant 512px WebGL base64 snapshots so models can <em>see</em> visual bugs like Z-fighting.</div>
-          </li>
-          <li class="flex items-start gap-3">
-            <div class="w-6 h-6 rounded-full bg-cyan-100 border border-cyan-300 text-cyan-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
-            <div><strong>Tool: render_jsx</strong> — Hot-mounts new React Three Fiber modules directly with instant AST compilation caching.</div>
-          </li>
-        </ul>
-      </div>
-
-      <!-- High-Contrast Clean Code Terminal -->
-      <div class="lg:col-span-7">
-        <div class="rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden shadow-2xl font-mono text-xs">
-          <div class="px-4 py-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
-              <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
-              <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
-              <span class="ml-2 text-slate-400 text-xs font-semibold">agent-terminal (muse-spark-1.3-contributor)</span>
-            </div>
-            <span class="text-emerald-400 font-bold">PORT: 9287 [MCP OK]</span>
-          </div>
-          <div class="p-6 space-y-4 max-h-[420px] overflow-y-auto text-slate-300">
-            <div class="text-slate-500">> Ask AI: "create a playable 3D ludo game with zero z-fighting"</div>
-            <div class="text-amber-300">💡 Agent thinks: Checking 3D viewport for missing dependencies...</div>
-            <div class="text-cyan-300 font-bold">⚙️ Agent acts: check3DView {}</div>
-            <div class="text-red-400 bg-red-950/40 p-2.5 rounded border border-red-900/60">
-              Observed: Runtime error: Cannot read properties of undefined (reading '0')
-            </div>
-            <div class="text-amber-300">💡 Agent thinks: Missing helper causes crash. Building self-contained staggered-elevation 52-tile board.</div>
-            <div class="text-cyan-300 font-bold">⚙️ Agent acts: render_jsx { name: "GameComponent.jsx", code: "..." }</div>
-            <div class="text-emerald-400 bg-emerald-950/40 p-2.5 rounded border border-emerald-900/60">
-              Live-parsed, mounted and saved JSX component "GameComponent.jsx" (30 lines).
-            </div>
-            <div class="text-cyan-300 font-bold">⚙️ Agent acts: check3DView {}</div>
-            <div class="text-emerald-300">
-              Observed: 3D VIEWPORT HEALTHY & PLAYABLE: 0 errors, 60 FPS animation loop active!
-            </div>
-            <div class="text-emerald-400 font-bold">
-              ✓ Goal Achieved: 3D Ludo synthesized with zero Z-fighting.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Platform Support & Capabilities -->
-  <section id="features" class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      
-      <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
-        <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold">
-          <i data-lucide="layers" class="w-5 h-5"></i>
-        </div>
-        <h3 class="text-lg font-bold text-slate-950">Multi-Platform Desktop & Web</h3>
-        <p class="text-sm text-slate-600">
-          Runs as a high-performance Electron app, ultra-lightweight Rust Tauri binary, or standard Vite web server. <strong>macOS port coming soon!</strong>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-950">Showcase Games & Simulations</h2>
+        <p class="text-slate-600">
+          Every game shown below runs cleanly at 60 FPS directly within Spider Engine's live React Three Fiber runtime.
         </p>
       </div>
 
-      <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
-        <div class="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center font-bold">
-          <i data-lucide="sparkles" class="w-5 h-5"></i>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        <!-- Card 1: 3D Tournament Ludo -->
+        <div class="tilt-card bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-emerald-500 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
+          <div>
+            <div class="overflow-hidden h-56 bg-slate-100 relative">
+              <img src="./images/ludo_tournament.png" alt="3D Ludo Board Tournament" class="w-full h-full object-cover group-hover:scale-108 transition duration-700 ease-out">
+              <div class="absolute bottom-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-emerald-700 border border-slate-200 shadow-sm">
+                Photorealistic 3D
+              </div>
+            </div>
+            <div class="p-6 space-y-3">
+              <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
+                3D Ludo Tournament Board
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono font-bold">52 Tiles</span>
+              </h3>
+              <p class="text-sm text-slate-600 leading-relaxed">
+                Folding cardboard board geometry with zero Z-fighting, realistic mahogany table, dice cup, pawn tokens, and soft directional shadows.
+              </p>
+            </div>
+          </div>
+          <div class="px-6 pb-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+            <span>Staggered Y-elevations</span>
+            <span class="text-emerald-700 font-bold flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Verified 60 FPS
+            </span>
+          </div>
         </div>
-        <h3 class="text-lg font-bold text-slate-950">Tournament Studio Lighting</h3>
-        <p class="text-sm text-slate-600">
-          Dual key and fill shadow-casting lights, soft ambient hemisphere light, and logarithmic depth buffer eliminate all visual artifacts.
-        </p>
-      </div>
 
-      <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center font-bold">
-          <i data-lucide="shield-alert" class="w-5 h-5"></i>
+        <!-- Card 2: Autonomous AI Ludo by Muse -->
+        <div class="tilt-card bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-teal-500 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
+          <div>
+            <div class="overflow-hidden h-56 bg-slate-100 relative">
+              <img src="./images/muse_autonomous.png" alt="Autonomous 3D Ludo by Muse AI" class="w-full h-full object-cover group-hover:scale-108 transition duration-700 ease-out">
+              <div class="absolute bottom-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-teal-700 border border-slate-200 shadow-sm">
+                100% Autonomous AI
+              </div>
+            </div>
+            <div class="p-6 space-y-3">
+              <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
+                AI-Synthesized Ludo
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 font-mono font-bold">Muse 1.3</span>
+              </h3>
+              <p class="text-sm text-slate-600 leading-relaxed">
+                Synthesized completely from scratch by <strong>muse-spark-1.3-contributor</strong>. Caught its own runtime error, re-architected non-overlapping geometry, and self-verified error-free.
+              </p>
+            </div>
+          </div>
+          <div class="px-6 pb-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+            <span>Zero Human Edits</span>
+            <span class="text-teal-700 font-bold flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-teal-500"></span> ReAct Loop
+            </span>
+          </div>
         </div>
-        <h3 class="text-lg font-bold text-slate-950">Safety & Legal Disclaimer</h3>
-        <p class="text-sm text-slate-600">
-          All games, simulations, and code created with Spider Engine are <strong>created and run strictly at your own risk</strong>.
-        </p>
-      </div>
 
-    </div>
-  </section>
+        <!-- Card 3: 3D Classical Chess -->
+        <div class="tilt-card bg-white rounded-3xl border border-slate-200 overflow-hidden hover:border-purple-500 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
+          <div>
+            <div class="overflow-hidden h-56 bg-slate-100 relative">
+              <img src="./images/chess_tournament.png" alt="3D Chess Tournament" class="w-full h-full object-cover group-hover:scale-108 transition duration-700 ease-out">
+              <div class="absolute bottom-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-purple-700 border border-slate-200 shadow-sm">
+                Full Rules Engine
+              </div>
+            </div>
+            <div class="p-6 space-y-3">
+              <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
+                3D Tournament Chess
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-mono font-bold">chess.js</span>
+              </h3>
+              <p class="text-sm text-slate-600 leading-relaxed">
+                Full 64-square board with legal chess move calculation, check/checkmate detection, interactive piece selection, and tournament stage lighting.
+              </p>
+            </div>
+          </div>
+          <div class="px-6 pb-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+            <span>Dual Lighting</span>
+            <span class="text-purple-700 font-bold flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-purple-500"></span> Interactive Move
+            </span>
+          </div>
+        </div>
 
-  <!-- Footer -->
-  <footer class="border-t border-slate-200 bg-slate-50 py-12 px-6">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-600">
-      <div class="flex items-center gap-3">
-        <span class="text-xl">🕷️</span>
-        <span class="font-bold text-slate-950">Spider Game Engine</span>
-        <span>•</span>
-        <span>Created & Maintained by <strong class="text-slate-900">M4SPIDER</strong> (<a href="mailto:support@m4spider.com" class="text-emerald-700 font-semibold hover:underline">support@m4spider.com</a>)</span>
       </div>
-      <div class="flex items-center gap-6">
-        <span>Lineage: <strong class="text-slate-900">Vivek / Venom / Quick / Qucik</strong></span>
-        <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="text-emerald-700 font-bold hover:underline flex items-center gap-1">
-          GitHub Repo <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
-        </a>
-      </div>
-    </div>
-  </footer>
+    </section>
 
-  <!-- Live 3D Script Initialization -->
+    <!-- Autonomous ReAct Agent Loop Section -->
+    <section id="agent-loop" class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200/80">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <div class="lg:col-span-5 space-y-6">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 text-xs font-bold text-emerald-800 border border-emerald-300">
+            <i data-lucide="cpu" class="w-4 h-4"></i> Model Context Protocol (MCP)
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-950">How Autonomous 3D Creation Works</h2>
+          <p class="text-slate-600 leading-relaxed">
+            Spider Engine doesn't just guess code. It embeds a local MCP server on port <code class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-mono font-bold border border-emerald-200">9287</code> that gives LLMs eyes and hands on the 3D canvas:
+          </p>
+
+          <ul class="space-y-4 text-sm text-slate-700">
+            <li class="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200">
+              <div class="w-7 h-7 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
+              <div><strong class="text-slate-900">Tool: check3DView</strong> — Inspects compilation errors, actor trees, and 60 FPS animation health.</div>
+            </li>
+            <li class="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200">
+              <div class="w-7 h-7 rounded-xl bg-teal-100 border border-teal-300 text-teal-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
+              <div><strong class="text-slate-900">Tool: captureScreenshot</strong> — Takes instant 512px WebGL base64 snapshots so models can <em>see</em> visual bugs like Z-fighting.</div>
+            </li>
+            <li class="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200">
+              <div class="w-7 h-7 rounded-xl bg-cyan-100 border border-cyan-300 text-cyan-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
+              <div><strong class="text-slate-900">Tool: render_jsx</strong> — Hot-mounts new React Three Fiber modules directly with instant AST compilation caching.</div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- High-Contrast Clean Code Terminal with Scanline -->
+        <div class="lg:col-span-7">
+          <div class="scanline-container rounded-3xl border border-slate-800 bg-slate-950 overflow-hidden shadow-2xl font-mono text-xs">
+            <div class="px-5 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+                <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
+                <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
+                <span class="ml-2 text-slate-400 text-xs font-semibold">agent-terminal (muse-spark-1.3-contributor)</span>
+              </div>
+              <span class="text-emerald-400 font-bold flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> PORT: 9287 [MCP OK]
+              </span>
+            </div>
+            <div class="p-6 space-y-4 max-h-[420px] overflow-y-auto text-slate-300">
+              <div class="text-slate-400">> Ask AI: "create a playable 3D ludo game with zero z-fighting"</div>
+              <div class="text-amber-300 font-semibold">💡 Agent thinks: Checking 3D viewport for missing dependencies...</div>
+              <div class="text-cyan-300 font-bold">⚙️ Agent acts: check3DView {}</div>
+              <div class="text-red-400 bg-red-950/40 p-3 rounded-xl border border-red-900/60">
+                Observed: Runtime error: Cannot read properties of undefined (reading '0')
+              </div>
+              <div class="text-amber-300 font-semibold">💡 Agent thinks: Missing helper causes crash. Building self-contained staggered-elevation 52-tile board.</div>
+              <div class="text-cyan-300 font-bold">⚙️ Agent acts: render_jsx { name: "GameComponent.jsx", code: "..." }</div>
+              <div class="text-emerald-400 bg-emerald-950/40 p-3 rounded-xl border border-emerald-900/60">
+                Live-parsed, mounted and saved JSX component "GameComponent.jsx" (30 lines).
+              </div>
+              <div class="text-cyan-300 font-bold">⚙️ Agent acts: check3DView {}</div>
+              <div class="text-emerald-300">
+                Observed: 3D VIEWPORT HEALTHY & PLAYABLE: 0 errors, 60 FPS animation loop active!
+              </div>
+              <div class="text-emerald-400 font-bold bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-800/40">
+                ✓ Goal Achieved: 3D Ludo synthesized with zero Z-fighting.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Platform Support & Capabilities -->
+    <section id="features" class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200/80">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <div class="tilt-card p-7 rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-xl transition space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold">
+            <i data-lucide="layers" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-xl font-bold text-slate-950">Multi-Platform Desktop & Web</h3>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Runs as a high-performance Electron app, ultra-lightweight Rust Tauri binary, or standard Vite web server. <strong>macOS port coming soon!</strong>
+          </p>
+        </div>
+
+        <div class="tilt-card p-7 rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-xl transition space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center font-bold">
+            <i data-lucide="sparkles" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-xl font-bold text-slate-950">Tournament Studio Lighting</h3>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Dual key and fill shadow-casting lights, soft ambient hemisphere light, and logarithmic depth buffer eliminate all visual artifacts.
+          </p>
+        </div>
+
+        <div class="tilt-card p-7 rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-xl transition space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center font-bold">
+            <i data-lucide="shield-alert" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-xl font-bold text-slate-950">Safety & Legal Disclaimer</h3>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            All games, simulations, and code created with Spider Engine are <strong>created and run strictly at your own risk</strong>.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-slate-50/80 backdrop-blur-md py-14 px-6">
+      <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-600">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🕷️</span>
+          <span class="font-extrabold text-slate-950 text-base">Spider Game Engine</span>
+          <span>•</span>
+          <span>Created & Maintained by <strong class="text-slate-900">M4SPIDER</strong> (<a href="mailto:support@m4spider.com" class="text-emerald-700 font-semibold hover:underline">support@m4spider.com</a>)</span>
+        </div>
+        <div class="flex items-center gap-6">
+          <span>Lineage: <strong class="text-slate-900">Vivek / Venom / Quick / Qucik</strong></span>
+          <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="text-emerald-700 font-bold hover:underline flex items-center gap-1.5">
+            GitHub Repo <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+          </a>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Interactive Spider-Filament Particle Canvas Script -->
+  <script>
+    (function initBackgroundSpiderNet() {
+      const canvas = document.getElementById('bg-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let width = (canvas.width = window.innerWidth);
+      let height = (canvas.height = window.innerHeight);
+
+      const particles = [];
+      const count = Math.min(Math.floor((width * height) / 14000), 100);
+      let mouse = { x: null, y: null, radius: 150 };
+
+      window.addEventListener('mousemove', (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+      });
+      window.addEventListener('mouseout', () => {
+        mouse.x = null;
+        mouse.y = null;
+      });
+
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.7,
+          vy: (Math.random() - 0.5) * 0.7,
+          radius: Math.random() * 2 + 1,
+          color: i % 2 === 0 ? 'rgba(16, 185, 129, ' : 'rgba(6, 182, 212, '
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < 0 || p.x > width) p.vx *= -1;
+          if (p.y < 0 || p.y > height) p.vy *= -1;
+
+          // Mouse interaction (spider-sense reaction)
+          if (mouse.x !== null) {
+            const dx = p.x - mouse.x;
+            const dy = p.y - mouse.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < mouse.radius) {
+              const force = (mouse.radius - dist) / mouse.radius;
+              p.x += (dx / dist) * force * 3;
+              p.y += (dy / dist) * force * 3;
+            }
+          }
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = p.color + '0.7)';
+          ctx.fill();
+
+          // Connect particles with delicate cyber spider-filaments
+          for (let j = i + 1; j < particles.length; j++) {
+            const p2 = particles[j];
+            const dx = p.x - p2.x;
+            const dy = p.y - p2.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 120) {
+              const alpha = (1 - dist / 120) * 0.22;
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
+              ctx.lineWidth = 0.8;
+              ctx.stroke();
+            }
+          }
+        }
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+
+      window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      });
+    })();
+
+    // 3D Tilt Cards effect
+    document.querySelectorAll('.tilt-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        const tiltX = (y / (rect.height / 2)) * -6;
+        const tiltY = (x / (rect.width / 2)) * 6;
+        card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale3d(1.02, 1.02, 1.02)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+      });
+    });
+  </script>
+
+  <!-- Live 3D Script with Holographic Tech Rings & Dice Sparks -->
   <script>
     lucide.createIcons();
 
-    // Setup interactive Three.js Hero Viewport (Crisp Studio Lighting in Light Mode)
     (function init3DHero() {
       const container = document.getElementById('hero-3d-container');
       if (!container) return;
@@ -338,9 +583,9 @@
       scene.background = new THREE.Color(0xf8fafc);
 
       const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-      camera.position.set(0, 7.5, 9);
+      camera.position.set(0, 8, 9.5);
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+      const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true, alpha: true });
       renderer.setSize(container.clientWidth, container.clientHeight);
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -352,19 +597,36 @@
       controls.maxPolarAngle = Math.PI / 2.05;
 
       // Studio Lighting
-      const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe2e8f0, 0.9);
+      const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe2e8f0, 0.95);
       scene.add(hemiLight);
 
-      const dirLight = new THREE.DirectionalLight(0xffffff, 1.3);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
       dirLight.position.set(6, 12, 8);
       dirLight.castShadow = true;
       dirLight.shadow.mapSize.width = 1024;
       dirLight.shadow.mapSize.height = 1024;
       scene.add(dirLight);
 
+      // Hi-Tech Rotating Holographic Rings around Board
+      const ringGroup = new THREE.Group();
+      const ringGeo1 = new THREE.RingGeometry(3.6, 3.65, 64);
+      const ringMat1 = new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+      const ringMesh1 = new THREE.Mesh(ringGeo1, ringMat1);
+      ringMesh1.rotation.x = -Math.PI / 2;
+      ringMesh1.position.y = 0.08;
+      ringGroup.add(ringMesh1);
+
+      const ringGeo2 = new THREE.RingGeometry(4.1, 4.13, 48);
+      const ringMat2 = new THREE.MeshBasicMaterial({ color: 0x06b6d4, side: THREE.DoubleSide, transparent: true, opacity: 0.45, wireframe: true });
+      const ringMesh2 = new THREE.Mesh(ringGeo2, ringMat2);
+      ringMesh2.rotation.x = -Math.PI / 2;
+      ringMesh2.position.y = 0.12;
+      ringGroup.add(ringMesh2);
+      scene.add(ringGroup);
+
       // Floor & Table
       const floorGeo = new THREE.PlaneGeometry(30, 30);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.9 });
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.95 });
       const floor = new THREE.Mesh(floorGeo, floorMat);
       floor.rotation.x = -Math.PI / 2;
       floor.position.y = -0.5;
@@ -372,13 +634,13 @@
       scene.add(floor);
 
       const tableGeo = new THREE.BoxGeometry(6.6, 0.4, 6.6);
-      const tableMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.5 });
+      const tableMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 });
       const table = new THREE.Mesh(tableGeo, tableMat);
       table.position.y = -0.2;
       table.receiveShadow = true;
       scene.add(table);
 
-      // 3D Ludo / Chess Board
+      // 3D Ludo Board
       const boardGeo = new THREE.BoxGeometry(5.8, 0.08, 5.8);
       const boardMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 });
       const board = new THREE.Mesh(boardGeo, boardMat);
@@ -386,7 +648,8 @@
       board.receiveShadow = true;
       scene.add(board);
 
-      // Bases (4 colored corners)
+      // 4 Bases with Glowing Pawn Tokens
+      const pawns = [];
       const colors = [0xef4444, 0x22c55e, 0xeab308, 0x3b82f6];
       const positions = [[-1.5, 0.1, -1.5], [1.5, 0.1, -1.5], [1.5, 0.1, 1.5], [-1.5, 0.1, 1.5]];
       
@@ -398,44 +661,62 @@
         baseMesh.receiveShadow = true;
         scene.add(baseMesh);
 
-        // Pawn token on base
+        // Pawn group
+        const pawnGroup = new THREE.Group();
+        pawnGroup.position.set(pos[0], pos[1] + 0.22, pos[2]);
+
         const pawnGeo = new THREE.CylinderGeometry(0.18, 0.24, 0.35, 16);
-        const pawnMat = new THREE.MeshStandardMaterial({ color: colors[idx], roughness: 0.2 });
+        const pawnMat = new THREE.MeshStandardMaterial({ color: colors[idx], roughness: 0.15 });
         const pawn = new THREE.Mesh(pawnGeo, pawnMat);
-        pawn.position.set(pos[0], pos[1] + 0.22, pos[2]);
         pawn.castShadow = true;
-        scene.add(pawn);
+        pawnGroup.add(pawn);
 
         const headGeo = new THREE.SphereGeometry(0.16, 16, 16);
         const head = new THREE.Mesh(headGeo, pawnMat);
-        head.position.set(pos[0], pos[1] + 0.45, pos[2]);
+        head.position.y = 0.23;
         head.castShadow = true;
-        scene.add(head);
+        pawnGroup.add(head);
+
+        scene.add(pawnGroup);
+        pawns.push({ group: pawnGroup, baseY: pos[1] + 0.22, offset: idx * 0.8 });
       });
 
       // Center Dice
       const diceGeo = new THREE.BoxGeometry(0.7, 0.7, 0.7);
-      const diceMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.2 });
+      const diceMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.15 });
       const dice = new THREE.Mesh(diceGeo, diceMat);
       dice.position.set(0, 0.5, 0);
       dice.castShadow = true;
       scene.add(dice);
 
-      // Animation Loop
-      let rotating = true;
+      // Roll Button Interaction
       document.getElementById('roll-dice-btn').addEventListener('click', () => {
-        dice.position.y = 1.4;
-        dice.rotation.x += Math.PI * (1 + Math.random() * 2);
-        dice.rotation.z += Math.PI * (1 + Math.random() * 2);
-        setTimeout(() => { dice.position.y = 0.5; }, 350);
+        dice.position.y = 1.7;
+        dice.rotation.x += Math.PI * (2 + Math.random() * 3);
+        dice.rotation.z += Math.PI * (2 + Math.random() * 3);
+        setTimeout(() => { dice.position.y = 0.5; }, 400);
       });
 
+      // 60 FPS Render Loop with Floating Animations
+      let clock = new THREE.Clock();
       function animate() {
         requestAnimationFrame(animate);
+        const elapsedTime = clock.getElapsedTime();
+
         controls.update();
-        if (rotating) {
-          dice.rotation.y += 0.015;
-        }
+
+        // Rotate holographic rings
+        ringMesh1.rotation.z = elapsedTime * 0.25;
+        ringMesh2.rotation.z = -elapsedTime * 0.18;
+
+        // Idle slow rotate die
+        dice.rotation.y = elapsedTime * 0.4;
+
+        // Gentle levitation float on pawns
+        pawns.forEach(p => {
+          p.group.position.y = p.baseY + Math.sin(elapsedTime * 2.5 + p.offset) * 0.05;
+        });
+
         renderer.render(scene, camera);
       }
       animate();
