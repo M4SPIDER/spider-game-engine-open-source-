@@ -37,8 +37,8 @@
       overflow-x: hidden;
     }
 
-    /* Hi-Tech Animated Background Canvas */
-    #bg-canvas {
+    /* Fullscreen 3D Three.js Undulating Wave Canvas ("Motam Uglipovale") */
+    #three-bg-canvas {
       position: fixed;
       top: 0;
       left: 0;
@@ -46,7 +46,6 @@
       height: 100vh;
       pointer-events: none;
       z-index: 0;
-      opacity: 0.85;
     }
 
     /* Floating Ambient Glowing Orbs */
@@ -145,8 +144,8 @@
 </head>
 <body class="min-h-screen selection:bg-emerald-200 selection:text-emerald-950 relative">
 
-  <!-- Interactive Spider-Tech Particle Background Canvas -->
-  <canvas id="bg-canvas"></canvas>
+  <!-- Fullscreen Three.js 3D Oscillating Wave Background -->
+  <canvas id="three-bg-canvas"></canvas>
 
   <!-- Ambient Light Orbs -->
   <div class="orb-1"></div>
@@ -465,95 +464,151 @@
 
   </div>
 
-  <!-- Interactive Spider-Filament Particle Canvas Script -->
+  <!-- Fullscreen 3D Three.js Undulating Motion Background ("Motam Uglipovale") -->
   <script>
-    (function initBackgroundSpiderNet() {
-      const canvas = document.getElementById('bg-canvas');
+    (function initThreeJsBackgroundWave() {
+      const canvas = document.getElementById('three-bg-canvas');
       if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      let width = (canvas.width = window.innerWidth);
-      let height = (canvas.height = window.innerHeight);
 
-      const particles = [];
-      const count = Math.min(Math.floor((width * height) / 14000), 100);
-      let mouse = { x: null, y: null, radius: 150 };
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 14, 28);
+      camera.lookAt(0, 0, 0);
 
-      window.addEventListener('mousemove', (e) => {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
+      const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // 3D Undulating Mesh Grid
+      const gridWidth = 90;
+      const gridHeight = 90;
+      const segments = 80;
+      const planeGeo = new THREE.PlaneGeometry(gridWidth, gridHeight, segments, segments);
+      planeGeo.rotateX(-Math.PI / 2);
+
+      // Save initial vertex positions
+      const count = planeGeo.attributes.position.count;
+      const basePositions = planeGeo.attributes.position.array.slice();
+
+      // Wireframe wave mesh
+      const planeMat = new THREE.MeshBasicMaterial({
+        color: 0x10b981,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.16
       });
-      window.addEventListener('mouseout', () => {
-        mouse.x = null;
-        mouse.y = null;
-      });
+      const waveMesh = new THREE.Mesh(planeGeo, planeMat);
+      scene.add(waveMesh);
 
-      for (let i = 0; i < count; i++) {
-        particles.push({
-          x: Math.random() * width,
-          y: Math.random() * height,
-          vx: (Math.random() - 0.5) * 0.7,
-          vy: (Math.random() - 0.5) * 0.7,
-          radius: Math.random() * 2 + 1,
-          color: i % 2 === 0 ? 'rgba(16, 185, 129, ' : 'rgba(6, 182, 212, '
+      // Glowing vertex points
+      const pointsMat = new THREE.PointsMaterial({
+        color: 0x06b6d4,
+        size: 0.14,
+        transparent: true,
+        opacity: 0.65
+      });
+      const wavePoints = new THREE.Points(planeGeo, pointsMat);
+      scene.add(wavePoints);
+
+      // Floating 3D Geometric Crystals drifting through space
+      const crystals = [];
+      const crystalGeos = [
+        new THREE.IcosahedronGeometry(0.9, 0),
+        new THREE.OctahedronGeometry(0.8, 0),
+        new THREE.TetrahedronGeometry(0.85, 0),
+        new THREE.TorusGeometry(0.7, 0.22, 8, 20)
+      ];
+      const crystalColors = [0x10b981, 0x06b6d4, 0x3b82f6, 0x8b5cf6];
+
+      for (let i = 0; i < 20; i++) {
+        const geo = crystalGeos[i % crystalGeos.length];
+        const mat = new THREE.MeshBasicMaterial({
+          color: crystalColors[i % crystalColors.length],
+          wireframe: true,
+          transparent: true,
+          opacity: 0.28
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(
+          (Math.random() - 0.5) * 45,
+          Math.random() * 15 + 2,
+          (Math.random() - 0.5) * 35
+        );
+        mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+        scene.add(mesh);
+        crystals.push({
+          mesh: mesh,
+          rotX: (Math.random() - 0.5) * 0.02,
+          rotY: (Math.random() - 0.5) * 0.02,
+          rotZ: (Math.random() - 0.5) * 0.02,
+          speed: Math.random() * 0.8 + 0.4,
+          baseY: mesh.position.y
         });
       }
 
-      function draw() {
-        ctx.clearRect(0, 0, width, height);
+      // Mouse Parallax & Wave Surge
+      let mouseX = 0, mouseY = 0;
+      let targetMouseX = 0, targetMouseY = 0;
 
-        for (let i = 0; i < particles.length; i++) {
-          const p = particles[i];
-          p.x += p.vx;
-          p.y += p.vy;
+      window.addEventListener('mousemove', (e) => {
+        targetMouseX = (e.clientX / window.innerWidth) * 2 - 1;
+        targetMouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+      });
 
-          if (p.x < 0 || p.x > width) p.vx *= -1;
-          if (p.y < 0 || p.y > height) p.vy *= -1;
+      // 60 FPS Intense Wave Motion Physics ("Oogipovali")
+      const clock = new THREE.Clock();
+      function animate() {
+        requestAnimationFrame(animate);
+        const t = clock.getElapsedTime() * 1.8;
 
-          // Mouse interaction (spider-sense reaction)
-          if (mouse.x !== null) {
-            const dx = p.x - mouse.x;
-            const dy = p.y - mouse.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < mouse.radius) {
-              const force = (mouse.radius - dist) / mouse.radius;
-              p.x += (dx / dist) * force * 3;
-              p.y += (dy / dist) * force * 3;
-            }
-          }
+        mouseX += (targetMouseX - mouseX) * 0.05;
+        mouseY += (targetMouseY - mouseY) * 0.05;
 
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = p.color + '0.7)';
-          ctx.fill();
+        // Camera float & mouse sway
+        camera.position.x = mouseX * 5;
+        camera.position.y = 14 + mouseY * 3 + Math.sin(t * 0.6) * 0.6;
+        camera.lookAt(0, 1, 0);
 
-          // Connect particles with delicate cyber spider-filaments
-          for (let j = i + 1; j < particles.length; j++) {
-            const p2 = particles[j];
-            const dx = p.x - p2.x;
-            const dy = p.y - p2.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
+        // Vigorously wave and oscillate plane vertices
+        const pos = planeGeo.attributes.position;
+        for (let i = 0; i < count; i++) {
+          const u = basePositions[i * 3];
+          const v = basePositions[i * 3 + 2];
 
-            if (dist < 120) {
-              const alpha = (1 - dist / 120) * 0.22;
-              ctx.beginPath();
-              ctx.moveTo(p.x, p.y);
-              ctx.lineTo(p2.x, p2.y);
-              ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
-              ctx.lineWidth = 0.8;
-              ctx.stroke();
-            }
-          }
+          // Harmonic oscillating waves
+          const wave = Math.sin(u * 0.2 + t) * 1.8
+                     + Math.cos(v * 0.25 + t * 1.4) * 1.5
+                     + Math.sin((u + v) * 0.16 + t * 1.9) * 1.1;
+
+          // Mouse ripple wave
+          const dx = u - mouseX * 30;
+          const dz = v - mouseY * 25;
+          const dist = Math.sqrt(dx * dx + dz * dz);
+          const mouseRipple = dist < 18 ? Math.sin((18 - dist) * 0.8 - t * 4) * 1.5 : 0;
+
+          pos.setY(i, wave + mouseRipple);
         }
+        pos.needsUpdate = true;
 
-        requestAnimationFrame(draw);
+        // Animate floating crystals
+        crystals.forEach((c, idx) => {
+          c.mesh.rotation.x += c.rotX;
+          c.mesh.rotation.y += c.rotY;
+          c.mesh.rotation.z += c.rotZ;
+          c.mesh.position.y = c.baseY + Math.sin(t * c.speed + idx) * 1.4;
+        });
+
+        renderer.render(scene, camera);
       }
-      draw();
+      animate();
 
       window.addEventListener('resize', () => {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
       });
     })();
+  </script>
 
     // 3D Tilt Cards effect
     document.querySelectorAll('.tilt-card').forEach(card => {
