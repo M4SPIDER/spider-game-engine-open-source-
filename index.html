@@ -154,87 +154,112 @@
   <!-- Main Content Wrap -->
   <div class="relative z-10">
 
-    <!-- Navbar -->
-    <nav class="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-200/80 px-6 py-4 transition duration-300">
+    <!-- Navbar (Responsive with Glassy Green Glow) -->
+    <nav class="sticky top-0 z-50 backdrop-blur-2xl bg-white/75 border-b border-emerald-500/20 px-4 sm:px-6 py-3.5 transition duration-300 shadow-sm shadow-emerald-500/5">
       <div class="max-w-7xl mx-auto flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center font-black text-white text-xl shadow-lg relative overflow-hidden group">
+        <div class="flex items-center gap-2.5 sm:gap-3">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-950 flex items-center justify-center font-black text-white text-lg sm:text-xl shadow-lg relative overflow-hidden group">
             <span class="relative z-10">🕷️</span>
-            <div class="absolute inset-0 bg-gradient-to-tr from-emerald-500/30 to-cyan-500/30 opacity-0 group-hover:opacity-100 transition duration-300"></div>
+            <div class="absolute inset-0 bg-gradient-to-tr from-emerald-500/40 to-cyan-500/40 opacity-0 group-hover:opacity-100 transition duration-300"></div>
           </div>
           <div>
-            <span class="font-extrabold text-xl tracking-tight text-slate-950">SPIDER<span class="text-emerald-600">ENGINE</span></span>
-            <span class="ml-2 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 tracking-wider">v0.9.0 OPEN SOURCE</span>
+            <span class="font-extrabold text-lg sm:text-xl tracking-tight text-slate-950">SPIDER<span class="text-emerald-600">ENGINE</span></span>
+            <span class="ml-1.5 sm:ml-2 text-[10px] sm:text-[11px] font-bold px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-950 border border-emerald-400/40 tracking-wider">v0.9.0</span>
           </div>
         </div>
-        <div class="flex items-center gap-6">
-          <a href="#showcase" class="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition">Showcase</a>
-          <a href="#features" class="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition">Capabilities</a>
-          <a href="#agent-loop" class="text-sm font-semibold text-slate-600 hover:text-emerald-600 transition">AI Agent Loop</a>
+
+        <!-- Desktop Navigation Links -->
+        <div class="hidden md:flex items-center gap-6">
+          <a href="#showcase" class="text-sm font-semibold text-slate-700 hover:text-emerald-700 transition">Showcase</a>
+          <a href="#features" class="text-sm font-semibold text-slate-700 hover:text-emerald-700 transition">Capabilities</a>
+          <a href="#agent-loop" class="text-sm font-semibold text-slate-700 hover:text-emerald-700 transition">AI Agent Loop</a>
           <button onclick="openLicenseModal()" class="flex items-center gap-1.5 text-sm font-bold text-emerald-700 hover:text-emerald-800 transition cursor-pointer">
             <i data-lucide="scale" class="w-4 h-4"></i> Licenses
           </button>
-          <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="flex items-center gap-2 bg-slate-950 hover:bg-slate-800 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hover:shadow-emerald-500/10">
+          <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="flex items-center gap-2 bg-slate-950 hover:bg-slate-800 text-white font-bold text-sm px-4 py-2 rounded-xl transition shadow-md hover:shadow-emerald-500/20">
             <i data-lucide="github" class="w-4 h-4"></i> Star on GitHub
           </a>
         </div>
+
+        <!-- Mobile Hamburger Button -->
+        <div class="md:hidden flex items-center gap-2">
+          <button onclick="openLicenseModal()" class="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 font-bold text-xs flex items-center gap-1 cursor-pointer">
+            <i data-lucide="scale" class="w-4 h-4"></i>
+          </button>
+          <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-slate-800 hover:text-emerald-700 transition cursor-pointer" aria-label="Toggle navigation">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Dropdown Navigation -->
+      <div id="mobile-menu" class="hidden md:hidden pt-4 pb-2 space-y-2 border-t border-emerald-500/20 mt-3 animate-fadeIn">
+        <a href="#showcase" class="block px-3 py-2 rounded-xl text-sm font-bold text-slate-800 hover:bg-emerald-500/10 hover:text-emerald-700 transition">🎮 Showcase Games</a>
+        <a href="#features" class="block px-3 py-2 rounded-xl text-sm font-bold text-slate-800 hover:bg-emerald-500/10 hover:text-emerald-700 transition">⚡ Capabilities</a>
+        <a href="#agent-loop" class="block px-3 py-2 rounded-xl text-sm font-bold text-slate-800 hover:bg-emerald-500/10 hover:text-emerald-700 transition">🤖 AI Agent Loop</a>
+        <button onclick="openLicenseModal()" class="w-full text-left px-3 py-2 rounded-xl text-sm font-bold text-emerald-700 hover:bg-emerald-500/10 transition flex items-center gap-2 cursor-pointer">
+          <i data-lucide="scale" class="w-4 h-4"></i> Open Licenses & Notices
+        </button>
+        <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="w-full mt-2 flex items-center justify-center gap-2 bg-slate-950 text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-md">
+          <i data-lucide="github" class="w-4 h-4"></i> Star on GitHub
+        </a>
       </div>
     </nav>
 
     <!-- Hero Section with Live 3D Interactive Canvas -->
-    <section class="max-w-7xl mx-auto px-6 pt-16 pb-24">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-16 sm:pb-24">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         
-        <!-- Hero Left Column in Green Frosted Glass Card -->
-        <div class="lg:col-span-6 p-8 sm:p-10 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/20 shadow-xl space-y-6">
-          <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-emerald-300 text-xs font-bold text-slate-800 shadow-sm float-badge">
+        <!-- Hero Left Column in Lustrous Green Frosted Glass Card -->
+        <div class="lg:col-span-6 p-6 sm:p-10 rounded-3xl bg-emerald-500/10 backdrop-blur-2xl border border-emerald-500/30 shadow-2xl shadow-emerald-500/10 space-y-5 sm:space-y-6">
+          <div class="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-emerald-500/15 backdrop-blur-md border border-emerald-500/30 text-[11px] sm:text-xs font-bold text-slate-900 shadow-sm float-badge">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
             Multimodal Autonomous 3D Game Engine
           </div>
 
-          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-950 leading-[1.1] tracking-tight">
+          <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-950 leading-[1.12] tracking-tight">
             Next-Gen 3D Games Built <br>
             <span class="bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-600 bg-clip-text text-transparent">Autonomously by AI</span>
           </h1>
 
-          <p class="text-slate-700 text-lg leading-relaxed font-medium">
+          <p class="text-slate-700 text-base sm:text-lg leading-relaxed font-medium">
             Powered by <strong>React Three Fiber</strong>, <strong>Three.js</strong>, and <strong>MCP</strong>. Spider Engine enables multimodal models like Meta Llama and Muse AI to synthesize, live-mount, inspect via screenshot vision, and debug 3D games entirely in real time.
           </p>
 
-          <!-- Command snippet with glow effect -->
-          <div class="p-3.5 bg-white/70 backdrop-blur-md rounded-2xl border border-emerald-200/80 shadow-sm flex items-center justify-between font-mono text-sm group hover:border-emerald-400 transition">
-            <div class="flex items-center gap-2 text-slate-700 overflow-x-auto">
+          <!-- Command snippet with lustrous green glow -->
+          <div class="p-3 sm:p-3.5 bg-emerald-500/10 backdrop-blur-xl rounded-2xl border border-emerald-500/30 shadow-md flex items-center justify-between font-mono text-xs sm:text-sm group hover:border-emerald-400 transition">
+            <div class="flex items-center gap-2 text-slate-800 overflow-x-auto select-all pr-2">
               <span class="text-emerald-600 font-bold">$</span>
-              <span class="select-all">git clone https://github.com/M4SPIDER/spider-game-engine-open-source-</span>
+              <span class="truncate sm:whitespace-normal">git clone https://github.com/M4SPIDER/spider-game-engine-open-source-</span>
             </div>
-            <button onclick="navigator.clipboard.writeText('git clone https://github.com/M4SPIDER/spider-game-engine-open-source-'); alert('Copied to clipboard!')" class="ml-3 shrink-0 text-emerald-800 hover:text-emerald-900 font-sans font-bold text-xs px-3 py-1.5 rounded-lg bg-emerald-100 border border-emerald-300 hover:bg-emerald-200 transition shadow-xs">
+            <button onclick="navigator.clipboard.writeText('git clone https://github.com/M4SPIDER/spider-game-engine-open-source-'); alert('Copied to clipboard!')" class="shrink-0 text-emerald-950 hover:text-emerald-900 font-sans font-bold text-xs px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 hover:bg-emerald-500/30 transition shadow-xs cursor-pointer">
               Copy
             </button>
           </div>
 
-          <div class="flex flex-wrap gap-4 pt-2">
-            <a href="#showcase" class="px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold transition flex items-center gap-2.5 shadow-lg shadow-emerald-600/25 hover:scale-[1.02]">
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-1 sm:pt-2">
+            <a href="#showcase" class="w-full sm:w-auto justify-center px-6 sm:px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:brightness-110 text-white font-bold transition flex items-center gap-2.5 shadow-lg shadow-emerald-600/30 active:scale-95">
               <i data-lucide="play" class="w-4 h-4 fill-current"></i> Explore Showcase Games
             </a>
-            <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="px-7 py-3.5 rounded-2xl bg-white/80 hover:bg-white text-slate-900 font-bold border border-emerald-300 transition flex items-center gap-2.5 shadow-sm hover:scale-[1.02]">
+            <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="w-full sm:w-auto justify-center px-6 sm:px-7 py-3.5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-slate-950 font-bold border border-emerald-500/30 backdrop-blur-md transition flex items-center gap-2.5 shadow-sm active:scale-95">
               <i data-lucide="external-link" class="w-4 h-4"></i> GitHub Repository
             </a>
           </div>
         </div>
 
-        <!-- Live 3D Interactive WebGL Hero Canvas in Matching Green Card -->
+        <!-- Live 3D Interactive WebGL Hero Canvas in Matching Green Frosted Glass Card -->
         <div class="lg:col-span-6 relative">
-          <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-xl overflow-hidden shadow-2xl relative glow-border">
-            <div class="absolute top-4 left-4 z-10 bg-white/80 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-emerald-200/80 text-xs font-mono text-slate-800 flex items-center gap-2.5 shadow-sm">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Live 3D WebGL Canvas (Orbit & Roll Die)
+          <div class="rounded-3xl border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-2xl overflow-hidden shadow-2xl relative glow-border">
+            <div class="absolute top-3.5 left-3.5 z-10 bg-emerald-950/75 backdrop-blur-md px-3 py-1.5 rounded-xl border border-emerald-400/40 text-[11px] sm:text-xs font-mono text-emerald-300 flex items-center gap-2 shadow-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Live 3D WebGL (Orbit & Roll Die)
             </div>
-            <div id="hero-3d-container" class="w-full h-[470px] cursor-grab active:cursor-grabbing bg-transparent"></div>
-            <div class="p-4 bg-white/60 backdrop-blur-md border-t border-emerald-200/60 flex items-center justify-between text-xs text-slate-700">
-              <span class="font-semibold flex items-center gap-2">
+            <div id="hero-3d-container" class="w-full h-[320px] sm:h-[400px] lg:h-[470px] cursor-grab active:cursor-grabbing bg-transparent"></div>
+            <div class="p-3.5 sm:p-4 bg-emerald-500/10 backdrop-blur-xl border-t border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-800">
+              <span class="font-semibold flex items-center gap-2 text-center sm:text-left">
                 <span class="w-2 h-2 rounded-full bg-cyan-500"></span> Tournament Studio Lighting • Zero Z-Fighting
               </span>
-              <button id="roll-dice-btn" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white font-bold transition flex items-center gap-2 shadow-md shadow-emerald-600/20 active:scale-95">
+              <button id="roll-dice-btn" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white font-bold transition flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 active:scale-95 cursor-pointer">
                 🎲 Roll 3D Die
               </button>
             </div>
@@ -245,13 +270,13 @@
     </section>
 
     <!-- Showcase Gallery (Games Created with Spider Engine) -->
-    <section id="showcase" class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200/80">
-      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-xs font-bold text-slate-800 border border-slate-200">
+    <section id="showcase" class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 border-t border-emerald-500/20">
+      <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16 space-y-4">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-950 border border-emerald-500/30 backdrop-blur-md shadow-sm">
           🎮 Production-Ready 3D Builds
         </div>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-950">Showcase Games & Simulations</h2>
-        <p class="text-slate-600">
+        <h2 class="text-3xl sm:text-4xl font-black text-slate-950">Showcase Games & Simulations</h2>
+        <p class="text-slate-700 font-medium">
           Every game shown below runs cleanly at 60 FPS directly within Spider Engine's live React Three Fiber runtime.
         </p>
       </div>
@@ -259,25 +284,25 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         
         <!-- Card 1: 3D Tournament Ludo -->
-        <div class="tilt-card bg-emerald-500/10 backdrop-blur-xl rounded-3xl border border-emerald-500/20 overflow-hidden hover:border-emerald-400 hover:bg-emerald-500/15 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
+        <div class="tilt-card bg-emerald-500/10 backdrop-blur-xl rounded-3xl border border-emerald-500/25 overflow-hidden hover:border-emerald-400 hover:bg-emerald-500/15 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
           <div>
-            <div class="overflow-hidden h-56 bg-transparent relative">
+            <div class="overflow-hidden h-48 sm:h-56 bg-transparent relative">
               <img src="./images/ludo_tournament.png" alt="3D Ludo Board Tournament" class="w-full h-full object-cover group-hover:scale-108 transition duration-700 ease-out">
-              <div class="absolute bottom-3 right-3 bg-white/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-emerald-800 border border-emerald-300/60 shadow-sm">
+              <div class="absolute bottom-3 right-3 bg-emerald-950/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-emerald-300 border border-emerald-400/40 shadow-md">
                 Photorealistic 3D
               </div>
             </div>
             <div class="p-6 space-y-3">
               <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
                 3D Ludo Tournament Board
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-mono font-bold">52 Tiles</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-950 font-mono font-bold">52 Tiles</span>
               </h3>
               <p class="text-sm text-slate-700 leading-relaxed font-medium">
                 Folding cardboard board geometry with zero Z-fighting, realistic mahogany table, dice cup, pawn tokens, and soft directional shadows.
               </p>
             </div>
           </div>
-          <div class="px-6 pb-6 pt-3 border-t border-emerald-200/40 flex items-center justify-between text-xs text-slate-600 font-semibold">
+          <div class="px-6 pb-6 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs text-slate-600 font-semibold">
             <span>Staggered Y-elevations</span>
             <span class="text-emerald-700 font-bold flex items-center gap-1">
               <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Verified 60 FPS
@@ -286,25 +311,25 @@
         </div>
 
         <!-- Card 2: Autonomous AI Ludo by Muse -->
-        <div class="tilt-card bg-emerald-500/10 backdrop-blur-xl rounded-3xl border border-emerald-500/20 overflow-hidden hover:border-teal-400 hover:bg-emerald-500/15 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
+        <div class="tilt-card bg-emerald-500/10 backdrop-blur-xl rounded-3xl border border-emerald-500/25 overflow-hidden hover:border-teal-400 hover:bg-emerald-500/15 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
           <div>
-            <div class="overflow-hidden h-56 bg-transparent relative">
+            <div class="overflow-hidden h-48 sm:h-56 bg-transparent relative">
               <img src="./images/muse_autonomous.png" alt="Autonomous 3D Ludo by Muse AI" class="w-full h-full object-cover group-hover:scale-108 transition duration-700 ease-out">
-              <div class="absolute bottom-3 right-3 bg-white/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-teal-800 border border-emerald-300/60 shadow-sm">
+              <div class="absolute bottom-3 right-3 bg-emerald-950/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-teal-300 border border-teal-400/40 shadow-md">
                 100% Autonomous AI
               </div>
             </div>
             <div class="p-6 space-y-3">
               <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
                 AI-Synthesized Ludo
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-900 font-mono font-bold">Muse 1.3</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-950 font-mono font-bold">Muse 1.3</span>
               </h3>
               <p class="text-sm text-slate-700 leading-relaxed font-medium">
                 Synthesized completely from scratch by <strong>muse-spark-1.3-contributor</strong>. Caught its own runtime error, re-architected non-overlapping geometry, and self-verified error-free.
               </p>
             </div>
           </div>
-          <div class="px-6 pb-6 pt-3 border-t border-emerald-200/40 flex items-center justify-between text-xs text-slate-600 font-semibold">
+          <div class="px-6 pb-6 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs text-slate-600 font-semibold">
             <span>Zero Human Edits</span>
             <span class="text-teal-700 font-bold flex items-center gap-1">
               <span class="w-2 h-2 rounded-full bg-teal-500"></span> ReAct Loop
@@ -313,28 +338,28 @@
         </div>
 
         <!-- Card 3: 3D Classical Chess (Last Image Card) -->
-        <div class="tilt-card bg-emerald-500/10 backdrop-blur-xl rounded-3xl border border-emerald-500/20 overflow-hidden hover:border-purple-400 hover:bg-emerald-500/15 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
+        <div class="tilt-card bg-emerald-500/10 backdrop-blur-xl rounded-3xl border border-emerald-500/25 overflow-hidden hover:border-emerald-400 hover:bg-emerald-500/15 transition-all duration-300 shadow-md hover:shadow-2xl group flex flex-col justify-between">
           <div>
-            <div class="overflow-hidden h-56 bg-transparent relative">
+            <div class="overflow-hidden h-48 sm:h-56 bg-transparent relative">
               <img src="./images/chess_tournament.png" alt="3D Chess Tournament" class="w-full h-full object-cover group-hover:scale-108 transition duration-700 ease-out">
-              <div class="absolute bottom-3 right-3 bg-white/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-purple-800 border border-emerald-300/60 shadow-sm">
+              <div class="absolute bottom-3 right-3 bg-emerald-950/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-emerald-300 border border-emerald-400/40 shadow-md">
                 Full Rules Engine
               </div>
             </div>
             <div class="p-6 space-y-3">
               <h3 class="text-xl font-bold text-slate-950 flex items-center justify-between">
                 3D Tournament Chess
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 font-mono font-bold">chess.js</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-mono font-bold">chess.js</span>
               </h3>
               <p class="text-sm text-slate-700 leading-relaxed font-medium">
                 Full 64-square board with legal chess move calculation, check/checkmate detection, interactive piece selection, and tournament stage lighting.
               </p>
             </div>
           </div>
-          <div class="px-6 pb-6 pt-3 border-t border-emerald-200/40 flex items-center justify-between text-xs text-slate-600 font-semibold">
+          <div class="px-6 pb-6 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-xs text-slate-600 font-semibold">
             <span>Dual Lighting</span>
-            <span class="text-purple-700 font-bold flex items-center gap-1">
-              <span class="w-2 h-2 rounded-full bg-purple-500"></span> Interactive Move
+            <span class="text-emerald-700 font-bold flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Interactive Move
             </span>
           </div>
         </div>
@@ -343,49 +368,49 @@
     </section>
 
     <!-- Autonomous ReAct Agent Loop Section -->
-    <section id="agent-loop" class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200/80">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+    <section id="agent-loop" class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 border-t border-emerald-500/20">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         
-        <div class="lg:col-span-5 space-y-6">
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 text-xs font-bold text-emerald-800 border border-emerald-300">
-            <i data-lucide="cpu" class="w-4 h-4"></i> Model Context Protocol (MCP)
+        <div class="lg:col-span-5 space-y-5 sm:space-y-6">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-950 border border-emerald-500/30 backdrop-blur-md shadow-sm">
+            <i data-lucide="cpu" class="w-4 h-4 text-emerald-700"></i> Model Context Protocol (MCP)
           </div>
-          <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-950">How Autonomous 3D Creation Works</h2>
-          <p class="text-slate-600 leading-relaxed">
-            Spider Engine doesn't just guess code. It embeds a local MCP server on port <code class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-mono font-bold border border-emerald-200">9287</code> that gives LLMs eyes and hands on the 3D canvas:
+          <h2 class="text-3xl sm:text-4xl font-black text-slate-950">How Autonomous 3D Creation Works</h2>
+          <p class="text-slate-700 leading-relaxed font-medium">
+            Spider Engine doesn't just guess code. It embeds a local MCP server on port <code class="text-emerald-800 bg-emerald-500/15 px-2 py-0.5 rounded-md font-mono font-bold border border-emerald-500/30">9287</code> that gives LLMs eyes and hands on the 3D canvas:
           </p>
 
-          <ul class="space-y-4 text-sm text-slate-700">
-            <li class="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200">
-              <div class="w-7 h-7 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
-              <div><strong class="text-slate-900">Tool: check3DView</strong> — Inspects compilation errors, actor trees, and 60 FPS animation health.</div>
+          <ul class="space-y-3.5 text-sm text-slate-800">
+            <li class="flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-emerald-500/10 backdrop-blur-md border border-emerald-500/25 hover:border-emerald-500/40 hover:bg-emerald-500/15 transition shadow-sm">
+              <div class="w-7 h-7 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-950 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
+              <div><strong class="text-slate-950">Tool: check3DView</strong> — Inspects compilation errors, actor trees, and 60 FPS animation loop health.</div>
             </li>
-            <li class="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200">
-              <div class="w-7 h-7 rounded-xl bg-teal-100 border border-teal-300 text-teal-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
-              <div><strong class="text-slate-900">Tool: captureScreenshot</strong> — Takes instant 512px WebGL base64 snapshots so models can <em>see</em> visual bugs like Z-fighting.</div>
+            <li class="flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-emerald-500/10 backdrop-blur-md border border-emerald-500/25 hover:border-emerald-500/40 hover:bg-emerald-500/15 transition shadow-sm">
+              <div class="w-7 h-7 rounded-xl bg-teal-500/20 border border-teal-500/40 text-teal-950 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
+              <div><strong class="text-slate-950">Tool: captureScreenshot</strong> — Takes instant 512px WebGL base64 snapshots so models can <em>see</em> visual bugs like Z-fighting.</div>
             </li>
-            <li class="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-slate-50 transition border border-transparent hover:border-slate-200">
-              <div class="w-7 h-7 rounded-xl bg-cyan-100 border border-cyan-300 text-cyan-800 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
-              <div><strong class="text-slate-900">Tool: render_jsx</strong> — Hot-mounts new React Three Fiber modules directly with instant AST compilation caching.</div>
+            <li class="flex items-start gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-emerald-500/10 backdrop-blur-md border border-emerald-500/25 hover:border-emerald-500/40 hover:bg-emerald-500/15 transition shadow-sm">
+              <div class="w-7 h-7 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-950 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
+              <div><strong class="text-slate-950">Tool: render_jsx</strong> — Hot-mounts new React Three Fiber modules directly with instant AST compilation caching.</div>
             </li>
           </ul>
         </div>
 
         <!-- High-Contrast Clean Code Terminal with Scanline -->
         <div class="lg:col-span-7">
-          <div class="scanline-container rounded-3xl border border-slate-800 bg-slate-950 overflow-hidden shadow-2xl font-mono text-xs">
-            <div class="px-5 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+          <div class="scanline-container rounded-3xl border border-emerald-500/30 bg-slate-950 overflow-hidden shadow-2xl shadow-emerald-950/40 font-mono text-xs">
+            <div class="px-4 sm:px-5 py-3 sm:py-3.5 bg-slate-900/90 border-b border-emerald-500/20 flex flex-wrap items-center justify-between gap-2">
               <div class="flex items-center gap-2.5">
                 <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
                 <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
                 <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
                 <span class="ml-2 text-slate-400 text-xs font-semibold">agent-terminal (muse-spark-1.3-contributor)</span>
               </div>
-              <span class="text-emerald-400 font-bold flex items-center gap-1.5">
+              <span class="text-emerald-400 font-bold flex items-center gap-1.5 text-[11px] sm:text-xs">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> PORT: 9287 [MCP OK]
               </span>
             </div>
-            <div class="p-6 space-y-4 max-h-[420px] overflow-y-auto text-slate-300">
+            <div class="p-4 sm:p-6 space-y-3.5 sm:space-y-4 max-h-[360px] sm:max-h-[420px] overflow-y-auto text-[11px] sm:text-xs text-slate-300">
               <div class="text-slate-400">> Ask AI: "create a playable 3D ludo game with zero z-fighting"</div>
               <div class="text-amber-300 font-semibold">💡 Agent thinks: Checking 3D viewport for missing dependencies...</div>
               <div class="text-cyan-300 font-bold">⚙️ Agent acts: check3DView {}</div>
@@ -411,36 +436,36 @@
       </div>
     </section>
 
-    <!-- Platform Support & Capabilities -->
-    <section id="features" class="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200/80">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <!-- Platform Support & Capabilities in Lustrous Green Frosted Glass Cards -->
+    <section id="features" class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 border-t border-emerald-500/20">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
         
-        <div class="tilt-card p-7 rounded-3xl bg-white/20 backdrop-blur-lg border border-slate-300/60 shadow-sm hover:shadow-xl hover:bg-white/35 transition space-y-4">
-          <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold">
+        <div class="tilt-card p-6 sm:p-7 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/5 hover:border-emerald-400 hover:bg-emerald-500/15 transition space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-950 flex items-center justify-center font-bold">
             <i data-lucide="layers" class="w-6 h-6"></i>
           </div>
           <h3 class="text-xl font-bold text-slate-950">Multi-Platform Desktop & Web</h3>
-          <p class="text-sm text-slate-700 leading-relaxed">
+          <p class="text-sm text-slate-700 leading-relaxed font-medium">
             Runs as a high-performance Electron app, ultra-lightweight Rust Tauri binary, or standard Vite web server. <strong>macOS port coming soon!</strong>
           </p>
         </div>
 
-        <div class="tilt-card p-7 rounded-3xl bg-white/20 backdrop-blur-lg border border-slate-300/60 shadow-sm hover:shadow-xl hover:bg-white/35 transition space-y-4">
-          <div class="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-300 text-teal-800 flex items-center justify-center font-bold">
+        <div class="tilt-card p-6 sm:p-7 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/5 hover:border-emerald-400 hover:bg-emerald-500/15 transition space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-teal-500/20 border border-teal-500/40 text-teal-950 flex items-center justify-center font-bold">
             <i data-lucide="sparkles" class="w-6 h-6"></i>
           </div>
           <h3 class="text-xl font-bold text-slate-950">Tournament Studio Lighting</h3>
-          <p class="text-sm text-slate-700 leading-relaxed">
+          <p class="text-sm text-slate-700 leading-relaxed font-medium">
             Dual key and fill shadow-casting lights, soft ambient hemisphere light, and logarithmic depth buffer eliminate all visual artifacts.
           </p>
         </div>
 
-        <div class="tilt-card p-7 rounded-3xl bg-white/20 backdrop-blur-lg border border-slate-300/60 shadow-sm hover:shadow-xl hover:bg-white/35 transition space-y-4">
-          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-300 text-amber-800 flex items-center justify-center font-bold">
+        <div class="tilt-card p-6 sm:p-7 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/5 hover:border-emerald-400 hover:bg-emerald-500/15 transition space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-950 flex items-center justify-center font-bold">
             <i data-lucide="shield-alert" class="w-6 h-6"></i>
           </div>
           <h3 class="text-xl font-bold text-slate-950">Safety & Legal Disclaimer</h3>
-          <p class="text-sm text-slate-700 leading-relaxed">
+          <p class="text-sm text-slate-700 leading-relaxed font-medium">
             All games, simulations, and code created with Spider Engine are <strong>created and run strictly at your own risk</strong>.
           </p>
         </div>
@@ -448,9 +473,26 @@
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-200 bg-slate-50/80 backdrop-blur-md py-14 px-6">
-      <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-600">
+    <!-- Footer with Lustrous Green Frosted Backdrop -->
+    <footer class="border-t border-emerald-500/20 bg-emerald-500/5 backdrop-blur-2xl py-12 px-4 sm:px-6">
+      <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6 text-xs sm:text-sm text-slate-700 text-center sm:text-left">
+        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 sm:gap-3">
+          <span class="text-2xl">🕷️</span>
+          <span class="font-black text-slate-950 text-base">Spider Game Engine</span>
+          <span class="hidden sm:inline">•</span>
+          <span>Created & Maintained by <strong class="text-slate-950">M4SPIDER</strong> (<a href="mailto:support@m4spider.com" class="text-emerald-700 font-bold hover:underline">support@m4spider.com</a>)</span>
+        </div>
+        <div class="flex items-center gap-4 sm:gap-6">
+          <button onclick="openLicenseModal()" class="text-emerald-700 font-bold hover:underline flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="scale" class="w-4 h-4"></i> Licenses & Notices
+          </button>
+          <span>•</span>
+          <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="text-emerald-700 font-bold hover:underline flex items-center gap-1.5">
+            GitHub <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+          </a>
+        </div>
+      </div>
+    </footer>
         <div class="flex items-center gap-3">
           <span class="text-2xl">🕷️</span>
           <span class="font-extrabold text-slate-950 text-base">Spider Game Engine</span>
@@ -471,47 +513,47 @@
 
   </div>
 
-  <!-- Third-Party Licenses & Notices Modal for Judges & Reviewers -->
-  <div id="license-modal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+  <!-- Third-Party Licenses & Notices Modal for Judges & Reviewers (Lustrous Green Frosted Glass) -->
+  <div id="license-modal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white/95 backdrop-blur-3xl rounded-3xl border-2 border-emerald-500/30 shadow-2xl shadow-emerald-500/20 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
       <!-- Modal Header -->
-      <div class="p-6 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+      <div class="p-4 sm:p-6 bg-gradient-to-r from-emerald-500/15 via-emerald-500/10 to-teal-500/15 border-b border-emerald-500/20 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-950 flex items-center justify-center font-bold">
             <i data-lucide="scale" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-lg font-black text-slate-950">Third-Party Open Source Licenses</h3>
-            <p class="text-xs text-slate-500 font-medium">Compliance & legal attributions for judges and reviewers</p>
+            <h3 class="text-base sm:text-lg font-black text-slate-950">Third-Party Open Source Licenses</h3>
+            <p class="text-[11px] sm:text-xs text-slate-600 font-medium">Compliance & legal attributions for judges and reviewers</p>
           </div>
         </div>
-        <button onclick="closeLicenseModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer">
+        <button onclick="closeLicenseModal()" class="p-2 rounded-xl text-slate-500 hover:text-emerald-950 hover:bg-emerald-500/20 transition cursor-pointer" aria-label="Close modal">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <!-- Modal Body (Scrollable List) -->
-      <div class="p-6 overflow-y-auto space-y-4 text-xs">
-        <div class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 text-emerald-900 leading-relaxed font-medium">
+      <!-- Modal Body (Scrollable List with Lustrous Green Frosted Cards) -->
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-3.5 text-xs">
+        <div class="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-950 leading-relaxed font-semibold">
           Spider Canvas & Engine is licensed under the <strong>MIT License</strong>. Below are the official licenses, copyrights, and legal terms for Spider Canvas and its third-party open-source components for judges and compliance reviewers:
         </div>
 
         <div class="space-y-3">
           <!-- Spider Canvas (Core Project) -->
-          <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-slate-50 border-2 border-emerald-500/30 space-y-2">
+          <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/15 via-emerald-500/10 to-teal-500/10 border-2 border-emerald-500/40 space-y-2 shadow-sm">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span class="font-extrabold text-sm text-slate-950">Spider Canvas (Spider Game Engine Core)</span>
-                <span class="font-mono text-[10px] text-emerald-800 font-bold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">v0.9.0 · Primary</span>
+                <span class="font-mono text-[10px] text-emerald-900 font-bold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">v0.9.0 · Primary</span>
               </div>
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-600 text-white shadow-xs">MIT License</span>
             </div>
-            <div class="text-slate-700">Copyright © 2026 <strong>Vivek / M4SPIDER</strong> (<a href="mailto:support@m4spider.com" class="text-emerald-700 font-semibold underline">support@m4spider.com</a>)</div>
-            <div class="text-slate-600 leading-relaxed text-[11px]">
+            <div class="text-slate-800">Copyright © 2026 <strong>Vivek / M4SPIDER</strong> (<a href="mailto:support@m4spider.com" class="text-emerald-700 font-bold underline">support@m4spider.com</a>)</div>
+            <div class="text-slate-700 leading-relaxed text-[11px] font-medium">
               Autonomous 3D Canvas runtime, live JSX hot-reloader, screenshot vision inspector, and MCP bridge.
             </div>
-            <div class="text-[10px] text-emerald-900 font-semibold bg-emerald-100/80 p-2.5 rounded-xl border border-emerald-200">
+            <div class="text-[10px] text-emerald-950 font-semibold bg-emerald-500/15 p-2.5 rounded-xl border border-emerald-500/30">
               Legal Notice: Games created with Spider Canvas are strictly at your own risk.
             </div>
             <div>
@@ -523,7 +565,7 @@
               <summary class="cursor-pointer text-[11px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1.5 select-none pt-1">
                 <span>Read Spider Canvas License & Legal Terms</span>
               </summary>
-              <pre class="mt-2 p-3 bg-white rounded-xl text-[10px] font-mono text-slate-700 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed border border-emerald-200 shadow-inner">MIT License
+              <pre class="mt-2 p-3 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed border border-emerald-500/40 shadow-inner">MIT License
 
 Copyright (c) 2026 Vivek / M4SPIDER (support@m4spider.com)
 GitHub: https://github.com/M4SPIDER/spider-game-engine-open-source-
@@ -551,16 +593,16 @@ SOFTWARE.</pre>
           </div>
 
           <!-- React -->
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
             <div class="flex items-center justify-between">
               <span class="font-bold text-sm text-slate-950">React & React DOM <span class="font-mono text-xs text-slate-500 font-normal">v19.3.1</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">MIT</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
             </div>
-            <div class="text-slate-600">Copyright © Meta Platforms, Inc. and affiliates.</div>
+            <div class="text-slate-700">Copyright © Meta Platforms, Inc. and affiliates.</div>
             <a href="https://react.dev" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">https://react.dev</a>
             <details class="mt-1 group">
               <summary class="cursor-pointer text-[10px] font-semibold text-emerald-700 hover:text-emerald-900 select-none pt-0.5">Read License Text</summary>
-              <pre class="mt-1.5 p-2 bg-white rounded-lg text-[10px] font-mono text-slate-600 whitespace-pre-wrap max-h-32 overflow-y-auto border border-slate-200">MIT License
+              <pre class="mt-1.5 p-2.5 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto border border-emerald-500/30">MIT License
 Copyright (c) Meta Platforms, Inc. and affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software...</pre>
@@ -568,16 +610,16 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
           </div>
 
           <!-- Three.js -->
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
             <div class="flex items-center justify-between">
               <span class="font-bold text-sm text-slate-950">Three.js <span class="font-mono text-xs text-slate-500 font-normal">v0.186.1</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">MIT</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
             </div>
-            <div class="text-slate-600">Copyright © 2010-2026 Three.js authors (Ricardo Cabello / mrdoob)</div>
+            <div class="text-slate-700">Copyright © 2010-2026 Three.js authors (Ricardo Cabello / mrdoob)</div>
             <a href="https://threejs.org" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">https://threejs.org</a>
             <details class="mt-1 group">
               <summary class="cursor-pointer text-[10px] font-semibold text-emerald-700 hover:text-emerald-900 select-none pt-0.5">Read License Text</summary>
-              <pre class="mt-1.5 p-2 bg-white rounded-lg text-[10px] font-mono text-slate-600 whitespace-pre-wrap max-h-32 overflow-y-auto border border-slate-200">MIT License
+              <pre class="mt-1.5 p-2.5 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto border border-emerald-500/30">MIT License
 Copyright (c) 2010-2026 three.js authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software...</pre>
@@ -585,61 +627,68 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
           </div>
 
           <!-- R3F & Drei -->
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
             <div class="flex items-center justify-between">
               <span class="font-bold text-sm text-slate-950">@react-three/fiber & @react-three/drei <span class="font-mono text-xs text-slate-500 font-normal">v9.8.2 / v10.7.9</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">MIT</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
             </div>
-            <div class="text-slate-600">Copyright © 2019-2026 Paul Henschel and Poimandres contributors</div>
+            <div class="text-slate-700">Copyright © 2019-2026 Paul Henschel and Poimandres contributors</div>
             <a href="https://github.com/pmndrs/react-three-fiber" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">github.com/pmndrs/react-three-fiber</a>
+            <details class="mt-1 group">
+              <summary class="cursor-pointer text-[10px] font-semibold text-emerald-700 hover:text-emerald-900 select-none pt-0.5">Read License Text</summary>
+              <pre class="mt-1.5 p-2.5 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto border border-emerald-500/30">MIT License
+Copyright (c) 2019-2026 Paul Henschel and Poimandres contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction...</pre>
+            </details>
           </div>
 
           <!-- chess.js -->
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
             <div class="flex items-center justify-between">
               <span class="font-bold text-sm text-slate-950">chess.js <span class="font-mono text-xs text-slate-500 font-normal">v1.4.0</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-200">BSD-2-Clause</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-200">BSD-2-Clause</span>
             </div>
-            <div class="text-slate-600">Copyright © Jeff Hlywa (jhlywa@gmail.com)</div>
+            <div class="text-slate-700">Copyright © Jeff Hlywa (jhlywa@gmail.com)</div>
             <a href="https://github.com/jhlywa/chess.js" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">github.com/jhlywa/chess.js</a>
           </div>
 
           <!-- Lucide Icons -->
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
             <div class="flex items-center justify-between">
               <span class="font-bold text-sm text-slate-950">Lucide Icons <span class="font-mono text-xs text-slate-500 font-normal">v1.61.0</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">ISC</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">ISC</span>
             </div>
-            <div class="text-slate-600">Copyright © 2022-2026 Lucide Contributors</div>
+            <div class="text-slate-700">Copyright © 2022-2026 Lucide Contributors</div>
             <a href="https://lucide.dev" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">https://lucide.dev</a>
           </div>
 
           <!-- Sucrase -->
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
             <div class="flex items-center justify-between">
               <span class="font-bold text-sm text-slate-950">Sucrase <span class="font-mono text-xs text-slate-500 font-normal">v3.35.1</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">MIT</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
             </div>
-            <div class="text-slate-600">Copyright © Alan Pierce</div>
+            <div class="text-slate-700">Copyright © Alan Pierce</div>
             <a href="https://github.com/alangpierce/sucrase" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">github.com/alangpierce/sucrase</a>
           </div>
 
           <!-- Electron & Tauri -->
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
             <div class="flex items-center justify-between">
               <span class="font-bold text-sm text-slate-950">Electron & Tauri <span class="font-mono text-xs text-slate-500 font-normal">v45.0.0 / v2.12.4</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">MIT / Apache-2.0</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT / Apache-2.0</span>
             </div>
-            <div class="text-slate-600">Copyright © OpenJS Foundation & The Commons Conservancy</div>
+            <div class="text-slate-700">Copyright © OpenJS Foundation & The Commons Conservancy</div>
             <div class="text-emerald-700 font-mono">electronjs.org &bull; tauri.app</div>
           </div>
         </div>
       </div>
 
       <!-- Modal Footer -->
-      <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+      <div class="p-3.5 sm:p-4 bg-emerald-500/10 border-t border-emerald-500/20 flex items-center justify-between text-xs text-slate-700 font-medium">
         <span>Verified for open-source license compliance</span>
-        <button onclick="closeLicenseModal()" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition cursor-pointer">
+        <button onclick="closeLicenseModal()" class="px-5 py-2 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition cursor-pointer">
           Close
         </button>
       </div>
@@ -647,6 +696,13 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
   </div>
 
   <script>
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      if (menu) {
+        menu.classList.toggle('hidden');
+      }
+    }
+
     function openLicenseModal() {
       const modal = document.getElementById('license-modal');
       if (modal) {
@@ -664,6 +720,13 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
     // Close on backdrop click
     document.getElementById('license-modal')?.addEventListener('click', (e) => {
       if (e.target.id === 'license-modal') closeLicenseModal();
+    });
+
+    // Close mobile menu when clicking any nav item
+    document.querySelectorAll('#mobile-menu a, #mobile-menu button').forEach(el => {
+      el.addEventListener('click', () => {
+        document.getElementById('mobile-menu')?.classList.add('hidden');
+      });
     });
   </script>
 
@@ -855,6 +918,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.maxPolarAngle = Math.PI / 2.05;
+      controls.enableZoom = false; // Prevent trapping mobile touch scroll gestures
 
       // Studio Lighting
       const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe2e8f0, 0.95);
