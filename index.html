@@ -629,51 +629,55 @@
 
   </div>
 
-  <!-- Third-Party Licenses & Notices Modal for Judges & Reviewers (Lustrous Green Frosted Glass) -->
-  <div id="license-modal" class="fixed inset-0 z-50 hidden bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-white/95 backdrop-blur-3xl rounded-3xl border-2 border-emerald-500/30 shadow-2xl shadow-emerald-500/20 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+  <!-- Third-Party Licenses & Notices Modal for Judges & Reviewers (Fully Mobile Responsive) -->
+  <div id="license-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto overscroll-contain">
+    <div class="bg-white/98 backdrop-blur-3xl rounded-t-3xl sm:rounded-3xl border-t-2 sm:border-2 border-emerald-500/40 shadow-2xl shadow-emerald-500/20 w-full sm:max-w-2xl h-[92vh] sm:h-auto sm:max-h-[88vh] flex flex-col overflow-hidden max-w-full">
+      
+      <!-- Mobile Drag Indicator -->
+      <div class="w-10 h-1 bg-slate-300 rounded-full mx-auto mt-2 sm:hidden shrink-0"></div>
+
       <!-- Modal Header -->
-      <div class="p-4 sm:p-6 bg-gradient-to-r from-emerald-500/15 via-emerald-500/10 to-teal-500/15 border-b border-emerald-500/20 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-950 flex items-center justify-center font-bold">
-            <i data-lucide="scale" class="w-5 h-5"></i>
+      <div class="px-4 py-3.5 sm:px-6 sm:py-5 bg-gradient-to-r from-emerald-500/15 via-emerald-500/10 to-teal-500/15 border-b border-emerald-500/20 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-950 flex items-center justify-center font-bold shrink-0">
+            <i data-lucide="scale" class="w-4 h-4 sm:w-5 sm:h-5"></i>
           </div>
-          <div>
-            <h3 class="text-base sm:text-lg font-black text-slate-950">Third-Party Open Source Licenses</h3>
-            <p class="text-[11px] sm:text-xs text-slate-600 font-medium">Compliance & legal attributions for judges and reviewers</p>
+          <div class="min-w-0">
+            <h3 class="text-sm sm:text-lg font-black text-slate-950 truncate">Third-Party Open Source Licenses</h3>
+            <p class="text-[10px] sm:text-xs text-slate-600 font-medium truncate">Compliance & legal attributions</p>
           </div>
         </div>
-        <button onclick="closeLicenseModal()" class="p-2 rounded-xl text-slate-500 hover:text-emerald-950 hover:bg-emerald-500/20 transition cursor-pointer" aria-label="Close modal">
+        <button onclick="closeLicenseModal()" class="shrink-0 p-2 rounded-xl bg-slate-100 hover:bg-emerald-500/20 text-slate-600 hover:text-emerald-950 transition cursor-pointer" aria-label="Close modal">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
       <!-- Modal Body (Scrollable List with Lustrous Green Frosted Cards) -->
-      <div class="p-4 sm:p-6 overflow-y-auto space-y-3.5 text-xs">
-        <div class="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-950 leading-relaxed font-semibold">
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain max-w-full" style="-webkit-overflow-scrolling: touch;">
+        <div class="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-950 leading-relaxed font-semibold break-words">
           Spider Canvas & Engine is licensed under the <strong>MIT License</strong>. Below are the official licenses, copyrights, and legal terms for Spider Canvas and its third-party open-source components for judges and compliance reviewers:
         </div>
 
-        <div class="space-y-3">
+        <div class="space-y-3 max-w-full">
           <!-- Spider Canvas (Core Project) -->
-          <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/15 via-emerald-500/10 to-teal-500/10 border-2 border-emerald-500/40 space-y-2 shadow-sm">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="font-extrabold text-sm text-slate-950">Spider Canvas (Spider Game Engine Core)</span>
-                <span class="font-mono text-[10px] text-emerald-900 font-bold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">v0.9.0 · Primary</span>
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-emerald-500/15 via-emerald-500/10 to-teal-500/10 border-2 border-emerald-500/40 space-y-2 shadow-sm max-w-full overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                <span class="font-extrabold text-xs sm:text-sm text-slate-950">Spider Canvas (Core Engine)</span>
+                <span class="font-mono text-[9px] sm:text-[10px] text-emerald-900 font-bold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">v0.9.0 · Primary</span>
               </div>
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-600 text-white shadow-xs">MIT License</span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-bold bg-emerald-600 text-white shadow-xs">MIT License</span>
             </div>
-            <div class="text-slate-800">Copyright © 2026 <strong>Vivek / M4SPIDER</strong> (<a href="mailto:support@m4spider.com" class="text-emerald-700 font-bold underline">support@m4spider.com</a>)</div>
-            <div class="text-slate-700 leading-relaxed text-[11px] font-medium">
+            <div class="text-slate-800 break-words">Copyright © 2026 <strong>Vivek / M4SPIDER</strong> (<a href="mailto:support@m4spider.com" class="text-emerald-700 font-bold underline break-all">support@m4spider.com</a>)</div>
+            <div class="text-slate-700 leading-relaxed text-[11px] font-medium break-words">
               Autonomous 3D Canvas runtime, live JSX hot-reloader, screenshot vision inspector, and MCP bridge.
             </div>
-            <div class="text-[10px] text-emerald-950 font-semibold bg-emerald-500/15 p-2.5 rounded-xl border border-emerald-500/30">
+            <div class="text-[10px] text-emerald-950 font-semibold bg-emerald-500/15 p-2.5 rounded-xl border border-emerald-500/30 break-words">
               Legal Notice: Games created with Spider Canvas are strictly at your own risk.
             </div>
-            <div>
-              <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="text-emerald-700 font-mono font-bold hover:underline inline-block">
+            <div class="min-w-0">
+              <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="text-emerald-700 font-mono font-bold hover:underline break-all inline-block text-[11px]">
                 https://github.com/M4SPIDER/spider-game-engine-open-source-
               </a>
             </div>
@@ -681,7 +685,7 @@
               <summary class="cursor-pointer text-[11px] font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1.5 select-none pt-1">
                 <span>Read Spider Canvas License & Legal Terms</span>
               </summary>
-              <pre class="mt-2 p-3 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed border border-emerald-500/40 shadow-inner">MIT License
+              <pre class="mt-2 p-3 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap break-words break-all max-h-48 overflow-y-auto leading-relaxed border border-emerald-500/40 shadow-inner">MIT License
 
 Copyright (c) 2026 Vivek / M4SPIDER (support@m4spider.com)
 GitHub: https://github.com/M4SPIDER/spider-game-engine-open-source-
@@ -709,16 +713,16 @@ SOFTWARE.</pre>
           </div>
 
           <!-- React -->
-          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-slate-950">React & React DOM <span class="font-mono text-xs text-slate-500 font-normal">v19.3.1</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm max-w-full overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <span class="font-bold text-xs sm:text-sm text-slate-950">React & React DOM <span class="font-mono text-xs text-slate-500 font-normal">v19.3.1</span></span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
             </div>
-            <div class="text-slate-700">Copyright © Meta Platforms, Inc. and affiliates.</div>
-            <a href="https://react.dev" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">https://react.dev</a>
+            <div class="text-slate-700 break-words">Copyright © Meta Platforms, Inc. and affiliates.</div>
+            <a href="https://react.dev" target="_blank" class="text-emerald-700 font-mono hover:underline break-all inline-block">https://react.dev</a>
             <details class="mt-1 group">
               <summary class="cursor-pointer text-[10px] font-semibold text-emerald-700 hover:text-emerald-900 select-none pt-0.5">Read License Text</summary>
-              <pre class="mt-1.5 p-2.5 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto border border-emerald-500/30">MIT License
+              <pre class="mt-1.5 p-2.5 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap break-words break-all max-h-32 overflow-y-auto border border-emerald-500/30">MIT License
 Copyright (c) Meta Platforms, Inc. and affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software...</pre>
@@ -726,16 +730,16 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
           </div>
 
           <!-- Three.js -->
-          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-slate-950">Three.js <span class="font-mono text-xs text-slate-500 font-normal">v0.186.1</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm max-w-full overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <span class="font-bold text-xs sm:text-sm text-slate-950">Three.js <span class="font-mono text-xs text-slate-500 font-normal">v0.186.1</span></span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
             </div>
-            <div class="text-slate-700">Copyright © 2010-2026 Three.js authors (Ricardo Cabello / mrdoob)</div>
-            <a href="https://threejs.org" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">https://threejs.org</a>
+            <div class="text-slate-700 break-words">Copyright © 2010-2026 Three.js authors (Ricardo Cabello / mrdoob)</div>
+            <a href="https://threejs.org" target="_blank" class="text-emerald-700 font-mono hover:underline break-all inline-block">https://threejs.org</a>
             <details class="mt-1 group">
               <summary class="cursor-pointer text-[10px] font-semibold text-emerald-700 hover:text-emerald-900 select-none pt-0.5">Read License Text</summary>
-              <pre class="mt-1.5 p-2.5 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto border border-emerald-500/30">MIT License
+              <pre class="mt-1.5 p-2.5 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap break-words break-all max-h-32 overflow-y-auto border border-emerald-500/30">MIT License
 Copyright (c) 2010-2026 three.js authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software...</pre>
@@ -743,16 +747,16 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
           </div>
 
           <!-- R3F & Drei -->
-          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-slate-950">@react-three/fiber & @react-three/drei <span class="font-mono text-xs text-slate-500 font-normal">v9.8.2 / v10.7.9</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm max-w-full overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <span class="font-bold text-xs sm:text-sm text-slate-950">@react-three/fiber & Drei <span class="font-mono text-xs text-slate-500 font-normal">v9.8 / v10.7</span></span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
             </div>
-            <div class="text-slate-700">Copyright © 2019-2026 Paul Henschel and Poimandres contributors</div>
-            <a href="https://github.com/pmndrs/react-three-fiber" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">github.com/pmndrs/react-three-fiber</a>
+            <div class="text-slate-700 break-words">Copyright © 2019-2026 Paul Henschel and Poimandres contributors</div>
+            <a href="https://github.com/pmndrs/react-three-fiber" target="_blank" class="text-emerald-700 font-mono hover:underline break-all inline-block">github.com/pmndrs/react-three-fiber</a>
             <details class="mt-1 group">
               <summary class="cursor-pointer text-[10px] font-semibold text-emerald-700 hover:text-emerald-900 select-none pt-0.5">Read License Text</summary>
-              <pre class="mt-1.5 p-2.5 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap max-h-32 overflow-y-auto border border-emerald-500/30">MIT License
+              <pre class="mt-1.5 p-2.5 bg-emerald-950/95 text-emerald-300 rounded-xl text-[10px] font-mono whitespace-pre-wrap break-words break-all max-h-32 overflow-y-auto border border-emerald-500/30">MIT License
 Copyright (c) 2019-2026 Paul Henschel and Poimandres contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction...</pre>
@@ -760,51 +764,51 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
           </div>
 
           <!-- chess.js -->
-          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-slate-950">chess.js <span class="font-mono text-xs text-slate-500 font-normal">v1.4.0</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-200">BSD-2-Clause</span>
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm max-w-full overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <span class="font-bold text-xs sm:text-sm text-slate-950">chess.js <span class="font-mono text-xs text-slate-500 font-normal">v1.4.0</span></span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-200">BSD-2-Clause</span>
             </div>
-            <div class="text-slate-700">Copyright © Jeff Hlywa (jhlywa@gmail.com)</div>
-            <a href="https://github.com/jhlywa/chess.js" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">github.com/jhlywa/chess.js</a>
+            <div class="text-slate-700 break-words">Copyright © Jeff Hlywa (jhlywa@gmail.com)</div>
+            <a href="https://github.com/jhlywa/chess.js" target="_blank" class="text-emerald-700 font-mono hover:underline break-all inline-block">github.com/jhlywa/chess.js</a>
           </div>
 
           <!-- Lucide Icons -->
-          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-slate-950">Lucide Icons <span class="font-mono text-xs text-slate-500 font-normal">v1.61.0</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">ISC</span>
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm max-w-full overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <span class="font-bold text-xs sm:text-sm text-slate-950">Lucide Icons <span class="font-mono text-xs text-slate-500 font-normal">v1.61.0</span></span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">ISC</span>
             </div>
-            <div class="text-slate-700">Copyright © 2022-2026 Lucide Contributors</div>
-            <a href="https://lucide.dev" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">https://lucide.dev</a>
+            <div class="text-slate-700 break-words">Copyright © 2022-2026 Lucide Contributors</div>
+            <a href="https://lucide.dev" target="_blank" class="text-emerald-700 font-mono hover:underline break-all inline-block">https://lucide.dev</a>
           </div>
 
           <!-- Sucrase -->
-          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-slate-950">Sucrase <span class="font-mono text-xs text-slate-500 font-normal">v3.35.1</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm max-w-full overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <span class="font-bold text-xs sm:text-sm text-slate-950">Sucrase <span class="font-mono text-xs text-slate-500 font-normal">v3.35.1</span></span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT</span>
             </div>
-            <div class="text-slate-700">Copyright © Alan Pierce</div>
-            <a href="https://github.com/alangpierce/sucrase" target="_blank" class="text-emerald-700 font-mono hover:underline inline-block">github.com/alangpierce/sucrase</a>
+            <div class="text-slate-700 break-words">Copyright © Alan Pierce</div>
+            <a href="https://github.com/alangpierce/sucrase" target="_blank" class="text-emerald-700 font-mono hover:underline break-all inline-block">github.com/alangpierce/sucrase</a>
           </div>
 
           <!-- Electron & Tauri -->
-          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-slate-950">Electron & Tauri <span class="font-mono text-xs text-slate-500 font-normal">v45.0.0 / v2.12.4</span></span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT / Apache-2.0</span>
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/20 space-y-1.5 transition backdrop-blur-sm max-w-full overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <span class="font-bold text-xs sm:text-sm text-slate-950">Electron & Tauri <span class="font-mono text-xs text-slate-500 font-normal">v45.0 / v2.12</span></span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">MIT / Apache-2.0</span>
             </div>
-            <div class="text-slate-700">Copyright © OpenJS Foundation & The Commons Conservancy</div>
-            <div class="text-emerald-700 font-mono">electronjs.org &bull; tauri.app</div>
+            <div class="text-slate-700 break-words">Copyright © OpenJS Foundation & The Commons Conservancy</div>
+            <div class="text-emerald-700 font-mono break-all">electronjs.org &bull; tauri.app</div>
           </div>
         </div>
       </div>
 
       <!-- Modal Footer -->
-      <div class="p-3.5 sm:p-4 bg-emerald-500/10 border-t border-emerald-500/20 flex items-center justify-between text-xs text-slate-700 font-medium">
-        <span>Verified for open-source license compliance</span>
-        <button onclick="closeLicenseModal()" class="px-5 py-2 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition cursor-pointer">
+      <div class="p-3.5 sm:p-4 bg-emerald-500/10 border-t border-emerald-500/20 flex items-center justify-between text-xs text-slate-700 font-medium shrink-0">
+        <span class="truncate pr-2">Verified for open-source license compliance</span>
+        <button onclick="closeLicenseModal()" class="px-5 py-2 bg-slate-950 hover:bg-slate-800 text-white font-bold rounded-xl transition cursor-pointer shrink-0">
           Close
         </button>
       </div>
