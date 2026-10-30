@@ -438,35 +438,168 @@
 
     <!-- Platform Support & Capabilities in Lustrous Green Frosted Glass Cards -->
     <section id="features" class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 border-t border-emerald-500/20">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+      <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16 space-y-4">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-950 border border-emerald-500/30 backdrop-blur-md shadow-sm">
+          ⚡ Next-Gen Engine Capabilities
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-slate-950">Engine Systems & Developer Tools</h2>
+        <p class="text-slate-700 font-medium">
+          Built from the ground up for high-speed game prototyping, autonomous AI agent execution, and studio-grade 3D performance.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
         
+        <!-- Card 1: Meta Muse Real-Time Speech -->
+        <div class="tilt-card p-6 sm:p-7 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/5 hover:border-emerald-400 hover:bg-emerald-500/15 transition space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-950 flex items-center justify-center font-bold">
+            <i data-lucide="mic" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-xl font-bold text-slate-950">Meta Muse Real-Time Speech (3.1% WER)</h3>
+          <p class="text-sm text-slate-700 leading-relaxed font-medium">
+            Ultra-low latency (~0.16s) live speech recognition streaming over WebSockets (<code>wss://api.meta.ai/v1/asr/realtime</code>) with native turn endpointing. Words stream into the prompt box as you talk.
+          </p>
+        </div>
+
+        <!-- Card 2: Blender Real-Time MCP Bridge -->
+        <div class="tilt-card p-6 sm:p-7 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/5 hover:border-teal-400 hover:bg-emerald-500/15 transition space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-teal-500/20 border border-teal-500/40 text-teal-950 flex items-center justify-center font-bold">
+            <i data-lucide="box" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-xl font-bold text-slate-950">Blender Real-Time MCP Bridge</h3>
+          <p class="text-sm text-slate-700 leading-relaxed font-medium">
+            Bi-directional TCP socket bridge on port <strong>9876</strong> connecting Spider Engine directly to Blender for instantaneous 3D geometry, transform, lighting, and camera synchronization.
+          </p>
+        </div>
+
+        <!-- Card 3: Spider Slash Commands -->
+        <div class="tilt-card p-6 sm:p-7 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/5 hover:border-cyan-400 hover:bg-emerald-500/15 transition space-y-4">
+          <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-950 flex items-center justify-center font-bold">
+            <i data-lucide="terminal" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-xl font-bold text-slate-950">Spider Slash Commands</h3>
+          <p class="text-sm text-slate-700 leading-relaxed font-medium">
+            Instant command palette (<code>/blender</code>, <code>/plan</code>, <code>/play</code>, <code>/browser</code>, <code>/clear</code>, <code>/stop</code>, <code>/help</code>) with keyboard arrow navigation and tab autocomplete.
+          </p>
+        </div>
+
+        <!-- Card 4: Multi-Platform Desktop & Web -->
         <div class="tilt-card p-6 sm:p-7 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/5 hover:border-emerald-400 hover:bg-emerald-500/15 transition space-y-4">
           <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-950 flex items-center justify-center font-bold">
             <i data-lucide="layers" class="w-6 h-6"></i>
           </div>
           <h3 class="text-xl font-bold text-slate-950">Multi-Platform Desktop & Web</h3>
           <p class="text-sm text-slate-700 leading-relaxed font-medium">
-            Runs as a high-performance Electron app, ultra-lightweight Rust Tauri binary, or standard Vite web server. <strong>macOS port coming soon!</strong>
+            Runs as a high-performance Electron desktop app, ultra-lightweight Rust Tauri binary, or standard Vite web server. Universal mobile and tablet support with zero setup.
           </p>
         </div>
 
-        <div class="tilt-card p-6 sm:p-7 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/5 hover:border-emerald-400 hover:bg-emerald-500/15 transition space-y-4">
+        <!-- Card 5: Tournament Studio Lighting -->
+        <div class="tilt-card p-6 sm:p-7 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/5 hover:border-teal-400 hover:bg-emerald-500/15 transition space-y-4">
           <div class="w-12 h-12 rounded-2xl bg-teal-500/20 border border-teal-500/40 text-teal-950 flex items-center justify-center font-bold">
             <i data-lucide="sparkles" class="w-6 h-6"></i>
           </div>
           <h3 class="text-xl font-bold text-slate-950">Tournament Studio Lighting</h3>
           <p class="text-sm text-slate-700 leading-relaxed font-medium">
-            Dual key and fill shadow-casting lights, soft ambient hemisphere light, and logarithmic depth buffer eliminate all visual artifacts.
+            Dual key and fill shadow-casting lights, soft ambient hemisphere light, and logarithmic depth buffer eliminate all visual artifacts and Z-fighting.
           </p>
         </div>
 
-        <div class="tilt-card p-6 sm:p-7 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/5 hover:border-emerald-400 hover:bg-emerald-500/15 transition space-y-4">
+        <!-- Card 6: Dual Governance & Security -->
+        <div class="tilt-card p-6 sm:p-7 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-500/5 hover:border-amber-400 hover:bg-emerald-500/15 transition space-y-4">
           <div class="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-950 flex items-center justify-center font-bold">
-            <i data-lucide="shield-alert" class="w-6 h-6"></i>
+            <i data-lucide="shield-check" class="w-6 h-6"></i>
           </div>
-          <h3 class="text-xl font-bold text-slate-950">Safety & Legal Disclaimer</h3>
+          <h3 class="text-xl font-bold text-slate-950">Dual Governance & DPAPI Security</h3>
           <p class="text-sm text-slate-700 leading-relaxed font-medium">
-            All games, simulations, and code created with Spider Engine are <strong>created and run strictly at your own risk</strong>.
+            Toggle between <strong>Ask Permission (Secure Mode)</strong> for interactive approval and <strong>Auto Mode</strong> for autonomous execution with OS-level DPAPI keychain protection.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 7 Core Engine Architecture Subsystems Section -->
+    <section id="architecture" class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 border-t border-emerald-500/20">
+      <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16 space-y-4">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-950 border border-emerald-500/30 backdrop-blur-md shadow-sm">
+          🏛️ Technical Blueprint
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-slate-950">7 Core Engine Architectures</h2>
+        <p class="text-slate-700 font-medium">
+          Comprehensive subsystem workflows designed for modularity, low-latency execution, and autonomous agent verification.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        
+        <div class="p-6 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 space-y-3">
+          <div class="flex items-center gap-2 text-emerald-950 font-bold text-sm">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-xs">1</span>
+            High-Level Cross-Platform Runtime
+          </div>
+          <p class="text-xs text-slate-700 leading-relaxed font-medium">
+            Decoupled presentation layer with React 19 UI shell, Three.js canvas, and platform adapters for Electron (Node.js IPC), Tauri (Rust), and WebGL.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 space-y-3">
+          <div class="flex items-center gap-2 text-emerald-950 font-bold text-sm">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-xs">2</span>
+            Meta Muse Real-Time Voice ASR
+          </div>
+          <p class="text-xs text-slate-700 leading-relaxed font-medium">
+            16 kHz mono Int16 PCM streaming pipeline delivering cumulative partial transcripts with 3.1% WER and ~0.16s latency via WebSockets.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 space-y-3">
+          <div class="flex items-center gap-2 text-emerald-950 font-bold text-sm">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-xs">3</span>
+            Autonomous Agent MCP Server (:9287)
+          </div>
+          <p class="text-xs text-slate-700 leading-relaxed font-medium">
+            Embedded Model Context Protocol endpoint supporting listScene, render_jsx, moveObject, check3DView, and screenshot vision loops.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 space-y-3">
+          <div class="flex items-center gap-2 text-emerald-950 font-bold text-sm">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-xs">4</span>
+            Dynamic JSX AST Hot-Mount Compiler
+          </div>
+          <p class="text-xs text-slate-700 leading-relaxed font-medium">
+            Babel standalone transpiler with in-memory multi-file virtual module resolver, hot-mounting R3F components without browser reloads.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 space-y-3">
+          <div class="flex items-center gap-2 text-emerald-950 font-bold text-sm">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-xs">5</span>
+            Blender Real-Time MCP Bridge (:9876)
+          </div>
+          <p class="text-xs text-slate-700 leading-relaxed font-medium">
+            Bi-directional TCP socket bridge enabling live asset interchange, shader synchronization, and spatial lighting previews with Blender.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 space-y-3">
+          <div class="flex items-center gap-2 text-emerald-950 font-bold text-sm">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-xs">6</span>
+            Multi-Tier State & DPAPI Storage
+          </div>
+          <p class="text-xs text-slate-700 leading-relaxed font-medium">
+            Four-tiered storage architecture: Volatile RAM Refs, Encrypted LocalStorage via Windows DPAPI, IndexedDB scene trees, and native disk I/O.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-3xl bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/25 space-y-3 md:col-span-2 lg:col-span-3">
+          <div class="flex items-center gap-2 text-emerald-950 font-bold text-sm">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-xs">7</span>
+            3D Game Viewport & Physics Simulation Engine Pipeline
+          </div>
+          <p class="text-xs text-slate-700 leading-relaxed font-medium">
+            Continuous 60 FPS useFrame simulation loop with delta-time normalization, raycasting collision solver, ACESFilmic tone mapping, and logarithmic depth buffer.
           </p>
         </div>
 
@@ -489,23 +622,6 @@
           <span>•</span>
           <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="text-emerald-700 font-bold hover:underline flex items-center gap-1.5">
             GitHub <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-          </a>
-        </div>
-      </div>
-    </footer>
-        <div class="flex items-center gap-3">
-          <span class="text-2xl">🕷️</span>
-          <span class="font-extrabold text-slate-950 text-base">Spider Game Engine</span>
-          <span>•</span>
-          <span>Created & Maintained by <strong class="text-slate-900">M4SPIDER</strong> (<a href="mailto:support@m4spider.com" class="text-emerald-700 font-semibold hover:underline">support@m4spider.com</a>)</span>
-        </div>
-        <div class="flex items-center gap-6">
-          <button onclick="openLicenseModal()" class="text-emerald-700 font-bold hover:underline flex items-center gap-1.5 cursor-pointer">
-            <i data-lucide="scale" class="w-4 h-4"></i> Third-Party Licenses
-          </button>
-          <span>•</span>
-          <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-" target="_blank" class="text-emerald-700 font-bold hover:underline flex items-center gap-1.5">
-            GitHub Repo <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
           </a>
         </div>
       </div>
