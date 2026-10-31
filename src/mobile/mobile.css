@@ -654,8 +654,6 @@ html.sp-mobile body:has(.is-full) {
   }
 }
 
-.sp-app.is-playing .sp-top,
-.sp-app.is-playing .sp-tabbar,
 .sp-app.is-playing .sp-dock {
   display: none !important;
 }

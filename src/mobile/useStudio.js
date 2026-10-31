@@ -94,9 +94,9 @@ export function useStudio() {
   const [activeJsxName, setActiveJsxName] = useState(() => (mountedAtBoot ? mountedAtBoot.name : null));
   const [codeError, setCodeError] = useState(null);
 
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [gizmo, setGizmo] = useState("move");
-  const [cameraMode, setCameraMode] = useState("Game View");
+  const [cameraMode, setCameraMode] = useState("Viewport");
   const [fps, setFps] = useState(0);
   const [keys, setKeysState] = useState({});
   const keysRefLive = useRef({});
