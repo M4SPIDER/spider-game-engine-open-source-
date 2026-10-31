@@ -59,13 +59,13 @@ export function buildMemory(messages, budgetChars) {
     return { text, compacted: false, turns: turns.length, kept: turns.length };
   }
 
-  // Tail Reservation: Reserve 75% of budget exclusively for the most recent turns
-  const tailBudget = budgetChars * 0.75;
+  // Tail Reservation: Reserve 85% of budget exclusively for the most recent turns (at least 20 turns)
+  const tailBudget = budgetChars * 0.85;
   let tailCount = 0;
   let tailChars = 0;
   for (let i = turns.length - 1; i >= 0; i--) {
     const len = turns[i].text.length + turns[i].who.length + 4;
-    if (tailChars + len > tailBudget && tailCount >= 4) break;
+    if (tailChars + len > tailBudget && tailCount >= 20) break;
     tailChars += len;
     tailCount++;
   }
@@ -73,10 +73,10 @@ export function buildMemory(messages, budgetChars) {
   const headTurns = turns.slice(0, turns.length - tailCount);
   const tailTurns = turns.slice(turns.length - tailCount);
 
-  // Structured summary of the older head turns
+  // Rich structured summary of older head turns (preserves multi-line goals & file references)
   const headSummary = headTurns.map((t) => {
-    const firstLine = t.text.split("\n")[0].trim();
-    const digest = firstLine.length > 250 ? `${firstLine.slice(0, 247)}…` : firstLine;
+    const lines = t.text.split("\n").filter((l) => l.trim().length > 0).slice(0, 3).join(" ");
+    const digest = lines.length > 350 ? `${lines.slice(0, 347)}…` : lines;
     return `• ${t.who}: ${digest}`;
   }).join("\n");
 
@@ -99,15 +99,15 @@ export function buildMemory(messages, budgetChars) {
   return { text: finalText, compacted: true, turns: turns.length, kept: tailTurns.length };
 }
 
-/** Adaptive memory budget (40-60% of window depending on token scale). */
+/** Adaptive memory budget (50-70% of window depending on token scale). */
 export function memoryBudget(windowTokens) {
-  const ratio = windowTokens >= 500000 ? 0.6 : windowTokens >= 190000 ? 0.5 : 0.4;
+  const ratio = windowTokens >= 500000 ? 0.7 : windowTokens >= 190000 ? 0.6 : 0.5;
   return Math.floor(windowTokens * 4 * ratio);
 }
 
 /** Dynamic run limits: generous verbatim history and high observation headroom. */
 export function runLimits(windowTokens) {
   if (windowTokens >= 500000) return { historyKeep: 60, obsChars: 16000 };
-  if (windowTokens >= 190000) return { historyKeep: 40, obsChars: 8000 };
-  return { historyKeep: 25, obsChars: 4000 };
+  if (windowTokens >= 190000) return { historyKeep: 40, obsChars: 10000 };
+  return { historyKeep: 30, obsChars: 6000 };
 }

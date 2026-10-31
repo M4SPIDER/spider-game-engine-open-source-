@@ -3736,6 +3736,25 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
         }
         return `Files in ${dir}:\n${activeListing}`;
       }
+      case "create_project":
+      case "createProject": {
+        const name = String(args?.name || "New Game");
+        const tpl = args?.template || "normal";
+        handleNewProject(name, tpl);
+        return `Created and switched to project "${name}".`;
+      }
+      case "open_project":
+      case "openProject": {
+        const q = String(args?.id || args?.name || "").toLowerCase();
+        const target = projects.find((p) => p.id === args?.id || p.name.toLowerCase() === q);
+        if (!target) throw new Error(`Project not found: ${args?.id || args?.name}`);
+        handleSelectProject(target.id);
+        return `Switched to project "${target.name}".`;
+      }
+      case "list_projects":
+      case "listProjects": {
+        return JSON.stringify(projects.map((p) => ({ id: p.id, name: p.name })));
+      }
       case "deleteFile": {
         let dir = args?.dir || snap().currentProject?.root || "";
         let rawName = String(args?.name || "").trim();

@@ -1267,6 +1267,26 @@ export function useStudio() {
           removeNode(id);
           return `removed ${n.name}`;
         }
+        case "create_project":
+        case "createProject": {
+          const name = String(args.name || "New Game");
+          const tpl = args.template === "normal" ? "normal" : "code";
+          const p = createProject(name, tpl);
+          log("Success", `Created project "${name}"`);
+          return `Created and switched to project "${p.name}" (id: ${p.id}).`;
+        }
+        case "open_project":
+        case "openProject": {
+          const q = String(args.id || args.name || "").toLowerCase();
+          const target = projects.find((p) => p.id === args.id || p.name.toLowerCase() === q);
+          if (!target) throw new Error(`Project not found: ${args.id || args.name}`);
+          openProject(target.id);
+          return `Switched to project "${target.name}".`;
+        }
+        case "list_projects":
+        case "listProjects": {
+          return JSON.stringify(projects.map((p) => ({ id: p.id, name: p.name, template: p.template })));
+        }
         case "saveScene":
           saveProjects(projects);
           return "scene saved to this device";

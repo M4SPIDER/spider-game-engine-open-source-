@@ -321,22 +321,20 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
 
         {fps > 0 && <div className="sp-fps">{fps} fps</div>}
 
-        {/* play HUD */}
-        {isPlaying && (
+        {/* play HUD — ONLY show lobby controls when no custom game is active */}
+        {isPlaying && !customGame && (
           <>
-            {!customGame && (
-              <div className="sp-hud" aria-live="polite">
-                <span className="sp-hud-pill">
-                  <CoinsIcon size={14} /> <b>{score}</b>
-                </span>
-                <span className="sp-hud-pill">{left} left</span>
-                {left === 0 && (
-                  <button type="button" className="sp-hud-pill is-action" onClick={resetScore}>
-                    Replay
-                  </button>
-                )}
-              </div>
-            )}
+            <div className="sp-hud" aria-live="polite">
+              <span className="sp-hud-pill">
+                <CoinsIcon size={14} /> <b>{score}</b>
+              </span>
+              <span className="sp-hud-pill">{left} left</span>
+              {left === 0 && (
+                <button type="button" className="sp-hud-pill is-action" onClick={resetScore}>
+                  Replay
+                </button>
+              )}
+            </div>
             {/* Mobile Analog Joystick */}
             <Joystick onChange={(v) => setKeys((k) => ({ ...k, ...v }))} />
             <div className="sp-combat-pad">
