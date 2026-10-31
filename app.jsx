@@ -4284,11 +4284,21 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
           (ragContext ? `${ragContext}\n` : "") +
           (mem.text ? `\n\nCONVERSATION SO FAR (earlier turns in this session; current goal comes below):\n${mem.text}\n` : "") +
           "\n\nCRITICAL LOCAL DISK ACCESS & ASSET IMPORT MANDATE: You run natively inside Spider Engine on Desktop (Windows Electron) with FULL access to the user's local disk, Downloads folder, and file system! NEVER tell the user 'I cannot access your files' or 'please upload/drag-and-drop'! When the user provides a path (e.g. C:\\Users\\...\\Downloads\\modern-city-block) or asks to import an FBX/GLB/3D asset, IMMEDIATELY call importAsset({ path: '...' }) to copy the files into public/assets/ and mount it in GameComponent.jsx using useFBX or useGLTF!\n" +
-          "\nCRITICAL DUAL-PLATFORM CONTROLS MANDATE (DESKTOP KEYBOARD + MOBILE PHONES TOUCH):\n" +
-          "Always make every game 100% playable on BOTH Desktop PC (Keyboard/Mouse) and Mobile Phones/Tablets (Touchscreens)!\n" +
-          "1. Input System: ALWAYS import `useKeyboardControls` or `useTouchControls` from './ArenaEnv.jsx' (or './mobileTouch.jsx') which automatically unifies WASD, Arrow keys, Spacebar, Shift, and mobile virtual touch/joystick (`window.__spiderVirtualTouch`)!\n" +
-          "2. Built-in Mobile Touch Runtime Library: Built-in runtime libraries are pre-loaded! You can import `useTouchControls`, `VirtualJoystick`, `Joystick`, `TouchButton`, `MobileControls`, `MobileMenu`, or `nipplejs` from './ArenaEnv.jsx' or './mobileTouch.jsx' with ZERO external dependencies!\n" +
-          "3. CRITICAL RESTART RULE: NEVER write `location.reload()` on 'R' or restart! That reloads the whole engine. 'R' key must ONLY reset local component React state (health, score, wave, player position) in-place without page reload!\n" +
+          "\nCRITICAL ENVIRONMENT DETECTION & ADAPTIVE CONTROLS MANDATE (DETECT ENV!):\n" +
+          "NEVER unconditionally generate both PC keyboard/mouse and mobile touch controls at the same time! Every game MUST detect its runtime environment:\n" +
+          "const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0 || window.matchMedia?.('(pointer: coarse)').matches);\n" +
+          "1. ON DESKTOP PC (!isTouch):\n" +
+          "   - Controls: Keyboard (WASD / Arrows to move, Space to jump/act, Shift to sprint, Esc to pause) and Mouse (aiming, mouse look, clicking).\n" +
+          "   - ABSOLUTELY NEVER render on-screen virtual joysticks, touch D-pads, or touch action buttons when running on PC! Keep the desktop screen 100% clean.\n" +
+          "   - HUD Controls Text: Display PC keyboard/mouse controls ONLY (e.g. 'WASD: Move • Space: Jump • Mouse: Aim & Shoot'). NEVER show mobile joystick hints on PC!\n" +
+          "2. ON MOBILE TOUCHSCREENS (isTouch):\n" +
+          "   - Controls: Render Virtual Joystick for movement and large touch buttons (min 48px) for actions (Jump/Attack/Boost).\n" +
+          "   - ABSOLUTELY NEVER require mouse clicks, mouse hover, right-clicks, or pointer lock on mobile devices!\n" +
+          "   - HUD Controls Text: Display Mobile touch controls ONLY (e.g. 'Joystick: Move • Tap JUMP / ATTACK'). NEVER show keyboard keys (WASD/Space) to mobile users!\n" +
+          "3. CONDITIONAL RENDERING PATTERN:\n" +
+          "   - Only render on-screen touch UI conditionally: `{isTouch && <VirtualJoystick ... />}` or `{isTouch && <TouchControls ... />}`.\n" +
+          "4. Input System: ALWAYS import `useKeyboardControls` or `useTouchControls` from './ArenaEnv.jsx' (or './mobileTouch.jsx') which automatically unifies WASD, Arrow keys, Spacebar, Shift, and mobile virtual touch/joystick (`window.__spiderVirtualTouch`) without forcing unwanted on-screen widgets on PC!\n" +
+          "5. CRITICAL RESTART RULE: NEVER write `location.reload()` on 'R' or restart! That reloads the whole engine. 'R' key must ONLY reset local component React state (health, score, wave, player position) in-place without page reload!\n" +
           "\nCRITICAL UI/HUD MANDATE — NEVER CREATE FLOATING 3D <Html> CARDS OR HUGE HUD BOXES: NEVER create massive floating HTML cards, health bars, controls lists, or rectangular HUD boxes floating in 3D space (<Html position={[x,y,z]} ...>). AVOID <Html> mid-air clutter. Use subtle 3D elements or dock HUD at top-center (<Html fullscreen> top: 12, left: '50%', transform: 'translateX(-50%)') so it NEVER covers mobile thumb controls at the bottom!\n" +
           "\nCRITICAL RESPONSIVE 3D & MOBILE MENUS MANDATE (DESKTOP & MOBILE PHONES):\n" +
           "When asked to create a menu, title screen, or game with menus, make it responsive for BOTH PC and Mobile Touchscreens:\n" +
@@ -4296,7 +4306,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
           "2. Mobile-Ready Layout: Render using `<MobileMenu title=\"...\" onStart={...} />` from './ArenaEnv.jsx' OR `<Html fullscreen calculatePosition={(_, __, s) => [s.width / 2, s.height / 2]}>` with `inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'` with backdrop blur and dark radial gradient.\n" +
           "3. Touch-Friendly Sizing for Phones: Use responsive font clamp: `fontSize: 'clamp(28px, 7vw, 54px)'`. Start button MUST have at least 48px height (`padding: '14px 40px', minHeight: 48, borderRadius: 14`) with big bold `▶ START GAME` so fingers on phones tap easily without missing.\n" +
           "4. Dual Touch & Click Handlers: Support BOTH `onClick` AND `onTouchStart` on menu buttons, plus listen for Space/Enter key for PC players.\n" +
-          "5. Phone vs Desktop Controls Text: Explain controls appropriately for the device: On desktop show `⌨️ WASD / Arrows to Move • Space Jump • Shift Boost`. On mobile phones show `🕹️ Use Virtual Joystick to move • Tap JUMP • Tap BOOST` (or detect `'ontouchstart' in window`).\n" +
+          "5. Phone vs Desktop Controls Text: Detect environment (`isTouch`): On desktop show `⌨️ WASD / Arrows to Move • Space Jump • Shift Boost`. On mobile phones show `🕹️ Use Virtual Joystick to move • Tap JUMP • Tap BOOST`.\n" +
           "6. In 'menu' state, slowly pan/orbit the camera around the 3D scene (`st.camera.position.set(...)`). When player clicks or taps Start, play a start sound effect and transition to 'playing'!\n" +
           "7. During gameplay ('playing'), the viewport MUST remain clean — NO giant wall of controls text ruining the view!\n" +
           "8. IN-GAME PAUSE, PLAY, SOUND & EXIT CONTROLS (CRITICAL):\n" +
@@ -4304,9 +4314,16 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
           "   - Icon-only sound toggle: Use a clean icon button ONLY (`🔊` / `🔇`) without any cluttered text.\n" +
           "   - Resume & Exit: Provide Resume (`▶`) and Exit (`✕`). Pressing Exit MUST exit fullscreen (`document.exitFullscreen?.()`) and return to menu/editor. On PC, listen to Escape key (`e.key === 'Escape'`) to toggle pause or exit fullscreen!\n" +
           "   - Re-use `<PauseOverlay paused={paused} onTogglePause={() => setPaused(!paused)} soundMuted={muted} onToggleSound={() => setMuted(!muted)} onExit={() => setGameState('menu')} />` from './ArenaEnv.jsx'!\n" +
-          "9. UNIVERSAL GAME HUD & MOBILE JOYSTICK MANDATE:\n" +
-          "   - MOBILE & JOYSTICK SUPPORT: ALWAYS import `useKeyboardControls` or `useTouchControls` from './ArenaEnv.jsx' (or read `window.__spiderVirtualTouch || { x: 0, z: 0 }`), which automatically unifies WASD, Arrow keys, and mobile virtual stick movement so the joystick works 100% of the time!\n" +
+          "9. UNIVERSAL GAME HUD & ENVIRONMENT ADAPTATION:\n" +
           "   - RESPONSIVE SCREEN HUD: ALWAYS pass `calculatePosition={(_, __, size) => [size.width / 2, size.height / 2]}` on `<Html fullscreen>` so the HUD never drifts when the camera moves. Use `maxWidth: 'min(92vw, 420px)', width: 'max-content'`. On mobile screens (<768px), dock the HUD at top-center (`top: 12, left: '50%', transform: 'translateX(-50%)'`) so it NEVER covers or obstructs the thumb joystick at the bottom!\n" +
+          "10. AAA COMBAT & FIGHTING GAMES ARCHITECTURE:\n" +
+          "   - When asked for combat, martial arts, boxing, or fighting games, ALWAYS build complete combat mechanics:\n" +
+          "     * Moveset: Light Jab (F key / Left Click | Mobile: JAB), Heavy Kick (E key / Right Click | Mobile: KICK), Slam/Special (R key / Shift | Mobile: SLAM), Guard (S / Down Arrow | Mobile: BLOCK).\n" +
+          "     * Hit Detection & Iframes: In useFrame, detect proximity (`Math.hypot(p.x - e.x, p.z - e.z) < 2.2`). Only strike during active phase (30-60%). Enforce 380ms hit cooldown to avoid multi-hit glitches.\n" +
+          "     * Guard Mitigation: Blocking mitigates 80% damage (chip damage only).\n" +
+          "     * Dynamic Knockback & SFX: Push defender back along attacker forward vector (`pos.x += fwdX * force`). Play punch sound via Web Audio API (`sfx(130, 'sawtooth', 0.12)`). Scale a flash hit spark mesh at contact point.\n" +
+          "     * Combat HUD: Top-center health bars (green for player, red for opponent/boss) + yellow stamina bar + combo counter ('x3 COMBO!').\n" +
+          "     * Opponent AI: Advances toward player if dist > 2.5. If player strikes, 40% chance to guard. Randomly executes jabs/kicks with cooldown.\n" +
           GAME_BUILDER_PRIMER;
         let messages;
         if (history.length === 0) {

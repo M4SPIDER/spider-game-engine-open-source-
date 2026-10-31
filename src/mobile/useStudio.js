@@ -40,13 +40,12 @@ const MAX_UNDO = 40;
 
 // Rules the agent must follow for on-screen controls in games it writes.
 const TOUCH_CONTROLS_RULES = [
-  "TOUCH CONTROLS (mandatory for every game that moves or has buttons):",
-  "- NEVER write your own joystick or on-screen buttons and never read the keyboard yourself. Use the built-in kit: import { useTouch, TouchControls } from 'spider-touch'.",
-  "- const touch = useTouch(); then read it inside useFrame every frame: touch.move.x (right is +1) and touch.move.y (forward/up is +1) are -1..1; touch.a and touch.b are booleans (jump, action); touch.presses.a / touch.presses.b are counters that go up once per tap (use them for one-shot actions like jump or shoot).",
-  "- Render <TouchControls touch={touch} buttons={['Jump']} /> as a child of the game's root <group>. Up to two buttons: buttons={['Jump','Shoot']} maps to touch.a and touch.b.",
-  "- The kit puts the joystick in a FIXED place (bottom-left) and the buttons bottom-right, sizes them from the viewport, and keeps them there in portrait and landscape. The same touch object also reacts to WASD / arrows / Space / E on a computer, so you do not need any other input code.",
-  "- Do not draw other controls in those corners. Put score and lives top-centre.",
-  "- Minimal pattern: const touch = useTouch(); const ref = useRef(); useFrame((_, dt) => { ref.current.position.x += touch.move.x * 6 * dt; ref.current.position.z -= touch.move.y * 6 * dt; }); return (<group><mesh ref={ref}>...</mesh><TouchControls touch={touch} buttons={['Jump']} /></group>);",
+  "ENVIRONMENT DETECTION & CONTROLS MANDATE (DETECT ENV!):",
+  "- ALWAYS detect runtime environment: const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0 || window.matchMedia?.('(pointer: coarse)').matches);",
+  "- If on touchscreens (isTouch): Use touch controls (tap, swipe, drag, virtual joystick, on-screen action buttons). NEVER require mouse clicks, mouse hover, right-clicks, or pointer lock on mobile!",
+  "- If on PC (!isTouch): Use keyboard (WASD / arrows, Space) and mouse. ABSOLUTELY NEVER render virtual joysticks or touch buttons on PC! Keep desktop screen clean.",
+  "- Minimal pattern with spider-touch: import { useTouch, TouchControls } from 'spider-touch'; const touch = useTouch(); const ref = useRef(); useFrame((_, dt) => { ref.current.position.x += touch.move.x * 6 * dt; ref.current.position.z -= touch.move.y * 6 * dt; }); return (<group><mesh ref={ref}>...</mesh>{isTouch && <TouchControls touch={touch} buttons={['Jump']} />}</group>);",
+  "- The same input system unifies both desktop keyboard and mobile touch, but mobile UI widgets are ONLY rendered when isTouch is true.",
   "",
 ].join("\n");
 const CORE_IDS = new Set(["player", "camera", "weapon", "terrain", "water", "sky", "lighting", "fog", "postprocess", "dir-light", "sky-light", "point-lights"]);
@@ -1387,7 +1386,8 @@ export function useStudio() {
             systemPrompt(snapshotText(), { isMobile: touch }) +
             (ragContext ? `${ragContext}\n` : "") +
             (mem.text ? `\n\nCONVERSATION SO FAR (oldest first; the current goal comes below):\n${mem.text}\n` : "") +
-            "\n\nCRITICAL MOBILE REQUIREMENT: The user is on a PHONE touchscreen. No keyboard controls (no WASD / arrows / space). All movement, steering and actions must be touch controlled (tap, swipe, drag, large on-screen buttons).\n" +
+            "\n\nCRITICAL ENVIRONMENT DETECTION MANDATE: Detect the user's environment (`const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)`). If isTouch is true, provide full touch controls (tap, swipe, virtual joystick, touch buttons) without mouse dependencies. If on PC, use keyboard/mouse without any on-screen touch joystick clutter. NEVER generate both on-screen at once!\n" +
+            "\nCRITICAL COMBAT GAMES ARCHITECTURE: When asked for combat, fighting, boxing or martial arts games, always implement a complete moveset (Jab, Kick, Slam, Guard/Block), distance-based hitboxes in useFrame, 380ms iframes/cooldown to prevent multi-hit glitches, guard mitigation, dynamic knockback, procedural punch sound effects, hit spark flash, top-docked HP/stamina bars, and responsive opponent AI!\n" +
             TOUCH_CONTROLS_RULES +
             GAME_BUILDER_PRIMER;
           const messages =
