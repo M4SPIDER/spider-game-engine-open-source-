@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:game": "vite build --config vite.game.config.js && node scripts/copy-game-html.cjs",
+    "build:game": "vite build --config vite.game.config.mjs && node scripts/copy-game-html.cjs",
     "tauri:build": "tauri build --no-bundle",
     "tauri:dev": "tauri dev",
     "game:export": "node scripts/export-level.cjs",
