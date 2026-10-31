@@ -430,37 +430,52 @@ export function PauseOverlay({
 
   return (
     <Html fullscreen calculatePosition={(_, __, size) => [size.width / 2, size.height / 2]} style={{ pointerEvents: 'none' }}>
-      {/* Top right floating quick-buttons */}
+      {/* Top right floating quick-buttons (Sound & Pause placed alongside Studio options without collision) */}
       <div
         style={{
           position: 'absolute',
-          top: 'calc(14px + env(safe-area-inset-top, 0px))',
-          right: 'calc(14px + env(safe-area-inset-right, 0px))',
+          top: 'calc(10px + env(safe-area-inset-top, 0px))',
+          right: 'calc(170px + env(safe-area-inset-right, 0px))',
           display: 'flex',
           gap: 10,
-          zIndex: 60,
+          zIndex: 9999,
           pointerEvents: 'auto'
         }}
       >
         {onToggleSound && (
           <button
             type="button"
-            onClick={onToggleSound}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSound();
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onToggleSound();
+            }}
             aria-label={soundMuted ? 'Unmute sound' : 'Mute sound'}
             style={{
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               borderRadius: '50%',
-              background: 'rgba(15, 23, 42, 0.85)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: 'rgba(15, 23, 42, 0.90)',
+              border: '2px solid rgba(255, 255, 255, 0.25)',
               color: soundMuted ? '#f87171' : '#38bdf8',
-              fontSize: 18,
+              fontSize: 22,
               cursor: 'pointer',
               display: 'grid',
               placeItems: 'center',
-              backdropFilter: 'blur(8px)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              outline: 'none'
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+              outline: 'none',
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitTapHighlightColor: 'transparent',
+              pointerEvents: 'auto'
             }}
           >
             {soundMuted ? '🔇' : '🔊'}
@@ -469,22 +484,37 @@ export function PauseOverlay({
         {onTogglePause && (
           <button
             type="button"
-            onClick={onTogglePause}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTogglePause();
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onTogglePause();
+            }}
             aria-label={paused ? 'Resume game' : 'Pause game'}
             style={{
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               borderRadius: '50%',
-              background: paused ? '#2563eb' : 'rgba(15, 23, 42, 0.85)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: paused ? '#2563eb' : 'rgba(15, 23, 42, 0.90)',
+              border: '2px solid rgba(255, 255, 255, 0.25)',
               color: '#ffffff',
-              fontSize: 16,
+              fontSize: 20,
               cursor: 'pointer',
               display: 'grid',
               placeItems: 'center',
-              backdropFilter: 'blur(8px)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              outline: 'none'
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+              outline: 'none',
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitTapHighlightColor: 'transparent',
+              pointerEvents: 'auto'
             }}
           >
             {paused ? '▶' : '⏸'}
@@ -495,6 +525,7 @@ export function PauseOverlay({
       {/* Centered Modal Backdrop when Paused */}
       {paused && (
         <div
+          onTouchStart={(e) => e.stopPropagation()}
           style={{
             position: 'absolute',
             inset: 0,
@@ -504,21 +535,23 @@ export function PauseOverlay({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 55,
+            zIndex: 9990,
             pointerEvents: 'auto',
             fontFamily: 'system-ui, -apple-system, sans-serif'
           }}
         >
           <div
+            onTouchStart={(e) => e.stopPropagation()}
             style={{
-              background: 'rgba(15, 23, 42, 0.92)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: 'rgba(15, 23, 42, 0.94)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
               borderRadius: 20,
               padding: '28px 36px',
               textAlign: 'center',
               boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
               minWidth: 260,
-              maxWidth: '90vw'
+              maxWidth: '90vw',
+              pointerEvents: 'auto'
             }}
           >
             <h2 style={{ margin: '0 0 20px 0', color: '#f8fafc', fontSize: 22, fontWeight: 800, letterSpacing: 1.5 }}>
@@ -527,21 +560,30 @@ export function PauseOverlay({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button
                 type="button"
-                onClick={onTogglePause}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTogglePause();
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onTogglePause();
+                }}
                 style={{
                   background: '#2563eb',
                   color: '#fff',
                   border: 'none',
-                  borderRadius: 12,
-                  padding: '12px 24px',
+                  borderRadius: 14,
+                  padding: '14px 28px',
                   fontWeight: 700,
-                  fontSize: 15,
+                  fontSize: 16,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
-                  boxShadow: '0 4px 14px rgba(37,99,235,0.4)'
+                  boxShadow: '0 4px 14px rgba(37,99,235,0.4)',
+                  touchAction: 'manipulation'
                 }}
               >
                 <span>▶</span> Resume
@@ -550,20 +592,29 @@ export function PauseOverlay({
               {onToggleSound && (
                 <button
                   type="button"
-                  onClick={onToggleSound}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleSound();
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    onToggleSound();
+                  }}
                   style={{
                     background: 'rgba(255,255,255,0.08)',
                     color: '#e2e8f0',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: 12,
-                    padding: '10px 20px',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: 14,
+                    padding: '14px 24px',
                     fontWeight: 600,
-                    fontSize: 14,
+                    fontSize: 15,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 8
+                    gap: 8,
+                    touchAction: 'manipulation'
                   }}
                 >
                   <span>{soundMuted ? '🔇' : '🔊'}</span> Sound: {soundMuted ? 'Off' : 'On'}
@@ -572,20 +623,29 @@ export function PauseOverlay({
 
               <button
                 type="button"
-                onClick={handleExitClick}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleExitClick();
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleExitClick();
+                }}
                 style={{
                   background: 'rgba(239, 68, 68, 0.18)',
                   color: '#f87171',
                   border: '1px solid rgba(239, 68, 68, 0.35)',
-                  borderRadius: 12,
-                  padding: '10px 20px',
+                  borderRadius: 14,
+                  padding: '14px 24px',
                   fontWeight: 600,
-                  fontSize: 14,
+                  fontSize: 15,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 8
+                  gap: 8,
+                  touchAction: 'manipulation'
                 }}
               >
                 <span>✕</span> Exit Game (Esc)
@@ -598,3 +658,15 @@ export function PauseOverlay({
   );
 }
 export const GameNav = PauseOverlay;
+
+// Mobile Touch & Virtual Joystick runtime exports
+export {
+  useTouchControls,
+  VirtualJoystick,
+  Joystick,
+  TouchButton,
+  MobileControls,
+  MobileMenu,
+  nipplejs
+} from './mobileTouch.jsx';
+
