@@ -25,7 +25,7 @@ import ReactDOM from 'react-dom/client'
 import * as THREE from 'three'
 import { Chess } from 'chess.js'
 import App from '../app.jsx'
-import { StandaloneGameViewer } from './game/standalone/main.jsx'
+import StandaloneGameViewer from './game/standalone/StandaloneGameViewer.jsx'
 import './index.css'
 
 // Expose on window for sandboxed ArtifactPreview fallback
