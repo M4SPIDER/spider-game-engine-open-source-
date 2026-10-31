@@ -31,7 +31,8 @@ function Joystick({ onChange }) {
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const last = useRef("");
   const activeKeys = useRef(new Set());
-  const R = 44;
+  const isDown = useRef(false);
+  const R = 50;
 
   const dispatchKeys = (jx, jz) => {
     const nextKeys = new Set();
@@ -55,25 +56,26 @@ function Joystick({ onChange }) {
     if (typeof window !== "undefined") {
       window.__spiderVirtualTouch = {
         x: jx,
-        z: -jz,
+        z: jz,
         jump: false
       };
+      window.__spiderHeroMoving = Math.abs(jx) > 0.05 || Math.abs(jz) > 0.05;
     }
   };
 
-  const apply = (e) => {
+  const applyCoords = (clientX, clientY) => {
     if (!base.current) return;
     const r = base.current.getBoundingClientRect();
-    let dx = e.clientX - (r.left + r.width / 2);
-    let dy = e.clientY - (r.top + r.height / 2);
+    let dx = clientX - (r.left + r.width / 2);
+    let dy = clientY - (r.top + r.height / 2);
     const d = Math.hypot(dx, dy);
     if (d > R) {
       dx = (dx / d) * R;
       dy = (dy / d) * R;
     }
     setKnob({ x: dx, y: dy });
-    const jx = Math.abs(dx) < 8 ? 0 : Number((dx / R).toFixed(2));
-    const jz = Math.abs(dy) < 8 ? 0 : Number((-dy / R).toFixed(2));
+    const jx = Math.abs(dx) < 6 ? 0 : Number((dx / R).toFixed(2));
+    const jz = Math.abs(dy) < 6 ? 0 : Number((-dy / R).toFixed(2));
     const sig = `${jx}|${jz}`;
     if (sig !== last.current) {
       last.current = sig;
@@ -81,24 +83,63 @@ function Joystick({ onChange }) {
       dispatchKeys(jx, jz);
     }
   };
+
   const end = () => {
+    isDown.current = false;
     setKnob({ x: 0, y: 0 });
     last.current = "";
     onChange({ jx: 0, jz: 0 });
     dispatchKeys(0, 0);
+    if (typeof window !== "undefined") {
+      window.__spiderHeroMoving = false;
+    }
   };
+
   return (
     <div
       ref={base}
       className="sp-stick"
       onPointerDown={(e) => {
-        e.currentTarget.setPointerCapture(e.pointerId);
-        apply(e);
+        isDown.current = true;
+        try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+        applyCoords(e.clientX, e.clientY);
       }}
-      onPointerMove={(e) => e.buttons && apply(e)}
-      onPointerUp={end}
-      onPointerCancel={end}
+      onPointerMove={(e) => {
+        if (isDown.current) {
+          applyCoords(e.clientX, e.clientY);
+        }
+      }}
+      onPointerUp={(e) => {
+        try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+        end();
+      }}
+      onPointerCancel={(e) => {
+        try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
+        end();
+      }}
+      onTouchStart={(e) => {
+        e.preventDefault();
+        isDown.current = true;
+        if (e.touches && e.touches[0]) {
+          applyCoords(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }}
+      onTouchMove={(e) => {
+        e.preventDefault();
+        if (isDown.current && e.touches && e.touches[0]) {
+          applyCoords(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }}
+      onTouchEnd={(e) => {
+        e.preventDefault();
+        end();
+      }}
+      onTouchCancel={(e) => {
+        e.preventDefault();
+        end();
+      }}
       aria-label="Movement stick"
+      style={{ touchAction: "none" }}
     >
       <span className="sp-stick-knob" style={{ transform: `translate(${knob.x}px, ${knob.y}px)` }} />
     </div>
@@ -278,8 +319,52 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
                 )}
               </div>
             )}
-            {/* Mobile joystick & Shadow Fight Combat Actions Pad */}
+            {/* Mobile joystick & Tactile D-Pad Controls */}
             <Joystick onChange={(v) => setKeys((k) => ({ ...k, ...v }))} />
+            <div className="sp-dpad">
+              <button
+                type="button"
+                className="sp-dpad-btn is-up"
+                onPointerDown={(e) => { e.preventDefault(); setKeys((k) => ({ ...k, w: true })); }}
+                onPointerUp={() => setKeys((k) => ({ ...k, w: false }))}
+                onPointerCancel={() => setKeys((k) => ({ ...k, w: false }))}
+                aria-label="Move Forward"
+              >
+                ▲
+              </button>
+              <div className="sp-dpad-middle">
+                <button
+                  type="button"
+                  className="sp-dpad-btn is-left"
+                  onPointerDown={(e) => { e.preventDefault(); setKeys((k) => ({ ...k, d: true })); }}
+                  onPointerUp={() => setKeys((k) => ({ ...k, d: false }))}
+                  onPointerCancel={() => setKeys((k) => ({ ...k, d: false }))}
+                  aria-label="Move Left"
+                >
+                  ◀
+                </button>
+                <button
+                  type="button"
+                  className="sp-dpad-btn is-down"
+                  onPointerDown={(e) => { e.preventDefault(); setKeys((k) => ({ ...k, s: true })); }}
+                  onPointerUp={() => setKeys((k) => ({ ...k, s: false }))}
+                  onPointerCancel={() => setKeys((k) => ({ ...k, s: false }))}
+                  aria-label="Move Backward"
+                >
+                  ▼
+                </button>
+                <button
+                  type="button"
+                  className="sp-dpad-btn is-right"
+                  onPointerDown={(e) => { e.preventDefault(); setKeys((k) => ({ ...k, a: true })); }}
+                  onPointerUp={() => setKeys((k) => ({ ...k, a: false }))}
+                  onPointerCancel={() => setKeys((k) => ({ ...k, a: false }))}
+                  aria-label="Move Right"
+                >
+                  ▶
+                </button>
+              </div>
+            </div>
             <div className="sp-combat-pad">
               <div className="sp-combat-row">
                 {/* Sprint Boost */}

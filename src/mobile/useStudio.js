@@ -98,7 +98,15 @@ export function useStudio() {
   const [gizmo, setGizmo] = useState("move");
   const [cameraMode, setCameraMode] = useState("Game View");
   const [fps, setFps] = useState(0);
-  const [keys, setKeys] = useState({});
+  const [keys, setKeysState] = useState({});
+  const keysRefLive = useRef({});
+  const setKeys = useCallback((patch) => {
+    setKeysState((prev) => {
+      const next = typeof patch === "function" ? patch(prev) : { ...prev, ...patch };
+      keysRefLive.current = next;
+      return next;
+    });
+  }, []);
   const [score, setScore] = useState(0);
   const [coins, setCoins] = useState(() => COINS.map((c) => ({ ...c, taken: false })));
   const [timeOfDay, setTimeOfDay] = useState(settings.timeOfDay);
@@ -623,8 +631,6 @@ export function useStudio() {
     haptic(settingsRef.current.haptics);
   }, []);
 
-  const keysRefLive = useRef({});
-  keysRefLive.current = keys;
 
   // Camera angle in Game View: camera is at (-7, 5, -9) looking at hero (0, 0, 0)
   // Camera forward ray in XZ plane: (7, 9) => sin = 7/sqrt(130) ≈ 0.61394, cos = 9/sqrt(130) ≈ 0.78935
@@ -634,7 +640,7 @@ export function useStudio() {
   // Ultra-responsive hero loop (30ms ~33 FPS) with smooth camera-relative steering & body turning
   useEffect(() => {
     const hasHero = flatten(projectRef.current.groups).some((c) => c.id === PLAYER.id);
-    if (!isPlaying || jsxRef.current.code || !hasHero) return undefined;
+    if (!isPlaying || !hasHero) return undefined;
     const tick = setInterval(() => {
       patchProject((p) => {
         const IGNORE_BLOCKERS = new Set(["player", "terrain", "water", "sky", "lighting", "fog", "postprocess", "ground", "spawn-ground"]);
@@ -645,20 +651,25 @@ export function useStudio() {
         const groupsNext = mapNodes(p.groups, (node) => {
           if (node.id === PLAYER.id) {
             const k = keysRefLive.current;
+            const touch = (typeof window !== "undefined" && window.__spiderVirtualTouch) || {};
             const isSprint = Boolean(k.shift || k.Shift || k.shiftleft || k.shiftright || (typeof window !== "undefined" && window.__spiderHeroSprinting));
             const step = PLAYER.moveStep * (isSprint ? 2.2 : 1.0);
-            // Raw 2D input: virtual joystick takes priority for smooth analog steering
+
+            // Raw 2D input: virtual joystick or touch takes priority for smooth analog steering
             let ix = 0;
             let iz = 0;
-            const hasStick = Math.abs(k.jx || 0) > 0.04 || Math.abs(k.jz || 0) > 0.04;
+            const stickX = Math.abs(k.jx || 0) > 0.04 ? Number(k.jx) : (Math.abs(touch.x || 0) > 0.04 ? Number(touch.x) : 0);
+            const stickZ = Math.abs(k.jz || 0) > 0.04 ? Number(k.jz) : (Math.abs(touch.z || 0) > 0.04 ? Number(touch.z) : 0);
+            const hasStick = Math.abs(stickX) > 0.04 || Math.abs(stickZ) > 0.04;
             if (hasStick) {
-              ix = Number(k.jx || 0);
-              iz = Number(k.jz || 0);
+              ix = stickX;
+              iz = stickZ;
             } else {
+              // User steering mapping: a = d, d = a
               if (k.d || k.arrowright || k.KeyD) ix -= 1;
               if (k.a || k.arrowleft || k.KeyA) ix += 1;
               if (k.w || k.arrowup || k.KeyW) iz += 1;
-              if (k.s || k.arrowdown || k.KeyS) iz -= 1;
+              if (k.s || k.arrowdown || k.KeyS) iz += 1;
             }
 
             const inputMag = Math.hypot(ix, iz);
@@ -668,22 +679,24 @@ export function useStudio() {
             }
 
             const speed = inputMag > 0.05 ? step * Math.min(1, inputMag) : 0;
-            const camFwd = (typeof window !== "undefined" && window.__spiderCamForward) || { x: 0, z: 1 };
-            const camRight = (typeof window !== "undefined" && window.__spiderCamRight) || { x: 1, z: 0 };
+            let fwdX = (typeof window !== "undefined" && window.__spiderCamForward?.x) ?? 0;
+            let fwdZ = (typeof window !== "undefined" && window.__spiderCamForward?.z) ?? 1;
+            let rightX = (typeof window !== "undefined" && window.__spiderCamRight?.x) ?? 1;
+            let rightZ = (typeof window !== "undefined" && window.__spiderCamRight?.z) ?? 0;
+            if (Math.hypot(fwdX, fwdZ) < 0.01) { fwdX = 0; fwdZ = 1; }
+            if (Math.hypot(rightX, rightZ) < 0.01) { rightX = 1; rightZ = 0; }
 
             // Camera-relative steering:
-            // Push UP on stick / W => move in camera's forward direction
-            // Push DOWN on stick / S => move in camera's backward direction
-            // Push RIGHT on stick / D => move in camera's right direction
-            // Push LEFT on stick / A => move in camera's left direction
             let dx = 0;
             let dz = 0;
-            let moveX = iz * camFwd.x + ix * camRight.x;
-            let moveZ = iz * camFwd.z + ix * camRight.z;
-            const moveMag = Math.hypot(moveX, moveZ);
-            if (moveMag > 0.01) {
-              dx = (moveX / moveMag) * speed;
-              dz = (moveZ / moveMag) * speed;
+            if (speed > 0) {
+              let moveX = iz * fwdX + ix * rightX;
+              let moveZ = iz * fwdZ + ix * rightZ;
+              const moveMag = Math.hypot(moveX, moveZ);
+              if (moveMag > 0.01) {
+                dx = (moveX / moveMag) * speed;
+                dz = (moveZ / moveMag) * speed;
+              }
             }
 
             // Athletic parabolic jump with gravity
