@@ -172,6 +172,7 @@
         <div class="hidden md:flex items-center gap-6">
           <a href="#showcase" class="text-sm font-semibold text-slate-700 hover:text-emerald-700 transition">Showcase</a>
           <a href="#full-capabilities" class="text-sm font-semibold text-slate-700 hover:text-emerald-700 transition">Capabilities</a>
+          <a href="#cross-engine" class="text-sm font-semibold text-slate-700 hover:text-emerald-700 transition">Export Guide</a>
           <a href="#agent-loop" class="text-sm font-semibold text-slate-700 hover:text-emerald-700 transition">AI Agent Loop</a>
           <a href="#roadmap" class="text-sm font-semibold text-slate-700 hover:text-emerald-700 transition">Roadmap</a>
           <button onclick="openLicenseModal()" class="flex items-center gap-1.5 text-sm font-bold text-emerald-700 hover:text-emerald-800 transition cursor-pointer">
@@ -197,6 +198,7 @@
       <div id="mobile-menu" class="hidden md:hidden pt-4 pb-2 space-y-2 border-t border-emerald-500/20 mt-3 animate-fadeIn">
         <a href="#showcase" class="block px-3 py-2 rounded-xl text-sm font-bold text-slate-800 hover:bg-emerald-500/10 hover:text-emerald-700 transition">🎮 Showcase Games</a>
         <a href="#full-capabilities" class="block px-3 py-2 rounded-xl text-sm font-bold text-slate-800 hover:bg-emerald-500/10 hover:text-emerald-700 transition">⚡ Capabilities</a>
+        <a href="#cross-engine" class="block px-3 py-2 rounded-xl text-sm font-bold text-slate-800 hover:bg-emerald-500/10 hover:text-emerald-700 transition">🚀 Export Guide (UE5/Godot/Unity)</a>
         <a href="#agent-loop" class="block px-3 py-2 rounded-xl text-sm font-bold text-slate-800 hover:bg-emerald-500/10 hover:text-emerald-700 transition">🤖 AI Agent Loop</a>
         <a href="#roadmap" class="block px-3 py-2 rounded-xl text-sm font-bold text-slate-800 hover:bg-emerald-500/10 hover:text-emerald-700 transition">🚀 Coming Soon</a>
         <button onclick="openLicenseModal()" class="w-full text-left px-3 py-2 rounded-xl text-sm font-bold text-emerald-700 hover:bg-emerald-500/10 transition flex items-center gap-2 cursor-pointer">
@@ -606,6 +608,111 @@
                   ✕ Deny
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cross-Engine Export & Integration Interactive Showcase -->
+    <section id="cross-engine" class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 border-t border-emerald-500/20">
+      <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16 space-y-4">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-950 border border-emerald-500/30 backdrop-blur-md shadow-sm">
+          <i data-lucide="cpu" class="w-4 h-4 text-emerald-700"></i>
+          <span>UNIVERSAL CROSS-ENGINE TRANSPILER</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-950 tracking-tight">
+          Export to <span class="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Unreal, Godot, Unity</span> &amp; C++
+        </h2>
+        <p class="text-slate-600 text-base sm:text-lg leading-relaxed">
+          Prototype and play in Spider Engine with instant AI voice and 60 FPS mobile preview. When your level is ready, export clean <strong>native C++20</strong>, <strong>SPY script</strong>, or <strong>JSX</strong> with zero overhead.
+        </p>
+      </div>
+
+      <!-- Engine Selector Tabs -->
+      <div class="flex items-center justify-center gap-2 sm:gap-3 flex-wrap mb-8">
+        <button id="tab-ue5" onclick="switchEngineTab('ue5')" class="engine-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2 bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 cursor-pointer">
+          <span>🎮</span> Unreal Engine 5
+        </button>
+        <button id="tab-godot" onclick="switchEngineTab('godot')" class="engine-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">
+          <span>🤖</span> Godot 4
+        </button>
+        <button id="tab-unity" onclick="switchEngineTab('unity')" class="engine-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">
+          <span>🎯</span> Unity
+        </button>
+        <button id="tab-cpp" onclick="switchEngineTab('cpp')" class="engine-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">
+          <span>⚙️</span> Custom C++ / Vulkan
+        </button>
+        <button id="tab-web" onclick="switchEngineTab('web')" class="engine-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">
+          <span>🌐</span> Web / React
+        </button>
+      </div>
+
+      <!-- Tab Content Cards -->
+      <div class="rounded-3xl bg-slate-950 text-white border border-slate-800 shadow-2xl p-6 sm:p-8 relative overflow-hidden">
+        <div class="absolute -right-20 -top-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div id="engine-tab-content">
+          <!-- Default: Unreal Engine 5 -->
+          <div class="space-y-6 animate-fadeIn">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <h3 class="text-xl sm:text-2xl font-bold text-emerald-400 flex items-center gap-2">
+                  <span>🎮</span> Unreal Engine 5 (UE5 / UE4)
+                </h3>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                  Transpiled C++ maps 1:1 to an Unreal Engine <code class="text-emerald-300">AActor</code> with <code class="text-emerald-300">Tick(float DeltaTime)</code>.
+                </p>
+              </div>
+              <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-/blob/main/docs/CROSS_ENGINE_GUIDE.md" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold hover:bg-emerald-600/30 transition flex items-center gap-1.5 shrink-0">
+                <i data-lucide="book-open" class="w-3.5 h-3.5"></i> View Full Tutorial
+              </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-emerald-400 font-bold">1. Create Class</span>
+                <p class="text-slate-400 font-sans">Tools → New C++ Class → Actor → Name: <code class="text-emerald-200">SpiderGameActor</code></p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-teal-400 font-bold">2. Paste Tick Loop</span>
+                <p class="text-slate-400 font-sans">Copy exported <code class="text-teal-200">Update(dt)</code> math into <code class="text-teal-200">Tick(DeltaTime)</code></p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-cyan-400 font-bold">3. Live Coding</span>
+                <p class="text-slate-400 font-sans">Press <code class="text-cyan-200">Ctrl + Alt + F11</code> to recompile and drag into Level</p>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+                <span class="font-mono">Source/YourProject/SpiderGameActor.cpp</span>
+                <button onclick="copyCodeSnippet('ue5-code')" class="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition cursor-pointer font-sans text-xs">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Code
+                </button>
+              </div>
+              <pre class="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-mono text-emerald-300/90 overflow-x-auto leading-relaxed"><code id="ue5-code">// Unreal Engine 5 Actor Implementation (transpiled from Spider Engine)
+#include "SpiderGameActor.h"
+
+ASpiderGameActor::ASpiderGameActor() {
+    PrimaryActorTick.bCanEverTick = true;
+    HeroMesh = CreateDefaultSubobject&lt;UStaticMeshComponent&gt;(TEXT("HeroMesh"));
+    RootComponent = HeroMesh;
+}
+
+void ASpiderGameActor::BeginPlay() {
+    Super::BeginPlay();
+    Score = 0;
+}
+
+void ASpiderGameActor::Tick(float DeltaTime) {
+    Super::Tick(DeltaTime);
+    // 1:1 match with Spider Engine's exported Update(dt) loop:
+    FVector Pos = GetActorLocation();
+    Pos.X += MoveInput.X * MoveSpeed * DeltaTime;
+    Pos.Y += MoveInput.Y * MoveSpeed * DeltaTime;
+    SetActorLocation(Pos);
+}</code></pre>
             </div>
           </div>
         </div>
@@ -1350,6 +1457,273 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
       }
       lucide.createIcons();
     }
+
+    // Interactive Engine Tab Switcher
+    function switchEngineTab(engine) {
+      const tabs = ['ue5', 'godot', 'unity', 'cpp', 'web'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (btn) {
+          if (t === engine) {
+            btn.className = 'engine-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2 bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 cursor-pointer';
+          } else {
+            btn.className = 'engine-tab-btn px-4 sm:px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer';
+          }
+        }
+      });
+
+      const container = document.getElementById('engine-tab-content');
+      if (!container) return;
+
+      const guides = {
+        ue5: `
+          <div class="space-y-6 animate-fadeIn">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <h3 class="text-xl sm:text-2xl font-bold text-emerald-400 flex items-center gap-2"><span>🎮</span> Unreal Engine 5 (UE5 / UE4)</h3>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1">Transpiled C++ maps 1:1 to an Unreal Engine <code class="text-emerald-300">AActor</code> with <code class="text-emerald-300">Tick(float DeltaTime)</code>.</p>
+              </div>
+              <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-/blob/main/docs/CROSS_ENGINE_GUIDE.md" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold hover:bg-emerald-600/30 transition flex items-center gap-1.5 shrink-0">
+                <i data-lucide="book-open" class="w-3.5 h-3.5"></i> View Full Tutorial
+              </a>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-emerald-400 font-bold">1. Create Class</span>
+                <p class="text-slate-400 font-sans">Tools → New C++ Class → Actor → Name: <code class="text-emerald-200">SpiderGameActor</code></p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-teal-400 font-bold">2. Paste Tick Loop</span>
+                <p class="text-slate-400 font-sans">Copy exported <code class="text-teal-200">Update(dt)</code> math into <code class="text-teal-200">Tick(DeltaTime)</code></p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-cyan-400 font-bold">3. Live Coding</span>
+                <p class="text-slate-400 font-sans">Press <code class="text-cyan-200">Ctrl + Alt + F11</code> to recompile and drag into Level</p>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+                <span class="font-mono">Source/YourProject/SpiderGameActor.cpp</span>
+                <button onclick="copyCodeSnippet('ue5-code')" class="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition cursor-pointer font-sans text-xs">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Code
+                </button>
+              </div>
+              <pre class="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-mono text-emerald-300/90 overflow-x-auto leading-relaxed"><code id="ue5-code">// Unreal Engine 5 Actor Implementation (transpiled from Spider Engine)
+#include "SpiderGameActor.h"
+
+ASpiderGameActor::ASpiderGameActor() {
+    PrimaryActorTick.bCanEverTick = true;
+    HeroMesh = CreateDefaultSubobject&lt;UStaticMeshComponent&gt;(TEXT("HeroMesh"));
+    RootComponent = HeroMesh;
+}
+
+void ASpiderGameActor::BeginPlay() {
+    Super::BeginPlay();
+    Score = 0;
+}
+
+void ASpiderGameActor::Tick(float DeltaTime) {
+    Super::Tick(DeltaTime);
+    // 1:1 match with Spider Engine's exported Update(dt) loop:
+    FVector Pos = GetActorLocation();
+    Pos.X += MoveInput.X * MoveSpeed * DeltaTime;
+    Pos.Y += MoveInput.Y * MoveSpeed * DeltaTime;
+    SetActorLocation(Pos);
+}</code></pre>
+            </div>
+          </div>
+        `,
+        godot: `
+          <div class="space-y-6 animate-fadeIn">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <h3 class="text-xl sm:text-2xl font-bold text-teal-400 flex items-center gap-2"><span>🤖</span> Godot Engine 4 (GDScript / C#)</h3>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1">Direct 1:1 translation from Spider Engine <code class="text-teal-300">&lt;group&gt;</code> and <code class="text-teal-300">useFrame</code> into <code class="text-teal-300">Node3D</code> and <code class="text-teal-300">_process(delta)</code>.</p>
+              </div>
+              <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-/blob/main/docs/CROSS_ENGINE_GUIDE.md" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-teal-600/20 text-teal-300 border border-teal-500/40 text-xs font-bold hover:bg-teal-600/30 transition flex items-center gap-1.5 shrink-0">
+                <i data-lucide="book-open" class="w-3.5 h-3.5"></i> View Full Tutorial
+              </a>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-emerald-400 font-bold">1. Create 3D Scene</span>
+                <p class="text-slate-400 font-sans">Scene dock → Click "3D Scene" → Add <code class="text-emerald-200">MeshInstance3D</code></p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-teal-400 font-bold">2. Attach Script</span>
+                <p class="text-slate-400 font-sans">Right-click Node3D → Attach Script → <code class="text-teal-200">SpiderGame.gd</code></p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-cyan-400 font-bold">3. Play Scene</span>
+                <p class="text-slate-400 font-sans">Save scene and press <code class="text-cyan-200">F6</code> to run</p>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+                <span class="font-mono">res://SpiderGame.gd</span>
+                <button onclick="copyCodeSnippet('godot-code')" class="flex items-center gap-1 text-teal-400 hover:text-teal-300 transition cursor-pointer font-sans text-xs">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Code
+                </button>
+              </div>
+              <pre class="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-mono text-teal-300/90 overflow-x-auto leading-relaxed"><code id="godot-code">extends Node3D
+
+# State variables (from Spider Engine useState)
+var score: int = 0
+var hero_pos: Vector3 = Vector3(0.0, 0.5, 0.0)
+@export var speed: float = 8.0
+
+func _process(delta: float) -> void:
+    # 1:1 match with Spider Engine's exported Update(dt) / useFrame:
+    var dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+    hero_pos.x += dir.x * speed * delta
+    hero_pos.z += dir.y * speed * delta
+
+    if has_node("HeroMesh"):
+        $HeroMesh.position = hero_pos</code></pre>
+            </div>
+          </div>
+        `,
+        unity: `
+          <div class="space-y-6 animate-fadeIn">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <h3 class="text-xl sm:text-2xl font-bold text-cyan-400 flex items-center gap-2"><span>🎯</span> Unity (Unity 2022+ / C# / URP)</h3>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1">Map state to public fields and hook exported loop directly into <code class="text-cyan-300">MonoBehaviour.Update()</code>.</p>
+              </div>
+              <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-/blob/main/docs/CROSS_ENGINE_GUIDE.md" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-cyan-600/20 text-cyan-300 border border-cyan-500/40 text-xs font-bold hover:bg-cyan-600/30 transition flex items-center gap-1.5 shrink-0">
+                <i data-lucide="book-open" class="w-3.5 h-3.5"></i> View Full Tutorial
+              </a>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-emerald-400 font-bold">1. Create C# Script</span>
+                <p class="text-slate-400 font-sans">Assets/Scripts → Create → C# Script: <code class="text-emerald-200">SpiderGameController</code></p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-teal-400 font-bold">2. Attach Component</span>
+                <p class="text-slate-400 font-sans">Drag script onto an Empty GameObject in Hierarchy</p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-cyan-400 font-bold">3. Play in Unity</span>
+                <p class="text-slate-400 font-sans">Assign Hero Transform and press <code class="text-cyan-200">Ctrl + P</code></p>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+                <span class="font-mono">Assets/Scripts/SpiderGameController.cs</span>
+                <button onclick="copyCodeSnippet('unity-code')" class="flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition cursor-pointer font-sans text-xs">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Code
+                </button>
+              </div>
+              <pre class="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-mono text-cyan-300/90 overflow-x-auto leading-relaxed"><code id="unity-code">using UnityEngine;
+
+public class SpiderGameController : MonoBehaviour {
+    [Header("State (from Spider Engine useState)")]
+    public int score = 0;
+    public float moveSpeed = 8.0f;
+    public Transform heroTransform;
+
+    void Update() {
+        float dt = Time.deltaTime;
+        float moveX = Input.GetAxis("Horizontal");
+        float moveZ = Input.GetAxis("Vertical");
+
+        if (heroTransform != null) {
+            heroTransform.position += new Vector3(moveX, 0, moveZ) * moveSpeed * dt;
+        }
+    }
+}</code></pre>
+            </div>
+          </div>
+        `,
+        cpp: `
+          <div class="space-y-6 animate-fadeIn">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <h3 class="text-xl sm:text-2xl font-bold text-amber-400 flex items-center gap-2"><span>⚙️</span> Custom C++ Engines (Vulkan / Raylib / CMake)</h3>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1">Clean standard C++20 with GLM vectors. Build directly with the exported <code class="text-amber-300">CMakeLists.txt</code>.</p>
+              </div>
+              <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-/blob/main/docs/CROSS_ENGINE_GUIDE.md" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-amber-600/20 text-amber-300 border border-amber-500/40 text-xs font-bold hover:bg-amber-600/30 transition flex items-center gap-1.5 shrink-0">
+                <i data-lucide="book-open" class="w-3.5 h-3.5"></i> View Full Tutorial
+              </a>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-emerald-400 font-bold">1. Put Files</span>
+                <p class="text-slate-400 font-sans">Put exported <code class="text-emerald-200">_native.cpp</code> into <code class="text-emerald-200">src/</code></p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-teal-400 font-bold">2. CMake Build</span>
+                <p class="text-slate-400 font-sans"><code class="text-teal-200">cmake -B build &amp;&amp; cmake --build build</code></p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <span class="text-amber-400 font-bold">3. Zero JS Overhead</span>
+                <p class="text-slate-400 font-sans">Runs pure native Vulkan/OpenGL machine code</p>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+                <span class="font-mono">src/main.cpp</span>
+                <button onclick="copyCodeSnippet('cpp-code')" class="flex items-center gap-1 text-amber-400 hover:text-amber-300 transition cursor-pointer font-sans text-xs">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Code
+                </button>
+              </div>
+              <pre class="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-mono text-amber-300/90 overflow-x-auto leading-relaxed"><code id="cpp-code">#include &lt;iostream&gt;
+#include &lt;cmath&gt;
+#include &lt;glm/glm.hpp&gt;
+
+struct SpiderGameScene {
+    glm::vec3 heroPos = glm::vec3(0.0f, 0.5f, 0.0f);
+    int score = 0;
+
+    void Update(float dt) {
+        // Direct C++ game loop transpiled from useFrame:
+        heroPos.x += 8.0f * dt;
+    }
+};</code></pre>
+            </div>
+          </div>
+        `,
+        web: `
+          <div class="space-y-6 animate-fadeIn">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <h3 class="text-xl sm:text-2xl font-bold text-indigo-400 flex items-center gap-2"><span>🌐</span> Web / React (Next.js / Vite)</h3>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1">Import your downloaded <code class="text-indigo-300">.jsx</code> directly into any Three.js canvas.</p>
+              </div>
+              <a href="https://github.com/M4SPIDER/spider-game-engine-open-source-/blob/main/docs/CROSS_ENGINE_GUIDE.md" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 text-xs font-bold hover:bg-indigo-600/30 transition flex items-center gap-1.5 shrink-0">
+                <i data-lucide="book-open" class="w-3.5 h-3.5"></i> View Full Tutorial
+              </a>
+            </div>
+            <pre class="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-mono text-indigo-300/90 overflow-x-auto leading-relaxed"><code id="web-code">import React from "react";
+import { Canvas } from "@react-three/fiber";
+import GameComponent from "./YourGameComponent.jsx";
+
+export default function App() {
+  return (
+    &lt;div style={{ width: "100vw", height: "100vh" }}&gt;
+      &lt;Canvas shadows camera={{ position: [0, 8, 12], fov: 50 }}&gt;
+        &lt;GameComponent /&gt;
+      &lt;/Canvas&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+          </div>
+        `
+      };
+
+      container.innerHTML = guides[engine] || guides.ue5;
+      lucide.createIcons();
+    }
+
+    // Code Snippet Clipboard Helper
+    function copyCodeSnippet(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      navigator.clipboard?.writeText(el.innerText || el.textContent);
+      alert('Code copied to clipboard!');
+    }
+
   </script>
 </body>
 </html>
