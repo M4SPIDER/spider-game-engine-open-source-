@@ -104,15 +104,17 @@ export default function MobileApp() {
   }, []);
 
   useEffect(() => {
-    const handleOrientationOrResize = () => {
-      setTimeout(() => window.dispatchEvent(new Event("resize")), 60);
-      setTimeout(() => window.dispatchEvent(new Event("resize")), 250);
+    let timer = null;
+    const handleOrientation = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+      }, 150);
     };
-    window.addEventListener("orientationchange", handleOrientationOrResize);
-    window.addEventListener("resize", handleOrientationOrResize);
+    window.addEventListener("orientationchange", handleOrientation);
     return () => {
-      window.removeEventListener("orientationchange", handleOrientationOrResize);
-      window.removeEventListener("resize", handleOrientationOrResize);
+      clearTimeout(timer);
+      window.removeEventListener("orientationchange", handleOrientation);
     };
   }, []);
   useEffect(() => {

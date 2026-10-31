@@ -339,48 +339,6 @@ html.sp-mobile body:has(.is-full) {
 
 .sp-stick { position: absolute; z-index: 12; left: calc(20px + env(safe-area-inset-left, 0px)); bottom: calc(28px + env(safe-area-inset-bottom, 0px)); width: 128px; height: 128px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)); border: 1.5px solid var(--glass-line); backdrop-filter: blur(6px); display: grid; place-items: center; touch-action: none; }
 .sp-stick-knob { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35); pointer-events: none; }
-
-/* Tactile D-Pad Controller */
-.sp-dpad {
-  position: absolute;
-  z-index: 12;
-  left: calc(24px + env(safe-area-inset-left, 0px));
-  bottom: calc(168px + env(safe-area-inset-bottom, 0px));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  touch-action: none;
-  pointer-events: auto;
-}
-.sp-dpad-middle {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-.sp-dpad-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(8px);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
-  transition: transform 0.08s ease, background 0.15s ease;
-}
-.sp-dpad-btn:active {
-  background: var(--accent);
-  transform: scale(0.92);
-}
 .sp-jump { position: absolute; z-index: 12; right: calc(24px + env(safe-area-inset-right, 0px)); bottom: calc(44px + env(safe-area-inset-bottom, 0px)); width: 88px; height: 88px; border-radius: 50%; background: rgba(42, 91, 215, 0.75); border: 1.5px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(6px); color: #fff; font-weight: 700; font-size: 15px; letter-spacing: 0.04em; touch-action: none; }
 .sp-jump:active { background: var(--accent); }
 
@@ -669,6 +627,37 @@ html.sp-mobile body:has(.is-full) {
     margin: 0 !important;
     border-radius: 0 !important;
   }
+  .sp-stick {
+    width: 106px !important;
+    height: 106px !important;
+    left: calc(18px + env(safe-area-inset-left, 0px)) !important;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .sp-stick-knob {
+    width: 46px !important;
+    height: 46px !important;
+  }
+  .sp-combat-pad {
+    right: calc(18px + env(safe-area-inset-right, 0px)) !important;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+    gap: 6px !important;
+  }
+  .sp-btn-combat {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 9px !important;
+  }
+  .sp-btn-combat.is-jump {
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 11px !important;
+  }
+}
+
+.sp-app.is-playing .sp-top,
+.sp-app.is-playing .sp-tabbar,
+.sp-app.is-playing .sp-dock {
+  display: none !important;
 }
 
 .sp-app.is-full,

@@ -95,6 +95,23 @@ function Joystick({ onChange }) {
     }
   };
 
+  useEffect(() => {
+    const handleReset = () => {
+      isDown.current = false;
+      setKnob({ x: 0, y: 0 });
+      last.current = "";
+      onChange({ jx: 0, jz: 0 });
+      dispatchKeys(0, 0);
+      if (typeof window !== "undefined") {
+        window.__spiderHeroMoving = false;
+      }
+    };
+    window.addEventListener("orientationchange", handleReset);
+    return () => {
+      window.removeEventListener("orientationchange", handleReset);
+    };
+  }, [onChange]);
+
   return (
     <div
       ref={base}
@@ -319,52 +336,8 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
                 )}
               </div>
             )}
-            {/* Mobile joystick & Tactile D-Pad Controls */}
+            {/* Mobile Analog Joystick */}
             <Joystick onChange={(v) => setKeys((k) => ({ ...k, ...v }))} />
-            <div className="sp-dpad">
-              <button
-                type="button"
-                className="sp-dpad-btn is-up"
-                onPointerDown={(e) => { e.preventDefault(); setKeys((k) => ({ ...k, w: true })); }}
-                onPointerUp={() => setKeys((k) => ({ ...k, w: false }))}
-                onPointerCancel={() => setKeys((k) => ({ ...k, w: false }))}
-                aria-label="Move Forward"
-              >
-                ▲
-              </button>
-              <div className="sp-dpad-middle">
-                <button
-                  type="button"
-                  className="sp-dpad-btn is-left"
-                  onPointerDown={(e) => { e.preventDefault(); setKeys((k) => ({ ...k, d: true })); }}
-                  onPointerUp={() => setKeys((k) => ({ ...k, d: false }))}
-                  onPointerCancel={() => setKeys((k) => ({ ...k, d: false }))}
-                  aria-label="Move Left"
-                >
-                  ◀
-                </button>
-                <button
-                  type="button"
-                  className="sp-dpad-btn is-down"
-                  onPointerDown={(e) => { e.preventDefault(); setKeys((k) => ({ ...k, s: true })); }}
-                  onPointerUp={() => setKeys((k) => ({ ...k, s: false }))}
-                  onPointerCancel={() => setKeys((k) => ({ ...k, s: false }))}
-                  aria-label="Move Backward"
-                >
-                  ▼
-                </button>
-                <button
-                  type="button"
-                  className="sp-dpad-btn is-right"
-                  onPointerDown={(e) => { e.preventDefault(); setKeys((k) => ({ ...k, a: true })); }}
-                  onPointerUp={() => setKeys((k) => ({ ...k, a: false }))}
-                  onPointerCancel={() => setKeys((k) => ({ ...k, a: false }))}
-                  aria-label="Move Right"
-                >
-                  ▶
-                </button>
-              </div>
-            </div>
             <div className="sp-combat-pad">
               <div className="sp-combat-row">
                 {/* Sprint Boost */}
