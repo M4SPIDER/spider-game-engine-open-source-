@@ -7856,11 +7856,11 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                   </div>
                 )}
 
-                {/* Mobile Virtual Touch D-Pad & Jump Button when Playing or active JSX game */}
-                {isMobile && !isEnvMode && (isPlaying || activeJsxCode) && (
-                  <div className="absolute inset-x-0 bottom-4 z-30 flex items-end justify-between px-4 pointer-events-none select-none">
-                    {/* D-Pad */}
-                    <div className="pointer-events-auto flex flex-col items-center gap-1 bg-slate-950/80 backdrop-blur-xl p-2 rounded-2xl border border-emerald-500/30 shadow-2xl">
+                {/* Mobile Virtual Touch D-Pad & Combat Action Pad when Playing, Game View, or active JSX game */}
+                {isMobile && !isEnvMode && (isPlaying || activeJsxCode || viewportTab === "Game View") && (
+                  <div className="absolute inset-x-0 bottom-4 z-30 flex items-end justify-between px-3 pointer-events-none select-none">
+                    {/* D-Pad Steering */}
+                    <div className="pointer-events-auto flex flex-col items-center gap-1 bg-slate-950/85 backdrop-blur-xl p-2 rounded-2xl border border-emerald-500/30 shadow-2xl">
                       <button
                         onTouchStart={(e) => {
                           e.preventDefault();
@@ -7890,7 +7890,8 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                             window.__spiderVirtualTouch.z = 0;
                           }
                         }}
-                        className="w-11 h-11 rounded-xl bg-slate-800/90 active:bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow active:scale-95 transition cursor-pointer"
+                        className="w-12 h-12 rounded-xl bg-slate-800/90 active:bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow active:scale-95 transition cursor-pointer"
+                        title="Move Forward"
                       >
                         ▲
                       </button>
@@ -7898,7 +7899,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                         <button
                           onTouchStart={(e) => {
                             e.preventDefault();
-                            setKeysPressed((p) => ({ ...p, a: true, arrowleft: true }));
+                            setKeysPressed((p) => ({ ...p, d: true, arrowright: true }));
                             if (typeof window !== "undefined") {
                               window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
                               window.__spiderVirtualTouch.x = -1;
@@ -7906,25 +7907,26 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                           }}
                           onTouchEnd={(e) => {
                             e.preventDefault();
-                            setKeysPressed((p) => ({ ...p, a: false, arrowleft: false }));
+                            setKeysPressed((p) => ({ ...p, d: false, arrowright: false }));
                             if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
                               window.__spiderVirtualTouch.x = 0;
                             }
                           }}
                           onMouseDown={() => {
-                            setKeysPressed((p) => ({ ...p, a: true, arrowleft: true }));
+                            setKeysPressed((p) => ({ ...p, d: true, arrowright: true }));
                             if (typeof window !== "undefined") {
                               window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
                               window.__spiderVirtualTouch.x = -1;
                             }
                           }}
                           onMouseUp={() => {
-                            setKeysPressed((p) => ({ ...p, a: false, arrowleft: false }));
+                            setKeysPressed((p) => ({ ...p, d: false, arrowright: false }));
                             if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
                               window.__spiderVirtualTouch.x = 0;
                             }
                           }}
-                          className="w-11 h-11 rounded-xl bg-slate-800/90 active:bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow active:scale-95 transition cursor-pointer"
+                          className="w-12 h-12 rounded-xl bg-slate-800/90 active:bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow active:scale-95 transition cursor-pointer"
+                          title="Move Left"
                         >
                           ◀
                         </button>
@@ -7957,14 +7959,15 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                               window.__spiderVirtualTouch.z = 0;
                             }
                           }}
-                          className="w-11 h-11 rounded-xl bg-slate-800/90 active:bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow active:scale-95 transition cursor-pointer"
+                          className="w-12 h-12 rounded-xl bg-slate-800/90 active:bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow active:scale-95 transition cursor-pointer"
+                          title="Move Backward"
                         >
                           ▼
                         </button>
                         <button
                           onTouchStart={(e) => {
                             e.preventDefault();
-                            setKeysPressed((p) => ({ ...p, d: true, arrowright: true }));
+                            setKeysPressed((p) => ({ ...p, a: true, arrowleft: true }));
                             if (typeof window !== "undefined") {
                               window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
                               window.__spiderVirtualTouch.x = 1;
@@ -7972,66 +7975,121 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                           }}
                           onTouchEnd={(e) => {
                             e.preventDefault();
-                            setKeysPressed((p) => ({ ...p, d: false, arrowright: false }));
+                            setKeysPressed((p) => ({ ...p, a: false, arrowleft: false }));
                             if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
                               window.__spiderVirtualTouch.x = 0;
                             }
                           }}
                           onMouseDown={() => {
-                            setKeysPressed((p) => ({ ...p, d: true, arrowright: true }));
+                            setKeysPressed((p) => ({ ...p, a: true, arrowleft: true }));
                             if (typeof window !== "undefined") {
                               window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
                               window.__spiderVirtualTouch.x = 1;
                             }
                           }}
                           onMouseUp={() => {
-                            setKeysPressed((p) => ({ ...p, d: false, arrowright: false }));
+                            setKeysPressed((p) => ({ ...p, a: false, arrowleft: false }));
                             if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
                               window.__spiderVirtualTouch.x = 0;
                             }
                           }}
-                          className="w-11 h-11 rounded-xl bg-slate-800/90 active:bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow active:scale-95 transition cursor-pointer"
+                          className="w-12 h-12 rounded-xl bg-slate-800/90 active:bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow active:scale-95 transition cursor-pointer"
+                          title="Move Right"
                         >
                           ▶
                         </button>
                       </div>
                     </div>
 
-                    {/* Jump & Action Button (Taps Jump and Space/R for restart) */}
-                    <div className="pointer-events-auto flex flex-col items-center">
+                    {/* Shadow Fight Combat Action Pad */}
+                    <div className="pointer-events-auto flex items-end gap-1.5">
+                      <div className="flex flex-col gap-1.5 items-end">
+                        <div className="flex items-center gap-1.5">
+                          {/* SPRINT Boost */}
+                          <button
+                            onTouchStart={(e) => {
+                              e.preventDefault();
+                              if (typeof window !== "undefined") window.__spiderHeroSprinting = true;
+                              setKeysPressed((p) => ({ ...p, shift: true }));
+                            }}
+                            onTouchEnd={(e) => {
+                              e.preventDefault();
+                              if (typeof window !== "undefined") window.__spiderHeroSprinting = false;
+                              setKeysPressed((p) => ({ ...p, shift: false }));
+                            }}
+                            className="w-11 h-11 rounded-xl bg-slate-900/90 active:bg-amber-600 text-amber-300 active:text-white font-black text-[9px] flex flex-col items-center justify-center border border-amber-500/30 shadow-lg active:scale-95 transition cursor-pointer"
+                            title="Hold to Sprint"
+                          >
+                            <span>🏃</span>
+                            <span>RUN</span>
+                          </button>
+
+                          {/* SHADOW BLAST */}
+                          <button
+                            onTouchStart={(e) => {
+                              e.preventDefault();
+                              window.dispatchEvent(new KeyboardEvent("keydown", { key: "r", code: "KeyR", bubbles: true }));
+                            }}
+                            className="w-11 h-11 rounded-xl bg-slate-900/90 active:bg-cyan-600 text-cyan-300 active:text-white font-black text-[9px] flex flex-col items-center justify-center border border-cyan-500/40 shadow-lg active:scale-95 transition cursor-pointer"
+                            title="Shadow Blast"
+                          >
+                            <span>⚡</span>
+                            <span>SHADOW</span>
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          {/* PUNCH Combo */}
+                          <button
+                            onTouchStart={(e) => {
+                              e.preventDefault();
+                              window.dispatchEvent(new KeyboardEvent("keydown", { key: "f", code: "KeyF", bubbles: true }));
+                            }}
+                            className="w-12 h-12 rounded-xl bg-slate-900/90 active:bg-rose-600 text-rose-300 active:text-white font-black text-[10px] flex flex-col items-center justify-center border border-rose-500/40 shadow-lg active:scale-95 transition cursor-pointer"
+                            title="Punch Combo (Jab -> Cross -> Spinning Backfist)"
+                          >
+                            <span>🥊</span>
+                            <span>PUNCH</span>
+                          </button>
+
+                          {/* KICK Combo */}
+                          <button
+                            onTouchStart={(e) => {
+                              e.preventDefault();
+                              window.dispatchEvent(new KeyboardEvent("keydown", { key: "e", code: "KeyE", bubbles: true }));
+                            }}
+                            className="w-12 h-12 rounded-xl bg-slate-900/90 active:bg-orange-600 text-orange-300 active:text-white font-black text-[10px] flex flex-col items-center justify-center border border-orange-500/40 shadow-lg active:scale-95 transition cursor-pointer"
+                            title="Kick Combo (Front Kick -> Roundhouse -> Axe Kick)"
+                          >
+                            <span>🥋</span>
+                            <span>KICK</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* JUMP Button */}
                       <button
                         onTouchStart={(e) => {
                           e.preventDefault();
-                          setKeysPressed((p) => ({ ...p, " ": true, r: true }));
+                          setKeysPressed((p) => ({ ...p, " ": true }));
                           if (typeof window !== "undefined") {
                             window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
                             window.__spiderVirtualTouch.jump = true;
                           }
+                          window.dispatchEvent(new KeyboardEvent("keydown", { key: " ", code: "Space", bubbles: true }));
                         }}
                         onTouchEnd={(e) => {
                           e.preventDefault();
-                          setKeysPressed((p) => ({ ...p, " ": false, r: false }));
+                          setKeysPressed((p) => ({ ...p, " ": false }));
                           if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
                             window.__spiderVirtualTouch.jump = false;
                           }
-                        }}
-                        onMouseDown={() => {
-                          setKeysPressed((p) => ({ ...p, " ": true, r: true }));
-                          if (typeof window !== "undefined") {
-                            window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
-                            window.__spiderVirtualTouch.jump = true;
-                          }
-                        }}
-                        onMouseUp={() => {
-                          setKeysPressed((p) => ({ ...p, " ": false, r: false }));
-                          if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
-                            window.__spiderVirtualTouch.jump = false;
-                          }
+                          window.dispatchEvent(new KeyboardEvent("keyup", { key: " ", code: "Space", bubbles: true }));
                         }}
                         className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 active:brightness-125 text-white font-black text-xs flex flex-col items-center justify-center shadow-2xl active:scale-90 transition border border-emerald-400/40 cursor-pointer"
                       >
                         <span>JUMP</span>
-                        <span className="text-[9px] opacity-75 font-mono">Action</span>
+                        <span className="text-[9px] opacity-75 font-mono">Space</span>
                       </button>
                     </div>
                   </div>
@@ -10665,13 +10723,6 @@ function useIsMobileOrTablet() {
 }
 
 export default function App() {
-  const isMobile = useIsMobileOrTablet();
-  if (isMobile) {
-    return (
-      <React.Suspense fallback={<div style={{ height: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0b0f19", color: "#94a3b8", fontFamily: "system-ui, sans-serif" }}>Loading Pocket Studio…</div>}>
-        <MobileApp />
-      </React.Suspense>
-    );
-  }
+  // Unified engine for PC, Tablet & Mobile — runs the full open world, combat, and touch controls everywhere!
   return <DesktopApp />;
 }
