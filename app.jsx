@@ -745,10 +745,10 @@ function DesktopApp() {
   const [bottomTab, setBottomTab] = useState("Content Browser"); // Content Browser, Console, Build Log
   const [rightTab, setRightTab] = useState("Inspector"); // Inspector, World Settings
   const [activeFolder, setActiveFolder] = useState("3D Shapes");
-  const [hierarchyOpen, setHierarchyOpen] = useState(true);
-  const [inspectorOpen, setInspectorOpen] = useState(true);
-  const [bottomLeftOpen, setBottomLeftOpen] = useState(true);
-  const [consoleOpen, setConsoleOpen] = useState(true);
+  const [hierarchyOpen, setHierarchyOpen] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [bottomLeftOpen, setBottomLeftOpen] = useState(false);
+  const [consoleOpen, setConsoleOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState("Rendering");
   const [openMenu, setOpenMenu] = useState(null); // File/Edit/... dropdown
@@ -4599,13 +4599,13 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
     return { groups: full, select: "player" }; // normal third person
   };
   // Per-project UI memory — each project keeps its own panel layout (own index in storage)
-  const DEFAULT_UI = { hierarchyOpen: true, inspectorOpen: true, bottomLeftOpen: true, consoleOpen: true, viewportTab: "Title Menu", bottomTab: "Content Browser", rightTab: "Inspector" };
+  const DEFAULT_UI = { hierarchyOpen: false, inspectorOpen: false, bottomLeftOpen: false, consoleOpen: false, viewportTab: "Title Menu", bottomTab: "Content Browser", rightTab: "Inspector" };
   const applyUi = (ui) => {
     const u = { ...DEFAULT_UI, ...(ui || {}) };
-    setHierarchyOpen(true);
-    setInspectorOpen(true);
-    setBottomLeftOpen(true);
-    setConsoleOpen(true);
+    setHierarchyOpen(Boolean(u.hierarchyOpen));
+    setInspectorOpen(Boolean(u.inspectorOpen));
+    setBottomLeftOpen(Boolean(u.bottomLeftOpen));
+    setConsoleOpen(Boolean(u.consoleOpen));
     setViewportTab(u.viewportTab || "Title Menu");
     setBottomTab(u.bottomTab || "Content Browser");
     setRightTab(u.rightTab || "Inspector");
