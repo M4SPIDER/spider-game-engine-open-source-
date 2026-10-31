@@ -383,31 +383,54 @@ You have 100% control over how the AI agent interacts with your system:
 
 ## 🚀 Exporting & Copy-Pasting to Unreal Engine, Godot, Unity & Custom Engines
 
-Spider Game Engine includes a native **JSX to C++ & SPY transpiler** and universal exporter. You can export any generated game or scene in **one click** as:
-- **`.jsx`**: React Three Fiber / WebGL game source.
-- **`.cpp`**: Native C++ source code with standard vectors, math, and game loop.
-- **`.spy`**: Declarative native Spider Engine script.
-- **`CMakeLists.txt`**: C++20 Vulkan build configuration.
+Spider Game Engine serves as a rapid **autonomous 3D prototyping and AI game design studio**. You can build, play, and test complete 3D games in Spider Engine (on Desktop or Mobile), and then export your creation directly into **production industry engines**:
 
-### How to Download from Spider Studio
-- **Desktop Studio**: Click **`Export ▾`** in the top viewport bar or click **`JSX`**, **`C++`**, or **`SPY`** in Code Mode.
-- **Pocket Studio Mobile**: Tap `Wand (🪄)` or File Menu → tap **Download JSX**, **Export Native C++**, or **Export SPY Script**.
+```mermaid
+flowchart LR
+    Spider[🕷️ Spider Engine\nReal-Time 3D & AI] -->|Export .cpp / .spy / .jsx| Transpiler[⚡ Spider Native Transpiler]
+    Transpiler -->|C++ Actor & Tick| Unreal[🎮 Unreal Engine 5]
+    Transpiler -->|GDScript & Node3D| Godot[🤖 Godot Engine 4]
+    Transpiler -->|C# MonoBehaviour| Unity[🎯 Unity 2022+]
+    Transpiler -->|C++20 & CMakeLists| Custom[⚙️ Custom C++ / Vulkan / Raylib]
+    Transpiler -->|React Component| Web[🌐 Web / Next.js / Vite]
+    Transpiler -->|SPY Script| NativeSpider[🕷️ Spider Engine C++ Runtime]
+```
+
+### 📥 Step 1: Export Your Game Files from Spider Studio
+1. In Spider Game Engine, create or generate your game.
+2. **On Desktop**:
+   - In the top viewport bar, click the **`Export ▾`** dropdown menu.
+   - Or switch to **Code Mode** (`Code` button) and click **`JSX`**, **`C++`**, or **`SPY`**.
+3. **On Mobile (Pocket Studio)**:
+   - Tap the **🪄 (Wand)** button or open the file menu, then tap **Download JSX**, **Export Native C++**, or **Export SPY Script**.
+4. The downloaded files will be in your browser's `Downloads` folder:
+   - `YourGameComponent.jsx` (Web/React Three Fiber source)
+   - `YourGame_native.cpp` (Zero-overhead C++ source with scene graph & game loop)
+   - `YourGame.spy` (Spider Engine SPY script)
+   - `CMakeLists.txt` (Ready-to-compile CMake project)
 
 ---
 
-### 1. 🎮 Unreal Engine 5 (UE5 / UE4)
+### 🎮 Step 2: How to Use in Unreal Engine 5 (UE5 / UE4)
 
-#### Option A: Native C++ Actor / Character
-1. In your Unreal Engine project, create a new C++ class inheriting from `AActor` (or `APawn` / `ACharacter`), e.g., `ASpiderGameActor`.
-2. Open `SpiderGameActor.h` and declare your component pointers and state variables from the exported `.cpp`:
+#### Click-by-Click Guide:
+1. **Open your Unreal Engine project** (or create a new Blank C++ or Blueprint project).
+2. **Create a C++ Class**:
+   - In the top menu, go to **Tools** → **New C++ Class...**
+   - Select **Actor** (or **Character** if you want built-in movement components) and click **Next**.
+   - Name it `SpiderGameActor` and click **Create Class**.
+   - Unreal Engine will generate `SpiderGameActor.h` and `SpiderGameActor.cpp` in your project's `Source/YourProjectName/` directory and open them in Visual Studio or Rider.
+3. **Copy the Header declarations (`SpiderGameActor.h`)**:
+   Add your component pointers and state variables from the exported `.cpp`:
    ```cpp
    #pragma once
    #include "CoreMinimal.h"
    #include "GameFramework/Actor.h"
+   #include "Components/StaticMeshComponent.h"
    #include "SpiderGameActor.generated.h"
 
    UCLASS()
-   class YOURGAME_API ASpiderGameActor : public AActor {
+   class YOURPROJECT_API ASpiderGameActor : public AActor {
        GENERATED_BODY()
    public:
        ASpiderGameActor();
@@ -418,62 +441,77 @@ Spider Game Engine includes a native **JSX to C++ & SPY transpiler** and univers
    public:
        virtual void Tick(float DeltaTime) override;
 
-       UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+       // 3D Scene Components (mapped from Spider Engine meshes)
+       UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spider Engine")
        UStaticMeshComponent* HeroMesh;
 
+       // Game State (mapped from Spider Engine useState)
        UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spider Engine")
-       float MoveSpeed = 800.0f;
+       float MoveSpeed = 600.0f;
 
-       UPROPERTY(VisibleAnywhere, Category = "Spider Engine")
+       UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spider Engine")
        int32 Score = 0;
    };
    ```
-3. Open `SpiderGameActor.cpp` and copy the logic:
-   - **Scene Initialization (`Init` in exported C++)** -> Place in `BeginPlay()`:
-     ```cpp
-     void ASpiderGameActor::BeginPlay() {
-         Super::BeginPlay();
-         // Setup positions and materials matching exported scene
-     }
-     ```
-   - **Game Loop (`Update(float dt)` / `useFrame`)** -> Place in `Tick(float DeltaTime)`:
-     ```cpp
-     void ASpiderGameActor::Tick(float DeltaTime) {
-         Super::Tick(DeltaTime);
+4. **Copy the Implementation (`SpiderGameActor.cpp`)**:
+   ```cpp
+   #include "SpiderGameActor.h"
 
-         // Direct 1:1 match with Spider Engine's exported Update(dt) loop:
-         FVector Pos = GetActorLocation();
-         // Apply directional movement, rotation, and math translated from Math.sin / std::sin
-         SetActorLocation(Pos);
-     }
-     ```
+   ASpiderGameActor::ASpiderGameActor() {
+       PrimaryActorTick.bCanEverTick = true;
 
-#### Option B: Blueprints
-- If you prefer Blueprints, map the exported variables to Actor variables, and recreate the `Update(dt)` logic in your **Event Tick** graph.
+       // Initialize the root component and mesh
+       HeroMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeroMesh"));
+       RootComponent = HeroMesh;
+   }
+
+   void ASpiderGameActor::BeginPlay() {
+       Super::BeginPlay();
+       // Place any one-time setup here (from Spider Engine init block)
+   }
+
+   void ASpiderGameActor::Tick(float DeltaTime) {
+       Super::Tick(DeltaTime);
+
+       // 1:1 match with Spider Engine's exported Update(dt) / useFrame:
+       FVector Location = GetActorLocation();
+       // Add your exported movement, rotation, and math translated from Math.sin / std::sin
+       SetActorLocation(Location);
+   }
+   ```
+5. **Compile & Play**:
+   - In Unreal Engine 5, click the **Live Coding** button at the bottom right (`Ctrl + Alt + F11`) to compile instantly without closing the editor.
+   - In the **Content Drawer** (`Ctrl + Space`), navigate to **C++ Classes** → **YourProject** → drag `SpiderGameActor` into your level viewport.
+   - Press **Play (`Alt + P`)** to run!
 
 ---
 
-### 2. 🤖 Godot Engine 4 (GDScript / C# / GDExtension)
+### 🤖 Step 3: How to Use in Godot Engine 4 (GDScript / C# / GDExtension)
 
-#### Option A: GDScript (Instant Copy-Paste)
-The exported JSX / SPY logic maps directly to a `Node3D` in Godot:
-1. Create a `Node3D` scene (`SpiderGame.tscn`).
-2. Add child nodes matching the exported meshes (`MeshInstance3D` with `BoxMesh`, `SphereMesh`, or `PlaneMesh`).
-3. Attach a script (`SpiderGame.gd`) and paste the state and loop logic:
+#### Click-by-Click Guide (GDScript):
+1. **Open your Godot 4 project**.
+2. **Create a 3D Scene**:
+   - In the **Scene** dock (top left), click **3D Scene** (creates a `Node3D` root).
+   - Right-click the root node → **Add Child Node...** (`Ctrl + A`).
+   - Add a `MeshInstance3D` (name it `HeroMesh`). In the Inspector on the right, under **Mesh**, select **New BoxMesh** or **New SphereMesh**.
+3. **Attach Script**:
+   - Right-click the `Node3D` root node → click **Attach Script** (or click the script icon with the green plus).
+   - Name it `SpiderGame.gd` and click **Create**.
+4. **Paste the Code**:
+   Replace the contents of `SpiderGame.gd` with your exported logic:
    ```gdscript
    extends Node3D
 
-   # 1. State variables mapped from useState()
+   # 1. State variables mapped from Spider Engine useState()
    var score: int = 0
    var hero_pos: Vector3 = Vector3(0, 0.5, 0)
    @export var speed: float = 8.0
 
    func _ready() -> void:
-       # Initialize scene nodes matching Spider Engine init block
-       pass
+       print("Spider Game loaded in Godot 4!")
 
    func _process(delta: float) -> void:
-       # Direct 1:1 mapping from exported Update(dt) / useFrame:
+       # Direct 1:1 mapping from Spider Engine's Update(dt) / useFrame:
        var dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
        hero_pos.x += dir.x * speed * delta
        hero_pos.z += dir.y * speed * delta
@@ -481,16 +519,21 @@ The exported JSX / SPY logic maps directly to a `Node3D` in Godot:
        if has_node("HeroMesh"):
            $HeroMesh.position = hero_pos
    ```
-
-#### Option B: GDExtension (Native C++)
-- Drop the exported `_native.cpp` into your GDExtension project directory.
-- Register class methods in `ClassDB::bind_method` and connect `Update(float dt)` directly to `_process(double delta)`.
+5. **Save & Play**:
+   - Save the scene as `SpiderGame.tscn` (`Ctrl + S`).
+   - Press **F6** to play the current scene (or **F5** to run the main project).
 
 ---
 
-### 3. 🎯 Unity (Unity 2022+ / C# / URP / HDRP)
+### 🎯 Step 4: How to Use in Unity (Unity 2022+ / C# / URP / HDRP)
 
-1. Create a new C# script `SpiderGameController.cs` and attach it to a GameObject in your Unity scene:
+#### Click-by-Click Guide:
+1. **Open your Unity project**.
+2. **Create the Script**:
+   - In the **Project** window at the bottom, go to `Assets/Scripts/` (or right-click `Assets` → **Create** → **Folder** named `Scripts`).
+   - Right-click inside the folder → **Create** → **C# Script** → name it exactly `SpiderGameController` (must match class name).
+3. **Paste the C# Script**:
+   Double-click `SpiderGameController.cs` to open it in your code editor and paste:
    ```csharp
    using UnityEngine;
 
@@ -502,6 +545,7 @@ The exported JSX / SPY logic maps directly to a `Node3D` in Godot:
 
        void Start() {
            // Scene setup matching exported Spider Engine scene
+           Debug.Log("Spider Engine scene initialized in Unity!");
        }
 
        void Update() {
@@ -517,25 +561,91 @@ The exported JSX / SPY logic maps directly to a `Node3D` in Godot:
        }
    }
    ```
-2. **Native C++ Plugin in Unity**: You can also compile the exported `_native.cpp` into a native `.dll` (Windows) or `.so` (Linux/Android) and invoke it from C# via `[DllImport]`.
+4. **Attach to GameObject in Scene**:
+   - In the **Hierarchy** window, right-click → **3D Object** → **Cube** (name it `HeroCube`).
+   - Right-click in the Hierarchy → **Create Empty** → name it `GameManager`.
+   - Drag `SpiderGameController.cs` from the Project window onto `GameManager` in the Inspector.
+   - Drag `HeroCube` from the Hierarchy into the **Hero Transform** field in the Inspector.
+5. **Play**:
+   - Click the **Play (▶)** button at the top center of the Unity Editor (`Ctrl + P`).
 
 ---
 
-### 4. ⚡ Custom Engines (Vulkan, OpenGL, DirectX, Raylib, O3DE, Flax)
+### ⚙️ Step 5: How to Use in Custom C++ Engines (Vulkan, OpenGL, Raylib, O3DE, Flax)
 
 The exported C++ file is clean, modern **C++20** that does **NOT** depend on WebGL, Electron, or JavaScript engines:
-- Uses standard `<cmath>`, `<vector>`, `<string>`, and GLM (`glm::vec3`, `glm::vec4`).
-- **CMake Support**: Build instantly using the exported `CMakeLists.txt`:
-  ```bash
-  mkdir build && cd build
-  cmake ..
-  cmake --build . --config Release
-  ```
-- **Raylib / Custom Game Loop**: Simply call `scene.Init()` in your engine's setup phase, and call `scene.Update(GetFrameTime())` inside your main frame loop (`while (!WindowShouldClose())`).
+- Uses standard `<cmath>`, `<vector>`, `<string>`, and GLM vectors (`glm::vec3`, `glm::vec4`).
+
+#### Building with CMake:
+1. Place the exported `YourGame_native.cpp` into your project's `src/` folder.
+2. Place the exported `CMakeLists.txt` in the root folder.
+3. Open your terminal in the project folder and run:
+   ```bash
+   mkdir build && cd build
+   cmake ..
+   cmake --build . --config Release
+   ```
+4. Run the compiled executable:
+   ```bash
+   ./Release/SpiderGame.exe
+   ```
+
+#### Using in Raylib / Custom Loop:
+```cpp
+#include "SpiderGame_native.h"
+
+int main() {
+    InitWindow(1280, 720, "Spider Game - Native C++");
+    SetTargetFPS(60);
+
+    SpiderGameScene scene;
+    scene.Init();
+
+    while (!WindowShouldClose()) {
+        float dt = GetFrameTime();
+        scene.Update(dt);
+
+        BeginDrawing();
+        ClearBackground(BLACK);
+        scene.Render();
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
+```
 
 ---
 
-### 5. 🕷️ Upcoming Spider Game Engine Native Runtime (SPY Language)
+### 🌐 Step 6: How to Use in Web Projects (Next.js / Vite / React)
+
+If you downloaded the `.jsx` file:
+1. Copy `YourGameComponent.jsx` into your React / Next.js project.
+2. Install the standard Three.js packages:
+   ```bash
+   npm install three @react-three/fiber @react-three/drei
+   ```
+3. Import and render the component inside any React view:
+   ```jsx
+   import React from "react";
+   import { Canvas } from "@react-three/fiber";
+   import GameComponent from "./YourGameComponent.jsx";
+
+   export default function App() {
+     return (
+       <div style={{ width: "100vw", height: "100vh" }}>
+         <Canvas shadows camera={{ position: [0, 8, 12], fov: 50 }}>
+           <GameComponent />
+         </Canvas>
+       </div>
+     );
+   }
+   ```
+
+---
+
+### 🕷️ Step 7: Upcoming Spider Engine Native Runtime (SPY Language)
 
 For maximum performance without browser or Electron overhead, games exported as `.spy` run directly on the upcoming Spider Game Engine C++ native runtime:
 ```bash
