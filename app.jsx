@@ -14,6 +14,12 @@ import { runAgent, systemPrompt, GAME_STEPS, GAME_BUILDER_PRIMER, extractFilesFr
 import { runLimits, contextWindow, buildMemory, memoryBudget } from "./src/mobile/context.js";
 import { retrieveRagContext, ragStore } from "./src/engine/ragEngine.js";
 import {
+  transpileJsxToCpp,
+  transpileJsxToSpy,
+  generateCMakeLists,
+  triggerDownload,
+} from "./src/engine/spiderCppExporter.js";
+import {
   GAME_WORLD, ENVIRONMENT_ASSETS, COINS, COIN_RULES, PLAYER, physicsFallSpeed
 } from "./src/game/index.js";
 import { MATERIAL_PRESETS, matColor, TUTORIALS } from "./src/game/index.js";
@@ -809,6 +815,7 @@ function DesktopApp() {
   const [artifactViewMode, setArtifactViewMode] = useState("viewport"); // 'viewport' | 'code'
   const [isArtifactFullscreen, setIsArtifactFullscreen] = useState(false);
   const [isCodeCopied, setIsCodeCopied] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const handleCheckMobile = () => {
@@ -6403,6 +6410,86 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                       {isCodeCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
 
+                    {/* Export / Download Menu */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setExportMenuOpen((v) => !v)}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-indigo-600 transition cursor-pointer"
+                        title="Download JSX or Export Native C++ / SPY code"
+                      >
+                        <Download className="w-3.5 h-3.5 text-indigo-600" />
+                        <span className="hidden sm:inline">Export</span>
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                      {exportMenuOpen && (
+                        <div
+                          className="absolute right-0 top-full mt-1 w-56 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl py-1.5 z-50 text-xs font-mono"
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                            Download / Export Code
+                          </div>
+                          <button
+                            onClick={() => {
+                              const curName = activeJsxName || (snakesActive ? "SnakesAndLadders3D.jsx" : "GameComponent.jsx");
+                              const curCode = activeJsxCode !== null ? activeJsxCode : "";
+                              triggerDownload(curName, curCode, "text/javascript");
+                              setExportMenuOpen(false);
+                              appendLog("Success", `Downloaded "${curName}"`);
+                            }}
+                            className="w-full text-left px-3 py-1.5 hover:bg-slate-800 text-cyan-300 flex items-center gap-2 cursor-pointer transition"
+                          >
+                            <Download className="w-3.5 h-3.5 text-cyan-400" />
+                            <span>Download JSX (.jsx)</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const curName = activeJsxName || (snakesActive ? "SnakesAndLadders3D.jsx" : "GameComponent.jsx");
+                              const baseName = curName.replace(/\.[^/.]+$/, "");
+                              const curCode = activeJsxCode !== null ? activeJsxCode : "";
+                              const cpp = transpileJsxToCpp(curCode, baseName);
+                              triggerDownload(`${baseName}_native.cpp`, cpp, "text/x-c++src");
+                              setExportMenuOpen(false);
+                              appendLog("Success", `Transpiled & downloaded "${baseName}_native.cpp" for Spider C++ Engine`);
+                            }}
+                            className="w-full text-left px-3 py-1.5 hover:bg-slate-800 text-amber-300 flex items-center gap-2 cursor-pointer transition"
+                          >
+                            <Code className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Export Native C++ (.cpp)</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const curName = activeJsxName || (snakesActive ? "SnakesAndLadders3D.jsx" : "GameComponent.jsx");
+                              const baseName = curName.replace(/\.[^/.]+$/, "");
+                              const curCode = activeJsxCode !== null ? activeJsxCode : "";
+                              const spy = transpileJsxToSpy(curCode, baseName);
+                              triggerDownload(`${baseName}.spy`, spy, "text/plain");
+                              setExportMenuOpen(false);
+                              appendLog("Success", `Exported SPY script "${baseName}.spy"`);
+                            }}
+                            className="w-full text-left px-3 py-1.5 hover:bg-slate-800 text-purple-300 flex items-center gap-2 cursor-pointer transition"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                            <span>Export SPY Script (.spy)</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const curName = activeJsxName || (snakesActive ? "SnakesAndLadders3D.jsx" : "GameComponent.jsx");
+                              const baseName = curName.replace(/\.[^/.]+$/, "");
+                              const cmake = generateCMakeLists(baseName);
+                              triggerDownload("CMakeLists.txt", cmake, "text/plain");
+                              setExportMenuOpen(false);
+                              appendLog("Success", `Exported CMakeLists.txt for "${baseName}"`);
+                            }}
+                            className="w-full text-left px-3 py-1.5 hover:bg-slate-800 text-emerald-300 flex items-center gap-2 cursor-pointer transition"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Export CMakeLists.txt</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Full Screen Toggle */}
                     <button
                       onClick={toggleViewportFullscreen}
@@ -6499,6 +6586,56 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                         <Save className="w-3 h-3 text-emerald-400" />
                         <span>Save</span>
                       </button>
+
+                      {/* Download JSX Button */}
+                      <button
+                        onClick={() => {
+                          const curName = activeJsxName || (snakesActive ? "SnakesAndLadders3D.jsx" : "GameComponent.jsx");
+                          const curCode = activeJsxCode !== null ? activeJsxCode : "";
+                          triggerDownload(curName, curCode, "text/javascript");
+                          appendLog("Success", `Downloaded "${curName}"`);
+                        }}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 font-mono text-[10px] cursor-pointer transition"
+                        title="Download active JSX game source (.jsx)"
+                      >
+                        <Download className="w-3 h-3 text-cyan-400" />
+                        <span>JSX</span>
+                      </button>
+
+                      {/* Export Native C++ Button */}
+                      <button
+                        onClick={() => {
+                          const curName = activeJsxName || (snakesActive ? "SnakesAndLadders3D.jsx" : "GameComponent.jsx");
+                          const baseName = curName.replace(/\.[^/.]+$/, "");
+                          const curCode = activeJsxCode !== null ? activeJsxCode : "";
+                          const cpp = transpileJsxToCpp(curCode, baseName);
+                          triggerDownload(`${baseName}_native.cpp`, cpp, "text/x-c++src");
+                          appendLog("Success", `Transpiled & downloaded "${baseName}_native.cpp" for Spider C++ Engine`);
+                        }}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-950/80 hover:bg-amber-900 border border-amber-800 text-amber-300 font-mono text-[10px] cursor-pointer transition"
+                        title="Transpile JSX to Native C++ (.cpp) for Spider C++ Vulkan/OpenGL Engine"
+                      >
+                        <Code className="w-3 h-3 text-amber-400" />
+                        <span>C++</span>
+                      </button>
+
+                      {/* Export SPY Script Button */}
+                      <button
+                        onClick={() => {
+                          const curName = activeJsxName || (snakesActive ? "SnakesAndLadders3D.jsx" : "GameComponent.jsx");
+                          const baseName = curName.replace(/\.[^/.]+$/, "");
+                          const curCode = activeJsxCode !== null ? activeJsxCode : "";
+                          const spy = transpileJsxToSpy(curCode, baseName);
+                          triggerDownload(`${baseName}.spy`, spy, "text/plain");
+                          appendLog("Success", `Exported SPY script "${baseName}.spy"`);
+                        }}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-950/80 hover:bg-purple-900 border border-purple-800 text-purple-300 font-mono text-[10px] cursor-pointer transition"
+                        title="Export SPY Script (.spy) for Spider Game Engine"
+                      >
+                        <Sparkles className="w-3 h-3 text-purple-400" />
+                        <span>SPY</span>
+                      </button>
+
                       <button
                         onClick={() => setArtifactViewMode("viewport")}
                         className="flex items-center gap-1.5 px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs cursor-pointer transition shadow-xs"

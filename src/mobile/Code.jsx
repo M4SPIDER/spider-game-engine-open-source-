@@ -5,8 +5,9 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { highlight, highlightLines } from "./highlight.js";
-import { AlignLeft, Check, ClipboardCopy, WrapText, FilePlus2, Pencil, Play, RotateCcw, Square, Trash2, Wand2, Copy as CopyIcon } from "lucide-react";
-import { STARTER_CODE } from "./store.js";
+import { AlignLeft, Check, ClipboardCopy, WrapText, FilePlus2, Pencil, Play, RotateCcw, Square, Trash2, Wand2, Copy as CopyIcon, Download, Code2, Cpu, FileText } from "lucide-react";
+import { STARTER_CODE, download } from "./store.js";
+import { transpileJsxToCpp, transpileJsxToSpy, generateCMakeLists } from "../engine/spiderCppExporter.js";
 import { Sheet, cx } from "./ui.jsx";
 
 const SNIPPETS = [
@@ -290,6 +291,52 @@ export default function Code({ s, notify }) {
         <div className="sp-menu">
           <button type="button" onClick={() => { navigator.clipboard?.writeText(draft); setMenu(false); notify("Copied", "ok"); }}>
             <ClipboardCopy size={18} /> Copy code
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              download(file.name || "GameComponent.jsx", draft, "text/javascript");
+              setMenu(false);
+              notify(`Downloaded ${file.name}`, "ok");
+            }}
+          >
+            <Download size={18} /> Download JSX (.jsx)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const baseName = (file.name || "GameComponent").replace(/\.[^/.]+$/, "");
+              const cpp = transpileJsxToCpp(draft, baseName);
+              download(`${baseName}_native.cpp`, cpp, "text/x-c++src");
+              setMenu(false);
+              notify(`Exported ${baseName}_native.cpp`, "ok");
+            }}
+          >
+            <Code2 size={18} /> Export Native C++ (.cpp)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const baseName = (file.name || "GameComponent").replace(/\.[^/.]+$/, "");
+              const spy = transpileJsxToSpy(draft, baseName);
+              download(`${baseName}.spy`, spy, "text/plain");
+              setMenu(false);
+              notify(`Exported ${baseName}.spy`, "ok");
+            }}
+          >
+            <Cpu size={18} /> Export SPY Script (.spy)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const baseName = (file.name || "GameComponent").replace(/\.[^/.]+$/, "");
+              const cmake = generateCMakeLists(baseName);
+              download("CMakeLists.txt", cmake, "text/plain");
+              setMenu(false);
+              notify("Exported CMakeLists.txt", "ok");
+            }}
+          >
+            <FileText size={18} /> Export CMake Project
           </button>
           <button type="button" onClick={() => { s.setSettings({ wrapCode: !wrap }); setMenu(false); }}>
             <WrapText size={18} /> Wrap long lines: {wrap ? "on" : "off"}
