@@ -349,8 +349,7 @@ export function useStudio() {
       resetRuntime();
       setCurrentId(id);
       setSelectedId(p.select === undefined ? null : p.select);
-      const isCode = p.template === "code" && Boolean(p.mountedFile);
-      const mounted = isCode ? p.files?.find((f) => f.name === p.mountedFile) : null;
+      const mounted = p.mountedFile ? p.files?.find((f) => f.name === p.mountedFile) : null;
       setActiveJsx(mounted ? mounted.content : null);
       setActiveJsxName(mounted ? mounted.name : null);
       setCodeError(null);
@@ -400,8 +399,7 @@ export function useStudio() {
         resetRuntime();
         setCurrentId(next.id);
         setSelectedId(next.select === undefined ? null : next.select);
-        const isCode = next.template === "code" && Boolean(next.mountedFile);
-        const mounted = isCode ? next.files?.find((f) => f.name === next.mountedFile) : null;
+        const mounted = next.mountedFile ? next.files?.find((f) => f.name === next.mountedFile) : null;
         setActiveJsx(mounted ? mounted.content : null);
         setActiveJsxName(mounted ? mounted.name : null);
       }
