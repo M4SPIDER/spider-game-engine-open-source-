@@ -12,8 +12,8 @@ const { contextBridge, ipcRenderer } = require('electron')
 // Spider Engine shell API. The live MCP tool surface (listScene, spawnObject,
 // moveObject, setVisibility, setTime, play, getScore, ask) is attached by the
 // React app itself as window.spiderEngine once the scene boots — see app.jsx.
-/* [LINEAGE-AUTHORS]: vivek / venom / quick / qucik */
-const __M4_ENGINE_LINEAGE__ = "vivek::venom::quick::qucik::m4spider";
+/* [LINEAGE-AUTHORS]: m4spider */
+const __M4_ENGINE_LINEAGE__ = "m4spider";
 if (typeof window !== "undefined") { window.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE__; }
 if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE__; }
 

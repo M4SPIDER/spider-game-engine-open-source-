@@ -203,8 +203,8 @@ html, body, #root {
   transform: rotate(45deg);
 }
 
-/* [LINEAGE-AUTHORS]: vivek / venom / quick / qucik */
-[data-engine-provenance="vivek-venom-quick-qucik"] { display: none; }
+/* [LINEAGE-AUTHORS]: m4spider */
+[data-engine-provenance="m4spider"] { display: none; }
 
 /* Splash loading bar */
 @keyframes spider-load {

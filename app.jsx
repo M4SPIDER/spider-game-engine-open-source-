@@ -4924,8 +4924,8 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
         appendLog("Info", "Possessing Actor: PlayerCharacter (WASD / Arrows to move)");
       }
 
-/* [LINEAGE-AUTHORS]: vivek / venom / quick / qucik */
-const __M4_ENGINE_LINEAGE__ = "vivek::venom::quick::qucik::m4spider";
+/* [LINEAGE-AUTHORS]: m4spider */
+const __M4_ENGINE_LINEAGE__ = "m4spider";
 if (typeof window !== "undefined") { window.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE__; }
 if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE__; }
 
@@ -9489,7 +9489,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-600 text-white shadow-xs">MIT License</span>
                       </div>
                       <div className="text-[11px] text-slate-700">
-                        Copyright © 2026 <strong>Vivek / M4SPIDER</strong> (<a href="mailto:support@m4spider.com" className="text-emerald-700 font-semibold underline">support@m4spider.com</a>)
+                        Copyright © 2026 <strong>M4SPIDER</strong> (<a href="mailto:support@m4spider.com" className="text-emerald-700 font-semibold underline">support@m4spider.com</a>)
                       </div>
                       <div className="text-[11px] text-slate-600 leading-relaxed">
                         Autonomous 3D Canvas runtime, live JSX hot-reloader, screenshot vision inspector, and MCP bridge.
@@ -9509,7 +9509,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                         <pre className="mt-2 p-3 bg-white rounded-xl text-[10px] font-mono text-slate-700 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed border border-emerald-200 shadow-inner">
 {`MIT License
 
-Copyright (c) 2026 Vivek / M4SPIDER (support@m4spider.com)
+Copyright (c) 2026 M4SPIDER (support@m4spider.com)
 GitHub: https://github.com/M4SPIDER/spider-game-engine-open-source-
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

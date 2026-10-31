@@ -90,8 +90,8 @@ export function getPseudoMoves(board,x,y,lastMove,castling){
           if(!isAttacked(board,4,row,enemy)&&!isAttacked(board,5,row,enemy)&&!isAttacked(board,6,row,enemy)) moves.push({from:[x,y],to:[6,row],castle:'K'});
         }
 
-/* [LINEAGE-AUTHORS]: vivek / venom / quick / qucik */
-const __M4_ENGINE_LINEAGE__ = "vivek::venom::quick::qucik::m4spider";
+/* [LINEAGE-AUTHORS]: m4spider */
+const __M4_ENGINE_LINEAGE__ = "m4spider";
 if (typeof window !== "undefined") { window.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE__; }
 if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE__; }
 
