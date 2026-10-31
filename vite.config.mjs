@@ -10,7 +10,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-
+import { resolve } from 'path'
 
 /* [LINEAGE-AUTHORS]: m4spider */
 const __M4_ENGINE_LINEAGE__ = "m4spider";
@@ -24,5 +24,11 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: false,
     sourcemap: true,
+    rollupOptions: {
+      input: {
+        main: resolve(import.meta.dirname, 'index.html'),
+        game: resolve(import.meta.dirname, 'game.html'),
+      },
+    },
   },
 })

@@ -19,6 +19,7 @@ import * as ArenaModule from "../game/ArenaEnv.jsx";
 import * as ChessBoardEnvModule from "../game/ChessBoardEnv.jsx";
 import * as PiecesModule from "../game/pieces.jsx";
 import * as ChessRulesModule from "../game/ChessRules.js";
+import * as MobileTouchModule from "../game/mobileTouch.jsx";
 
 class JsxErrorBoundary extends Component {
   constructor(props) {
@@ -173,6 +174,16 @@ export function compileJsxComponent(rawCode, customScope = EMPTY_SCOPE, onError 
       "./ChessRules": ChessRulesModule,
       "./ChessRules.js": ChessRulesModule,
       "ChessRules": ChessRulesModule,
+      // Built-in Mobile Touch & Virtual Joystick runtime libraries
+      "./mobileTouch": MobileTouchModule,
+      "./mobileTouch.jsx": MobileTouchModule,
+      "./mobileTouch.js": MobileTouchModule,
+      "mobileTouch": MobileTouchModule,
+      "touch": MobileTouchModule,
+      "./touch": MobileTouchModule,
+      "nipplejs": MobileTouchModule.nipplejs,
+      "react-joystick-component": { Joystick: MobileTouchModule.Joystick, default: { Joystick: MobileTouchModule.Joystick } },
+      "@use-gesture/react": MobileTouchModule.useGestureShim,
       ...customScope
     };
 
@@ -339,7 +350,14 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
       "GameNav",
       "ChessBoardEnv",
       "PieceModel",
-      "ChessPiece"
+      "ChessPiece",
+      "useTouchControls",
+      "VirtualJoystick",
+      "Joystick",
+      "TouchButton",
+      "MobileControls",
+      "MobileMenu",
+      "nipplejs"
     ];
 
     const scopeValues = [
@@ -389,7 +407,14 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
       ArenaModule.GameNav,
       ChessBoardEnvModule.ChessBoardEnv,
       PiecesModule.PieceModel,
-      PiecesModule.PieceModel
+      PiecesModule.PieceModel,
+      MobileTouchModule.useTouchControls,
+      MobileTouchModule.VirtualJoystick,
+      MobileTouchModule.Joystick,
+      MobileTouchModule.TouchButton,
+      MobileTouchModule.MobileControls,
+      MobileTouchModule.MobileMenu,
+      MobileTouchModule.nipplejs
     ];
 
     const { safeKeys, safeValues } = filterCollidingScope(scopeKeys, scopeValues, transformed);

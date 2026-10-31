@@ -1336,19 +1336,19 @@ export default function GameViewport({
         {/* Dedicated Studio & Tournament Lighting for Custom & Board Games */}
         {isolateCustomGame && (
           <>
-            <hemisphereLight skyColor="#f8fafc" groundColor="#1e293b" intensity={0.65} />
+            <hemisphereLight skyColor={night ? "#1e293b" : "#f8fafc"} groundColor="#0f172a" intensity={night ? 0.35 : 0.65} />
             <directionalLight
-              position={[14, 24, 18]}
-              intensity={1.6}
-              castShadow
+              position={sunPos}
+              intensity={night ? 0.4 : 1.6}
+              castShadow={rtxEnabled}
               shadow-mapSize={[2048, 2048]}
-              shadow-camera-left={-16}
-              shadow-camera-right={16}
-              shadow-camera-top={16}
-              shadow-camera-bottom={-16}
+              shadow-camera-left={-25}
+              shadow-camera-right={25}
+              shadow-camera-top={25}
+              shadow-camera-bottom={-25}
               shadow-bias={-0.0001}
             />
-            <directionalLight position={[-12, 14, -12]} intensity={0.45} color="#93c5fd" />
+            <directionalLight position={[-sunPos[0], 14, -sunPos[2]]} intensity={0.45} color={night ? "#6366f1" : "#93c5fd"} />
           </>
         )}
 
@@ -1516,9 +1516,9 @@ export default function GameViewport({
           />
         )}
 
-        {showGrid && !isolateCustomGame && <Grid position={[0, 0.01, 0]} args={[120, 120]} cellColor="#94a3b8" sectionColor="#475569" fadeDistance={140} />}
-        {!hasCustomJsx && (
-          <OrbitControls makeDefault target={[0, 0, 0]} maxPolarAngle={Math.PI / 2.05} minDistance={4} maxDistance={160} enabled={isBoardGame || cameraMode !== "Game View"} />
+        {showGrid && <Grid position={[0, -0.41, 0]} args={[120, 120]} cellColor="#334155" sectionColor="#475569" fadeDistance={140} />}
+        {(cameraMode === "Viewport" || (!hasCustomJsx && (isBoardGame || cameraMode !== "Game View"))) && (
+          <OrbitControls makeDefault target={[0, 0, 0]} maxPolarAngle={Math.PI / 2.05} minDistance={4} maxDistance={160} />
         )}
         {/* Live axis orientation gizmo — tracks the real camera */}
         {!isPlaying && !hasCustomJsx && (

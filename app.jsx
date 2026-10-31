@@ -62,6 +62,7 @@ import {
   Mic,
   MicOff,
   Move,
+  GripVertical,
   RotateCw,
   Scaling,
   MousePointer,
@@ -103,6 +104,31 @@ import {
   MessageCircle
 } from "lucide-react";
 import { sfx } from "./src/engine/audioSynthesizer.js";
+
+// Spider Engine Direct Internal Audio Destination Tap for 60 FPS Video Recorder
+if (typeof window !== "undefined" && !window.__spiderAudioTapInstalled) {
+  window.__spiderAudioTapInstalled = true;
+  window.__spiderAudioDests = new Set();
+  const origConnect = typeof AudioNode !== "undefined" ? AudioNode.prototype.connect : null;
+  if (origConnect) {
+    AudioNode.prototype.connect = function(destination, ...rest) {
+      try {
+        if (this.context && (destination === this.context.destination || destination === undefined)) {
+          if (!this.context.__spiderRecordDest && this.context.createMediaStreamDestination) {
+            const rd = this.context.createMediaStreamDestination();
+            this.context.__spiderRecordDest = rd;
+            window.__spiderAudioDests.add(rd);
+          }
+          if (this.context.__spiderRecordDest && destination !== this.context.__spiderRecordDest) {
+            try { origConnect.call(this, this.context.__spiderRecordDest); } catch(e) {}
+          }
+        }
+      } catch (err) {}
+      return origConnect.call(this, destination, ...rest);
+    };
+  }
+}
+
 
 // Text purifier: strips all ** asterisks, bold markers, and markdown clutter from UI
 export function purifyUiText(text) {
@@ -399,12 +425,646 @@ function pickModelText(d) {
   return null;
 }
 
-const DEFAULT_JSX_GAME = `import React from "react";
+const DEFAULT_JSX_GAME = `import React, { useRef, useState, useEffect } from "react";
+import { useFrame } from "@react-three/fiber";
+import { Html } from "@react-three/drei";
+import { PauseOverlay, useKeyboardControls } from "./ArenaEnv.jsx";
+
+// Web Audio API Procedural SFX (Zero external audio files required)
+const sfx = (f = 440, t = "sine", d = 0.12) => {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const c = new AudioCtx();
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = t;
+    o.frequency.value = f;
+    g.gain.setValueAtTime(0.09, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + d);
+    o.connect(g);
+    g.connect(c.destination);
+    o.start();
+    o.stop(c.currentTime + d);
+  } catch {}
+};
+
+// 3 Track Lanes
+const LANES = [-2.3, 0, 2.3];
 
 export default function GameComponent() {
-  return null;
+  const pRef = useRef();
+  const keys = useRef({});
+  const vy = useRef(0);
+  const hp = useRef(3);
+  const sc = useRef(0);
+  const dist = useRef(0);
+  const lastTier = useRef(0);
+  const inv = useRef(0);
+  const jumpCount = useRef(0);
+  const oR = useRef([]);
+  const cR = useRef([]);
+  const sR = useRef([]);
+
+  const touchState = useRef({
+    startX: 0,
+    startY: 0,
+    active: false,
+    isTap: true,
+    startTime: 0
+  });
+
+  // Procedural Obstacles and Coins
+  const obs = useRef(
+    Array.from({ length: 14 }, (_, i) => ({
+      x: LANES[i % 3],
+      z: -18 - i * 17,
+      h: i % 3 === 0 ? 1.6 : 1
+    }))
+  );
+
+  const coins = useRef(
+    Array.from({ length: 14 }, (_, i) => ({
+      x: LANES[(i + 1) % 3],
+      z: -10 - i * 15,
+      a: true
+    }))
+  );
+
+  const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [distance, setDistance] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [state, setState] = useState("menu");
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+  const [isHyperBoosting, setIsHyperBoosting] = useState(false);
+  const [speedNotification, setSpeedNotification] = useState(null);
+
+  const { getDir } = useKeyboardControls();
+
+  // Reset Run State
+  const reset = () => {
+    hp.current = 3;
+    sc.current = 0;
+    dist.current = 0;
+    lastTier.current = 0;
+    vy.current = 0;
+    inv.current = 0;
+    jumpCount.current = 0;
+    setScore(0);
+    setLives(3);
+    setDistance(0);
+    setSpeedNotification(null);
+    obs.current.forEach((o, i) => {
+      o.x = LANES[Math.floor(Math.random() * 3)];
+      o.z = -18 - i * 17;
+    });
+    coins.current.forEach((c, i) => {
+      c.a = true;
+      c.x = LANES[Math.floor(Math.random() * 3)];
+      c.z = -10 - i * 15;
+    });
+    if (pRef.current) pRef.current.position.set(0, 0.65, 0);
+  };
+
+  // Start Run
+  const start = () => {
+    reset();
+    setState("playing");
+    setPaused(false);
+    if (!muted) sfx(620, "triangle", 0.18);
+  };
+
+  // Physical Keyboard Listeners
+  useEffect(() => {
+    const dn = (e) => {
+      keys.current[e.key.toLowerCase()] = true;
+      keys.current[e.code] = true;
+      if (e.key === "Escape") setPaused((p) => !p);
+      if ((e.key === "Enter" || e.key === " ") && state !== "playing") start();
+      if (e.key.toLowerCase() === "r") {
+        reset();
+        setState("playing");
+      }
+    };
+    const up = (e) => {
+      keys.current[e.key.toLowerCase()] = false;
+      keys.current[e.code] = false;
+    };
+    window.addEventListener("keydown", dn);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", dn);
+      window.removeEventListener("keyup", up);
+    };
+  }, [state, muted]);
+
+  // Touch Gesture Listeners (Push Forward = Boost, Swipe Left/Right = Steer, Tap = Jump)
+  useEffect(() => {
+    const handleTouchStart = (e) => {
+      // Don't intercept touches on buttons or interactive UI (speaker, pause, etc.)
+      if (e.target && (e.target.closest("button") || e.target.closest("a") || e.target.closest("[data-interactive]"))) {
+        return;
+      }
+      const t = e.touches[0];
+      if (!t) return;
+      touchState.current = {
+        startX: t.clientX,
+        startY: t.clientY,
+        active: true,
+        isTap: true,
+        startTime: Date.now()
+      };
+
+      // Tapping or swiping anywhere starts the run immediately!
+      if (stateRef.current !== "playing") {
+        start();
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.target && (e.target.closest("button") || e.target.closest("a") || e.target.closest("[data-interactive]"))) {
+        return;
+      }
+      if (!touchState.current.active) return;
+      const t = e.touches[0];
+      if (!t) return;
+      const dx = t.clientX - touchState.current.startX;
+      const dy = t.clientY - touchState.current.startY;
+
+      if (Math.hypot(dx, dy) > 8) {
+        touchState.current.isTap = false;
+      }
+
+      if (stateRef.current !== "playing") {
+        start();
+      }
+
+      if (typeof window !== "undefined") {
+        window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
+        // Steer Left / Right (smooth responsive threshold)
+        if (dx < -15) {
+          window.__spiderVirtualTouch.x = -1;
+        } else if (dx > 15) {
+          window.__spiderVirtualTouch.x = 1;
+        } else {
+          window.__spiderVirtualTouch.x = 0;
+        }
+
+        // PUSH FORWARD -> TURN ON BOOST!
+        if (dy < -20) {
+          window.__spiderVirtualTouch.sprint = true;
+        } else {
+          window.__spiderVirtualTouch.sprint = false;
+        }
+      }
+    };
+
+    const handleTouchEnd = (e) => {
+      if (e.target && (e.target.closest("button") || e.target.closest("a") || e.target.closest("[data-interactive]"))) {
+        touchState.current.active = false;
+        return;
+      }
+      if (touchState.current.active && touchState.current.isTap && Date.now() - touchState.current.startTime < 350) {
+        if (stateRef.current === "playing") {
+          // Tap screen = JUMP
+          if (typeof window !== "undefined") {
+            window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
+            window.__spiderVirtualTouch.jump = true;
+            setTimeout(() => {
+              if (window.__spiderVirtualTouch) window.__spiderVirtualTouch.jump = false;
+            }, 120);
+          }
+        } else {
+          start();
+        }
+      }
+      touchState.current.active = false;
+      if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
+        window.__spiderVirtualTouch.x = 0;
+        window.__spiderVirtualTouch.sprint = false;
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, []);
+
+  // Main 60 FPS Game Loop
+  useFrame((st, dt) => {
+    const p = pRef.current;
+    if (!p) return;
+
+    // Menu Camera Sweep
+    if (state !== "playing") {
+      const a = st.clock.elapsedTime * 0.25;
+      st.camera.position.set(Math.sin(a) * 9, 4.5, Math.cos(a) * 9);
+      st.camera.lookAt(0, 1, -4);
+      p.rotation.x += dt * 2;
+      return;
+    }
+
+    if (paused) return;
+    dt = Math.min(dt, 0.033);
+
+    // SPEED PROGRESSION: On every 100 meters, increase speed!
+    const currentTier = Math.floor(dist.current / 100);
+    if (currentTier > lastTier.current) {
+      lastTier.current = currentTier;
+      setSpeedNotification(\`🚀 SPEED UP! \${currentTier * 100}m MILESTONE (+\${currentTier * 3.5} SPD)\`);
+      if (!muted) {
+        sfx(780, "sine", 0.1);
+        setTimeout(() => sfx(1046, "sine", 0.16), 65);
+      }
+      setTimeout(() => setSpeedNotification(null), 2400);
+    }
+
+    // Base speed increases with every 100m milestone!
+    const speedMilestoneBonus = currentTier * 3.5;
+    const baseSpeed = 16 + speedMilestoneBonus;
+
+    // PUSH FORWARD TO TURN ON BOOST (W / Up Arrow / Push Forward on Touch Screen)
+    const { x } = getDir();
+    const boostActive = Boolean(
+      keys.current["w"] ||
+      keys.current["arrowup"] ||
+      keys.current["shift"] ||
+      keys.current["shiftleft"] ||
+      keys.current["shiftright"] ||
+      (typeof window !== "undefined" && window.__spiderVirtualTouch?.sprint)
+    );
+    if (boostActive !== isHyperBoosting) {
+      setIsHyperBoosting(boostActive);
+    }
+
+    // OP Boost multiplier: 2.2x speed boost!
+    const sprint = boostActive ? 2.2 : 1.0;
+    const speed = baseSpeed * sprint;
+
+    dist.current += speed * dt;
+    sc.current += dt * (boostActive ? 14 : 6);
+    if (Math.floor(sc.current) % 10 === 0) setScore(Math.floor(sc.current));
+    if (Math.floor(dist.current) % 5 === 0) setDistance(Math.floor(dist.current));
+
+    // Smooth horizontal lane steering
+    p.position.x = Math.max(-3.4, Math.min(3.4, p.position.x + x * (boostActive ? 14 : 11) * dt));
+
+    // MULTI-JUMP / AIR JUMP (Spacebar or Screen Tap - up to 2 jumps in air!)
+    const jumpPressed = Boolean(
+      keys.current[" "] ||
+      keys.current["Space"] ||
+      (typeof window !== "undefined" && window.__spiderVirtualTouch?.jump)
+    );
+    if (jumpPressed && jumpCount.current < 2 && p.position.y <= 2.2) {
+      vy.current = 10.4;
+      jumpCount.current++;
+      keys.current[" "] = false;
+      keys.current["Space"] = false;
+      if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
+        window.__spiderVirtualTouch.jump = false;
+      }
+      if (!muted) sfx(jumpCount.current === 2 ? 780 : 540, "sine", 0.12);
+    }
+
+    vy.current -= 28 * dt;
+    p.position.y = Math.max(0.65, p.position.y + vy.current * dt);
+    if (p.position.y <= 0.66) {
+      vy.current = 0;
+      jumpCount.current = 0;
+    }
+
+    // Rapid ball rotation according to speed
+    p.rotation.x -= speed * dt * 0.95;
+    p.rotation.z = -x * 0.3;
+    inv.current -= dt;
+
+    // Moving Ground Stripes
+    sR.current.forEach((m) => {
+      if (!m) return;
+      m.position.z = ((m.position.z + speed * dt + 6) % 36) - 30;
+    });
+
+    // Obstacle Logic & Collision
+    obs.current.forEach((o, i) => {
+      const m = oR.current[i];
+      if (!m) return;
+      o.z += speed * dt;
+      if (o.z > 9) {
+        o.z -= 238;
+        o.x = LANES[Math.floor(Math.random() * 3)];
+      }
+      m.position.set(o.x, o.h / 2, o.z);
+      m.rotation.y = st.clock.elapsedTime * 0.4 + i;
+      if (
+        Math.abs(o.z) < 0.95 &&
+        Math.abs(o.x - p.position.x) < 1.05 &&
+        p.position.y < 0.65 + o.h &&
+        inv.current <= 0
+      ) {
+        inv.current = 1.6;
+        hp.current--;
+        setLives(hp.current);
+        if (!muted) sfx(85, "sawtooth", 0.22);
+        o.z -= 18;
+        if (hp.current <= 0) setState("gameover");
+      }
+    });
+
+    // Coin Pickups
+    coins.current.forEach((c, i) => {
+      const m = cR.current[i];
+      if (!m) return;
+      if (!c.a) {
+        m.position.y = -5;
+        return;
+      }
+      c.z += speed * dt;
+      if (c.z > 9) {
+        c.z -= 210;
+        c.a = true;
+        c.x = LANES[Math.floor(Math.random() * 3)];
+      }
+      m.position.set(c.x, 1 + Math.sin(st.clock.elapsedTime * 3 + i) * 0.15, c.z);
+      m.rotation.y += dt * 3;
+      if (
+        Math.abs(c.z) < 1 &&
+        Math.abs(c.x - p.position.x) < 1.1 &&
+        Math.abs(p.position.y + 0.3 - m.position.y) < 1.4
+      ) {
+        c.a = false;
+        sc.current += 30;
+        setScore(Math.floor(sc.current));
+        if (!muted) sfx(920, "sine", 0.14);
+      }
+    });
+
+    // Invulnerability Blink & Boost Emissive Pulse
+    if (p.children[0]) {
+      p.children[0].material.emissiveIntensity =
+        inv.current > 0 && Math.floor(st.clock.elapsedTime * 12) % 2 ? 0.15 : boostActive ? 1.8 : 1.0;
+    }
+    if (p.children[1]) {
+      p.children[1].material.emissiveIntensity = boostActive ? 2.6 : 1.2;
+    }
+
+    // Third-Person Chase Cam (Pulls back on OP Boost)
+    const targetCamZ = boostActive ? 10.5 : 8.2;
+    const targetCamY = boostActive ? 4.9 : 4.4;
+    st.camera.position.lerp({ x: p.position.x * 0.55, y: targetCamY, z: targetCamZ }, 0.1);
+    st.camera.lookAt(p.position.x, 1, -6);
+  });
+
+  return (
+    <group>
+      <ambientLight intensity={0.65} />
+      <directionalLight position={[6, 14, 6]} intensity={1.7} castShadow color="#fef3c7" />
+      <fog attach="fog" args={["#0f172a", 18, 62]} />
+
+      {/* Main Track Floor */}
+      <mesh position={[0, -0.25, -22]} receiveShadow>
+        <boxGeometry args={[9, 0.5, 75]} />
+        <meshStandardMaterial color="#111827" roughness={0.85} />
+      </mesh>
+
+      {/* Neon Side Guardrails */}
+      {[-4.7, 4.7].map((x) => (
+        <mesh key={x} position={[x, 0.45, -22]}>
+          <boxGeometry args={[0.35, 0.9, 75]} />
+          <meshStandardMaterial color="#0ea5e9" emissive="#0284c7" emissiveIntensity={isHyperBoosting ? 2.5 : 1.6} />
+        </mesh>
+      ))}
+
+      {/* Lane Markers */}
+      {LANES.map((x) => (
+        <mesh key={x} position={[x, 0.02, -22]}>
+          <boxGeometry args={[0.08, 0.04, 75]} />
+          <meshStandardMaterial color="#334155" emissive="#475569" emissiveIntensity={0.5} />
+        </mesh>
+      ))}
+
+      {/* Speed Lines */}
+      {Array.from({ length: 12 }, (_, i) => (
+        <mesh key={i} ref={(el) => (sR.current[i] = el)} position={[0, 0.03, -i * 3]}>
+          <boxGeometry args={[8.8, 0.05, 0.22]} />
+          <meshStandardMaterial color="#facc15" emissive="#eab308" emissiveIntensity={isHyperBoosting ? 1.5 : 0.7} />
+        </mesh>
+      ))}
+
+      {/* Cyber Pylons */}
+      {[-9, -14, -24, -34].map((z, i) => (
+        <group key={i}>
+          <mesh position={[-8, 2.2, z]}>
+            <coneGeometry args={[2.4, 5, 6]} />
+            <meshStandardMaterial color="#1e293b" />
+          </mesh>
+          <mesh position={[8, 2.8, z - 3]}>
+            <coneGeometry args={[3, 6.5, 6]} />
+            <meshStandardMaterial color="#1e293b" />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Player Ball */}
+      <group ref={pRef} position={[0, 0.65, 0]}>
+        <mesh castShadow>
+          <sphereGeometry args={[0.65, 28, 28]} />
+          <meshStandardMaterial
+            color="#38bdf8"
+            emissive={isHyperBoosting ? "#0284c7" : "#0369a1"}
+            emissiveIntensity={isHyperBoosting ? 1.8 : 1}
+            metalness={0.35}
+            roughness={0.25}
+          />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.66, 0.07, 10, 28]} />
+          <meshStandardMaterial
+            color="#facc15"
+            emissive={isHyperBoosting ? "#f59e0b" : "#ca8a04"}
+            emissiveIntensity={isHyperBoosting ? 2.5 : 1.2}
+          />
+        </mesh>
+      </group>
+
+      {/* Obstacles */}
+      {obs.current.map((o, i) => (
+        <mesh key={i} ref={(el) => (oR.current[i] = el)} castShadow>
+          <boxGeometry args={[1.25, o.h, 1.25]} />
+          <meshStandardMaterial
+            color={i % 2 ? "#ef4444" : "#f97316"}
+            emissive={i % 2 ? "#991b1b" : "#9a3412"}
+            emissiveIntensity={0.8}
+            roughness={0.6}
+          />
+        </mesh>
+      ))}
+
+      {/* Gold Ring Pickups */}
+      {coins.current.map((c, i) => (
+        <mesh key={i} ref={(el) => (cR.current[i] = el)}>
+          <torusGeometry args={[0.42, 0.13, 10, 22]} />
+          <meshStandardMaterial color="#fde047" emissive="#eab308" emissiveIntensity={1.6} metalness={0.6} roughness={0.2} />
+        </mesh>
+      ))}
+
+      {/* Pause Menu & Sound Toggle */}
+      <PauseOverlay
+        paused={paused}
+        onTogglePause={() => setPaused(!paused)}
+        soundMuted={muted}
+        onToggleSound={() => setMuted(!muted)}
+        onExit={() => {
+          setPaused(false);
+          setState("menu");
+        }}
+      />
+
+      {/* Speed Milestone Notification */}
+      {speedNotification && (
+        <Html fullscreen style={{ pointerEvents: "none" }} calculatePosition={(_, __, s) => [s.width / 2, s.height / 2]}>
+          <div
+            style={{
+              position: "absolute",
+              top: 110,
+              left: "50%",
+              transform: "translateX(-50%)",
+              background: "linear-gradient(90deg, rgba(245,158,11,0.95), rgba(234,88,12,0.95))",
+              color: "#fff",
+              padding: "8px 22px",
+              borderRadius: 30,
+              fontFamily: "sans-serif",
+              fontWeight: 800,
+              fontSize: 14,
+              boxShadow: "0 0 25px rgba(245,158,11,0.7)",
+              pointerEvents: "none",
+              animation: "pulse 1s infinite",
+              whiteSpace: "nowrap"
+            }}
+          >
+            {speedNotification}
+          </div>
+        </Html>
+      )}
+
+      {/* Start / Game Over Screen */}
+      {state !== "playing" && (
+        <Html fullscreen style={{ pointerEvents: "none" }} calculatePosition={(_, __, s) => [s.width / 2, s.height / 2]}>
+          <div
+            onClick={start}
+            onTouchStart={(e) => {
+              if (e.target && (e.target.closest("button") || e.target.closest("a") || e.target.closest("[data-interactive]"))) return;
+              start();
+            }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "radial-gradient(circle,rgba(14,165,233,.28),rgba(2,6,23,.93))",
+              color: "#fff",
+              fontFamily: "sans-serif",
+              textAlign: "center",
+              pointerEvents: "auto",
+              cursor: "pointer",
+              userSelect: "none"
+            }}
+          >
+            <div style={{ letterSpacing: 5, fontSize: 12, color: "#7dd3fc" }}>ENDLESS • FAST • OP BOOST RUNNER</div>
+            <h1 style={{ fontSize: "clamp(32px, 8vw, 54px)", margin: "8px 0", color: "#fde047", textShadow: "0 0 32px #0284c7" }}>
+              🏃 BALL RUNNER
+            </h1>
+            <p style={{ maxWidth: 440, opacity: 0.92, fontSize: "clamp(12px, 3.5vw, 14px)", padding: "0 14px" }}>
+              {state === "gameover"
+                ? \`💀 Run over! Distance: \${distance}m • Final score: \${score}\`
+                : "Roll at high speed, push forward for OP BOOST, double-jump barriers and collect gold rings!"}
+            </p>
+            <p style={{ fontSize: "clamp(11px, 3vw, 13px)", opacity: 0.85, padding: "0 12px" }}>
+              {typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0)
+                ? "🕹️ Touch anywhere to start • Swipe to Steer • Push Forward for BOOST • Tap to JUMP"
+                : "⌨️ A/D or ←/→ Move • SPACE Jump (x2) • Push W / ↑ or Shift for OP BOOST • Esc Pause • R Restart"}
+            </p>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                start();
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                start();
+              }}
+              style={{
+                pointerEvents: "auto",
+                marginTop: 14,
+                background: "#22c55e",
+                color: "#fff",
+                border: "none",
+                padding: "16px 42px",
+                borderRadius: 14,
+                fontSize: "clamp(16px, 4vw, 20px)",
+                fontWeight: 800,
+                cursor: "pointer",
+                boxShadow: "0 0 26px #16a34a",
+                touchAction: "manipulation"
+              }}
+            >
+              ▶ START RUN
+            </button>
+            <div style={{ marginTop: 12 }}>
+              ❤️ {lives} &nbsp; 📏 {distance}m &nbsp; 🏆 {score}
+            </div>
+          </div>
+        </Html>
+      )}
+
+      {/* In-Game Active HUD */}
+      {state === "playing" && (
+        <Html fullscreen style={{ pointerEvents: "none" }} calculatePosition={(_, __, s) => [s.width / 2, s.height / 2]}>
+          <div
+            style={{
+              position: "absolute",
+              top: 54,
+              left: "50%",
+              transform: "translateX(-50%)",
+              color: "#fff",
+              background: "rgba(0,0,0,.6)",
+              backdropFilter: "blur(6px)",
+              padding: "6px 16px",
+              borderRadius: 20,
+              fontFamily: "sans-serif",
+              fontWeight: 700,
+              fontSize: 13,
+              whiteSpace: "nowrap",
+              border: isHyperBoosting ? "1px solid #f59e0b" : "1px solid rgba(255,255,255,0.15)",
+              boxShadow: isHyperBoosting ? "0 0 20px #f59e0b" : "none",
+              pointerEvents: "none"
+            }}
+          >
+            🏃 BALL RUNNER &nbsp; ❤️ {lives} &nbsp; 📏 {distance}m &nbsp; 🏆 {score}
+            {isHyperBoosting && (
+              <span style={{ marginLeft: 10, color: "#f59e0b", fontWeight: 900 }}>🔥 OP BOOST!</span>
+            )}
+          </div>
+        </Html>
+      )}
+    </group>
+  );
 }
-`;;
+`;
 
 const BUILTIN_PROJECT_SCRIPTS = [
   {
@@ -741,7 +1401,7 @@ function AgentQuestionCard({ questionData, onAnswer }) {
 function DesktopApp() {
   // Navigation & Tabs State
   const [activeLeftRail, setActiveLeftRail] = useState("Scene");
-  const [viewportTab, setViewportTab] = useState("Title Menu"); // Title Menu, Viewport, Cinematic, Game View
+  const [viewportTab, setViewportTab] = useState("Viewport"); // Title Menu, Viewport, Cinematic, Game View
   const [bottomTab, setBottomTab] = useState("Content Browser"); // Content Browser, Console, Build Log
   const [rightTab, setRightTab] = useState("Inspector"); // Inspector, World Settings
   const [activeFolder, setActiveFolder] = useState("3D Shapes");
@@ -764,14 +1424,14 @@ function DesktopApp() {
         localStorage.removeItem("spider-active-jsx-code");
         return null;
       }
-      return saved && saved.trim() ? saved : null;
+      return saved && saved.trim() ? saved : DEFAULT_JSX_GAME;
     } catch { return null; }
   });
   const activeJsxCodeRef = useRef(null);
 
   const [activeJsxName, setActiveJsxName] = useState(() => {
     try {
-      return localStorage.getItem("spider-active-jsx-name") || null;
+      return localStorage.getItem("spider-active-jsx-name") || "GameComponent.jsx";
     } catch { return null; }
   });
   const activeJsxNameRef = useRef(null);
@@ -843,6 +1503,58 @@ function DesktopApp() {
   });
   const [isDirectGameOverlayCollapsed, setIsDirectGameOverlayCollapsed] = useState(false);
   const [isGameControlsCollapsed, setIsGameControlsCollapsed] = useState(false);
+  const [controlsPos, setControlsPos] = useState(() => {
+    try {
+      const saved = localStorage.getItem("spider-game-controls-pos");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  });
+  const controlsDragRef = useRef({ dragging: false, startX: 0, startY: 0, origX: 0, origY: 0, hasMoved: false });
+
+  const handleControlsPointerDown = useCallback((e) => {
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    e.stopPropagation();
+    const el = e.currentTarget.closest(".spider-floating-controls");
+    const rect = el ? el.getBoundingClientRect() : { left: window.innerWidth - 320, top: 12 };
+    controlsDragRef.current = {
+      dragging: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: rect.left,
+      origY: rect.top,
+      hasMoved: false
+    };
+
+    const handlePointerMove = (ev) => {
+      if (!controlsDragRef.current.dragging) return;
+      const dx = ev.clientX - controlsDragRef.current.startX;
+      const dy = ev.clientY - controlsDragRef.current.startY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        controlsDragRef.current.hasMoved = true;
+      }
+      const newX = Math.max(10, Math.min(window.innerWidth - 120, controlsDragRef.current.origX + dx));
+      const newY = Math.max(10, Math.min(window.innerHeight - 50, controlsDragRef.current.origY + dy));
+      setControlsPos({ x: newX, y: newY });
+    };
+
+    const handlePointerUp = () => {
+      if (controlsDragRef.current.dragging) {
+        controlsDragRef.current.dragging = false;
+        setControlsPos((cur) => {
+          if (cur) {
+            try { localStorage.setItem("spider-game-controls-pos", JSON.stringify(cur)); } catch {}
+          }
+          return cur;
+        });
+      }
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  }, []);
 
   // Multi-Select Scripting State: 1 file = single active script; 2+ files / full project = unified full game scene
   const [selectedScriptNames, setSelectedScriptNames] = useState(() => new Set(["GameComponent.jsx"]));
@@ -3567,22 +4279,28 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
           (ragContext ? `${ragContext}\n` : "") +
           (mem.text ? `\n\nCONVERSATION SO FAR (earlier turns in this session; current goal comes below):\n${mem.text}\n` : "") +
           "\n\nCRITICAL LOCAL DISK ACCESS & ASSET IMPORT MANDATE: You run natively inside Spider Engine on Desktop (Windows Electron) with FULL access to the user's local disk, Downloads folder, and file system! NEVER tell the user 'I cannot access your files' or 'please upload/drag-and-drop'! When the user provides a path (e.g. C:\\Users\\...\\Downloads\\modern-city-block) or asks to import an FBX/GLB/3D asset, IMMEDIATELY call importAsset({ path: '...' }) to copy the files into public/assets/ and mount it in GameComponent.jsx using useFBX or useGLTF!\n" +
-          "\nCRITICAL CONTROLS MANDATE: CREATE GAMES FOR KEYBOARD, NOT FOR SCREEN! Always implement responsive physical keyboard controls (WASD, Arrow Keys, Spacebar for jump/action/brake, Shift for sprint, and 'R' key to restart). NEVER create on-screen touch buttons, virtual joysticks, or touch d-pads on the screen. The engine is designed for desktop keyboard gameplay. CRITICAL RESTART RULE: NEVER write `location.reload()` on 'R' or restart! That reloads the whole engine. 'R' key must ONLY reset local component React state (health, score, wave, player position) in-place without page reload!\n" +
-          "\nCRITICAL UI/HUD MANDATE — NEVER CREATE FLOATING 3D <Html> CARDS OR HUGE HUD BOXES: NEVER create massive floating HTML cards, health bars, controls lists, or rectangular HUD boxes floating in 3D space (<Html position={[x,y,z]} ...>). They float awkwardly in mid-air, obstruct the player's 3D view, look amateurish, and ruin game immersion. AVOID <Html> entirely whenever possible. The 3D viewport MUST remain 100% clean, cinematic, and unobstructed. If game stats (score, HP) are needed, use subtle 3D elements (like <Text> from '@react-three/drei' or tiny 3D mesh bars above characters), OR ultra-minimal translucent corner text (<Html fullscreen> with position: absolute, top: 12, left: 12), NEVER a giant floating card in the middle of the screen!\n" +
-          "\nCRITICAL 3D MENUS & TITLE SCREEN MANDATE (NEVER DUMP UNSTYLED CONTROLS TEXT):\n" +
-          "When asked to create a menu, title screen, or game with menus:\n" +
-          "1. NEVER just dump controls as plain unstyled text in the corner and call it a 'menu'! That is NOT a menu!\n" +
-          "2. A Menu MUST have a dedicated game state (`const [gameState, setGameState] = useState('menu'); // 'menu' | 'playing' | 'gameover'`). Combat and enemies must wait while in the menu.\n" +
-          "3. Menu Presentation: Centered, atmospheric title screen with bold stylized title, a prominent [ ⚔️ START / PLAY ] button, and [ 📜 CONTROLS ] button. When rendered with `<Html fullscreen>`, it MUST be centered (`inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'`) with backdrop blur and dark radial gradient. Or render in pure 3D world space using `<Billboard>` with `<Text>` and 3D `<mesh>` buttons!\n" +
-          "4. In 'menu' state, slowly pan/orbit the camera around the 3D scene (`st.camera.position.set(...)`). When player clicks the Start button or presses Space/Enter, play a start sound effect and transition to 'playing'!\n" +
-          "5. During gameplay ('playing'), the viewport MUST remain clean — NO giant wall of controls text ruining the view!\n" +
-          "6. IN-GAME PAUSE, PLAY, SOUND & EXIT CONTROLS (CRITICAL):\n" +
+          "\nCRITICAL DUAL-PLATFORM CONTROLS MANDATE (DESKTOP KEYBOARD + MOBILE PHONES TOUCH):\n" +
+          "Always make every game 100% playable on BOTH Desktop PC (Keyboard/Mouse) and Mobile Phones/Tablets (Touchscreens)!\n" +
+          "1. Input System: ALWAYS import `useKeyboardControls` or `useTouchControls` from './ArenaEnv.jsx' (or './mobileTouch.jsx') which automatically unifies WASD, Arrow keys, Spacebar, Shift, and mobile virtual touch/joystick (`window.__spiderVirtualTouch`)!\n" +
+          "2. Built-in Mobile Touch Runtime Library: Built-in runtime libraries are pre-loaded! You can import `useTouchControls`, `VirtualJoystick`, `Joystick`, `TouchButton`, `MobileControls`, `MobileMenu`, or `nipplejs` from './ArenaEnv.jsx' or './mobileTouch.jsx' with ZERO external dependencies!\n" +
+          "3. CRITICAL RESTART RULE: NEVER write `location.reload()` on 'R' or restart! That reloads the whole engine. 'R' key must ONLY reset local component React state (health, score, wave, player position) in-place without page reload!\n" +
+          "\nCRITICAL UI/HUD MANDATE — NEVER CREATE FLOATING 3D <Html> CARDS OR HUGE HUD BOXES: NEVER create massive floating HTML cards, health bars, controls lists, or rectangular HUD boxes floating in 3D space (<Html position={[x,y,z]} ...>). AVOID <Html> mid-air clutter. Use subtle 3D elements or dock HUD at top-center (<Html fullscreen> top: 12, left: '50%', transform: 'translateX(-50%)') so it NEVER covers mobile thumb controls at the bottom!\n" +
+          "\nCRITICAL RESPONSIVE 3D & MOBILE MENUS MANDATE (DESKTOP & MOBILE PHONES):\n" +
+          "When asked to create a menu, title screen, or game with menus, make it responsive for BOTH PC and Mobile Touchscreens:\n" +
+          "1. A Menu MUST have a dedicated game state (`const [gameState, setGameState] = useState('menu'); // 'menu' | 'playing' | 'gameover'`). Combat, hazards, and enemy spawns must pause while in the menu.\n" +
+          "2. Mobile-Ready Layout: Render using `<MobileMenu title=\"...\" onStart={...} />` from './ArenaEnv.jsx' OR `<Html fullscreen calculatePosition={(_, __, s) => [s.width / 2, s.height / 2]}>` with `inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'` with backdrop blur and dark radial gradient.\n" +
+          "3. Touch-Friendly Sizing for Phones: Use responsive font clamp: `fontSize: 'clamp(28px, 7vw, 54px)'`. Start button MUST have at least 48px height (`padding: '14px 40px', minHeight: 48, borderRadius: 14`) with big bold `▶ START GAME` so fingers on phones tap easily without missing.\n" +
+          "4. Dual Touch & Click Handlers: Support BOTH `onClick` AND `onTouchStart` on menu buttons, plus listen for Space/Enter key for PC players.\n" +
+          "5. Phone vs Desktop Controls Text: Explain controls appropriately for the device: On desktop show `⌨️ WASD / Arrows to Move • Space Jump • Shift Boost`. On mobile phones show `🕹️ Use Virtual Joystick to move • Tap JUMP • Tap BOOST` (or detect `'ontouchstart' in window`).\n" +
+          "6. In 'menu' state, slowly pan/orbit the camera around the 3D scene (`st.camera.position.set(...)`). When player clicks or taps Start, play a start sound effect and transition to 'playing'!\n" +
+          "7. During gameplay ('playing'), the viewport MUST remain clean — NO giant wall of controls text ruining the view!\n" +
+          "8. IN-GAME PAUSE, PLAY, SOUND & EXIT CONTROLS (CRITICAL):\n" +
           "   - Always include in-game pause/resume (`paused`, `setPaused(!paused)`). In useFrame, freeze game loop when paused.\n" +
           "   - Icon-only sound toggle: Use a clean icon button ONLY (`🔊` / `🔇`) without any cluttered text.\n" +
           "   - Resume & Exit: Provide Resume (`▶`) and Exit (`✕`). Pressing Exit MUST exit fullscreen (`document.exitFullscreen?.()`) and return to menu/editor. On PC, listen to Escape key (`e.key === 'Escape'`) to toggle pause or exit fullscreen!\n" +
-          "   - Re-use `<PauseOverlay paused={paused} onTogglePause={() => setPaused(!paused)} soundMuted={muted} onToggleSound={() => setMuted(!muted)} onExit={() => setPaused(false)} />` from './ArenaEnv.jsx'!\n" +
-          "7. UNIVERSAL GAME HUD & MOBILE JOYSTICK MANDATE (NEVER MAKE JOYSTICK USELESS):\n" +
-          "   - MOBILE & JOYSTICK SUPPORT: NEVER rely solely on desktop physical keyboard events! On phones/tablets players use the virtual joystick. ALWAYS import `useKeyboardControls` from './ArenaEnv.jsx' (or read `window.__spiderVirtualTouch || { x: 0, z: 0 }`), which automatically unifies WASD, Arrow keys, and mobile virtual stick movement so the joystick works 100% of the time!\n" +
+          "   - Re-use `<PauseOverlay paused={paused} onTogglePause={() => setPaused(!paused)} soundMuted={muted} onToggleSound={() => setMuted(!muted)} onExit={() => setGameState('menu')} />` from './ArenaEnv.jsx'!\n" +
+          "9. UNIVERSAL GAME HUD & MOBILE JOYSTICK MANDATE:\n" +
+          "   - MOBILE & JOYSTICK SUPPORT: ALWAYS import `useKeyboardControls` or `useTouchControls` from './ArenaEnv.jsx' (or read `window.__spiderVirtualTouch || { x: 0, z: 0 }`), which automatically unifies WASD, Arrow keys, and mobile virtual stick movement so the joystick works 100% of the time!\n" +
           "   - RESPONSIVE SCREEN HUD: ALWAYS pass `calculatePosition={(_, __, size) => [size.width / 2, size.height / 2]}` on `<Html fullscreen>` so the HUD never drifts when the camera moves. Use `maxWidth: 'min(92vw, 420px)', width: 'max-content'`. On mobile screens (<768px), dock the HUD at top-center (`top: 12, left: '50%', transform: 'translateX(-50%)'`) so it NEVER covers or obstructs the thumb joystick at the bottom!\n" +
           GAME_BUILDER_PRIMER;
         let messages;
@@ -3975,6 +4693,22 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
 
     try {
       const stream = canvas.captureStream ? canvas.captureStream(60) : canvas.mozCaptureStream?.(60);
+      if (stream) {
+        // Collect internal game audio tracks from active AudioContexts
+        try {
+          if (window.__spiderAudioDests) {
+            for (const dest of window.__spiderAudioDests) {
+              if (dest?.stream) {
+                dest.stream.getAudioTracks().forEach((track) => {
+                  if (track && track.readyState === "live") {
+                    stream.addTrack(track);
+                  }
+                });
+              }
+            }
+          }
+        } catch (e) {}
+      }
       if (!stream) {
         appendLog("Warning", "Could not capture 3D Viewport stream.");
         return;
@@ -4092,10 +4826,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
       }
     } catch (e) {}
     setIsViewportCursorLocked(true);
-    setCursorLockToast({
-      title: "🔒 Cursor Blocked on Viewport (Play Mode)",
-      sub: "Press Alt + Win + G to release"
-    });
+    /* cursor toast removed */
   }, []);
 
   const releaseViewportCursorLock = useCallback(() => {
@@ -4106,10 +4837,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
     } catch (e) {}
     setIsViewportCursorLocked(false);
     if (isPlayingRef.current) {
-      setCursorLockToast({
-        title: "🔓 Cursor Released",
-        sub: "Click Viewport or Alt + Win + G to re-block"
-      });
+      /* cursor toast removed */
     }
   }, []);
 
@@ -4157,10 +4885,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
       }
       setIsViewportCursorLocked(locked);
       if (locked && isPlayingRef.current) {
-        setCursorLockToast({
-          title: "🔒 Cursor Blocked on Viewport (Play Mode)",
-          sub: "Press Alt + Win + G to release"
-        });
+        /* cursor toast removed */
       }
     };
 
@@ -5109,18 +5834,34 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
           children: (group?.children || []).map((node) => {
             // Play: WASD drives the hero (+jump gravity, +BlockAll collision)
             if (isPlaying && node.id === PLAYER.id) {
-              const step = PLAYER.moveStep;
+              const step = PLAYER.moveStep * 0.7;
+              const CAM_SIN = 0.61394;
+              const CAM_COS = 0.78935;
+              let ix = 0;
+              let iz = 0;
+              if (keysPressed["d"] || keysPressed["arrowright"]) ix += 1;
+              if (keysPressed["a"] || keysPressed["arrowleft"]) ix -= 1;
+              if (keysPressed["w"] || keysPressed["arrowup"]) iz += 1;
+              if (keysPressed["s"] || keysPressed["arrowdown"]) iz -= 1;
+
+              const inputMag = Math.hypot(ix, iz);
+              if (inputMag > 1) {
+                ix /= inputMag;
+                iz /= inputMag;
+              }
+
+              const speed = inputMag > 0.05 ? step * Math.min(1, inputMag) : 0;
               let dx = 0;
               let dz = 0;
-              if (keysPressed["w"] || keysPressed["arrowup"]) dz += step;
-              if (keysPressed["s"] || keysPressed["arrowdown"]) dz -= step;
-              if (keysPressed["a"] || keysPressed["arrowleft"]) dx -= step;
-              if (keysPressed["d"] || keysPressed["arrowright"]) dx += step;
+              if (speed > 0) {
+                dx = (ix * CAM_COS + iz * CAM_SIN) * speed;
+                dz = (-ix * CAM_SIN + iz * CAM_COS) * speed;
+              }
 
               // Real gravity for jumping (Space) — lands back on groundY
               const g = velY.current || 0;
-              let ny = Number((node.pos.y + g * 0.03).toFixed(2));
-              let nv = g - PLAYER.gravity;
+              let ny = Number((node.pos.y + g * 0.038).toFixed(2));
+              let nv = g - 0.75;
               if (ny <= PLAYER.groundY) {
                 ny = PLAYER.groundY;
                 nv = 0;
@@ -5130,23 +5871,34 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               if (dx === 0 && dz === 0 && ny === node.pos.y) return node;
               if (dx !== 0 || dz !== 0) tutorialStats.current.moved = true;
               tutorialStats.current.maxY = Math.max(tutorialStats.current.maxY, ny);
-              let nx = Number(Math.max(PLAYER.bounds.minX, Math.min(PLAYER.bounds.maxX, (node.pos?.x ?? 0) + dx)).toFixed(1));
-              let nz = Number(Math.max(PLAYER.bounds.minZ, Math.min(PLAYER.bounds.maxZ, node.pos.z + dz)).toFixed(1));
+              let nx = Number(Math.max(PLAYER.bounds.minX, Math.min(PLAYER.bounds.maxX, (node.pos?.x ?? 0) + dx)).toFixed(2));
+              let nz = Number(Math.max(PLAYER.bounds.minZ, Math.min(PLAYER.bounds.maxZ, (node.pos?.z ?? 0) + dz)).toFixed(2));
               // Real BlockAll collision — slide out of every blocker circle
               for (const b of blockers) {
                 const ox = nx - b.x;
                 const oz = nz - b.z;
                 const d = Math.hypot(ox, oz);
                 if (d < b.r && d > 1e-4) {
-                  nx = Number((b.x + (ox / d) * b.r).toFixed(1));
-                  nz = Number((b.z + (oz / d) * b.r).toFixed(1));
+                  nx = Number((b.x + (ox / d) * b.r).toFixed(2));
+                  nz = Number((b.z + (oz / d) * b.r).toFixed(2));
                 } else if (d <= 1e-4) {
-                  nx = Number((b.x + b.r).toFixed(1));
+                  nx = Number((b.x + b.r).toFixed(2));
                 }
               }
+
+              // Smooth body rotation to face running direction
+              let nextRotY = node.rot?.y || 0;
+              if (speed > 0 && (Math.abs(dx) > 0.001 || Math.abs(dz) > 0.001)) {
+                const targetRotDeg = Math.atan2(dx, dz) * (180 / Math.PI);
+                let currentRot = node.rot?.y || 0;
+                let diff = ((targetRotDeg - currentRot + 540) % 360) - 180;
+                nextRotY = Number((currentRot + diff * 0.35).toFixed(1));
+              }
+
               return {
                 ...node,
-                pos: { ...node.pos, x: nx, z: nz, y: ny }
+                pos: { ...node.pos, x: nx, z: nz, y: ny },
+                rot: { ...(node.rot || { x: 0, z: 0 }), y: nextRotY }
               };
             }
             // Editor transform gizmo: WASD nudges ONLY the selected object (no camera, no hero)
@@ -6314,21 +7066,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
             {/* CENTER 3D VIEWPORT PANEL */}
             <section ref={viewportRef} data-cursor-locked={(isPlaying && isViewportCursorLocked) ? "true" : "false"} data-is-playing={isPlaying ? "true" : "false"} className={isArtifactFullscreen ? "fixed inset-0 z-50 bg-slate-950 flex flex-col overflow-hidden" : "flex-1 bg-white/95 rounded-xl border border-slate-200/80 flex flex-col shadow-2xs overflow-hidden relative"}>
               {/* Viewport Cursor Lock / Release Floating Toast */}
-              {cursorLockToast && (
-                <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 animate-in fade-in slide-in-from-top-2">
-                  <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold shadow-2xl backdrop-blur-md border ${
-                    isViewportCursorLocked
-                      ? "bg-slate-950/95 text-cyan-300 border-cyan-500/50 shadow-cyan-500/25"
-                      : "bg-slate-950/95 text-emerald-300 border-emerald-500/50 shadow-emerald-500/25"
-                  }`}>
-                    <span className={`w-2 h-2 rounded-full ${isViewportCursorLocked ? "bg-cyan-400 animate-ping" : "bg-emerald-400"}`} />
-                    <span>{cursorLockToast.title}</span>
-                    <span className="text-[10px] text-slate-300 bg-slate-800/90 px-1.5 py-0.5 rounded border border-slate-700">
-                      {cursorLockToast.sub}
-                    </span>
-                  </div>
-                </div>
-              )}
+              {/* cursor lock toast removed */}
               {/* Viewport Top Tab Bar: Shown on both mobile and desktop (only hidden in Env Mode or Fullscreen) */}
               {!isEnvMode && !isArtifactFullscreen && (
                 <div className="h-9 px-2 sm:px-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0 select-none">
@@ -6724,16 +7462,12 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                   }`}
                   onPointerDown={(e) => {
                     if (isPlaying && !isViewportCursorLocked && !document.pointerLockElement) {
-                      if (e.target.tagName === 'CANVAS' || e.target === e.currentTarget || e.target.closest?.('canvas') || e.target.closest?.('.viewport-stage-container')) {
-                        requestViewportCursorLock();
-                      }
+                      /* auto cursor lock removed */
                     }
                   }}
                   onMouseDown={(e) => {
                     if (isPlaying && !isViewportCursorLocked && !document.pointerLockElement) {
-                      if (e.target.tagName === 'CANVAS' || e.target === e.currentTarget || e.target.closest?.('canvas') || e.target.closest?.('.viewport-stage-container')) {
-                        requestViewportCursorLock();
-                      }
+                      /* auto cursor lock removed */
                     }
                   }}
                 >
@@ -7387,7 +8121,18 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
 
                 {/* --- FLOATING GAME VIEW CONTROLS & RECORDER (Visible on side of 3D Viewport only, never in Code Mode) --- */}
                 {!isEnvMode && artifactViewMode === "viewport" && (viewportTab === "Game View" || activeJsxCode || isArtifactFullscreen) && (
-                  <div className="absolute top-3 right-3 z-30 flex items-center gap-2 select-none">
+                  <div
+                    className="spider-floating-controls fixed z-40 flex items-center gap-2 select-none transition-shadow"
+                    style={controlsPos ? { left: controlsPos.x, top: controlsPos.y } : { top: 12, right: 12 }}
+                  >
+                    {/* Draggable Grip Handle */}
+                    <div
+                      onPointerDown={handleControlsPointerDown}
+                      title="Click & Drag controls anywhere on screen"
+                      className="p-1.5 cursor-grab active:cursor-grabbing text-slate-400 hover:text-white bg-slate-900/85 hover:bg-slate-900 rounded-xl border border-slate-700/80 shadow-lg backdrop-blur-md transition flex items-center justify-center active:scale-95"
+                    >
+                      <GripVertical className="w-3.5 h-3.5" />
+                    </div>
                     {isGameControlsCollapsed ? (
                       /* Collapsed state: button with > / < to open back up */
                       <button
@@ -7400,6 +8145,17 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                       </button>
                     ) : (
                       <>
+                        
+                        {/* Edit Game Code Button */}
+                        <button
+                          onClick={() => setArtifactViewMode("code")}
+                          title="Edit Game Code (Script Editor)"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-xl border border-emerald-400/60 shadow-lg cursor-pointer transition select-none backdrop-blur-md active:scale-95 text-xs font-bold"
+                        >
+                          <Code2 className="w-3.5 h-3.5 text-emerald-200" />
+                          <span>Edit Game</span>
+                        </button>
+
                         {/* Screen Recorder Button on side of Game View */}
                         <button
                           onClick={toggleViewportRecording}

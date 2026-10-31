@@ -88,14 +88,14 @@ export function useStudio() {
   const flat = useMemo(() => flatten(groups), [groups]);
 
   const [selectedId, setSelectedId] = useState(project.select === undefined ? "player" : project.select);
-  const mountedAtBoot = project.mountedFile ? project.files.find((f) => f.name === project.mountedFile) : null;
-  const [activeJsx, setActiveJsx] = useState(mountedAtBoot ? mountedAtBoot.content : null);
-  const [activeJsxName, setActiveJsxName] = useState(mountedAtBoot ? mountedAtBoot.name : null);
+  const mountedAtBoot = project.mountedFile ? project.files?.find((f) => f.name === project.mountedFile) : null;
+  const [activeJsx, setActiveJsx] = useState(() => (mountedAtBoot ? mountedAtBoot.content : null));
+  const [activeJsxName, setActiveJsxName] = useState(() => (mountedAtBoot ? mountedAtBoot.name : null));
   const [codeError, setCodeError] = useState(null);
 
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [gizmo, setGizmo] = useState("move");
-  const [cameraMode, setCameraMode] = useState("Viewport");
+  const [cameraMode, setCameraMode] = useState("Game View");
   const [fps, setFps] = useState(0);
   const [keys, setKeys] = useState({});
   const [score, setScore] = useState(0);
@@ -104,6 +104,17 @@ export function useStudio() {
   const [timelinePlaying, setTimelinePlaying] = useState(false);
   const [logs, setLogs] = useState([]);
   const [undoCount, setUndoCount] = useState({ u: 0, r: 0 });
+
+  // Sync activeJsx when project changes or files update
+  useEffect(() => {
+    const mounted = project.mountedFile ? project.files?.find((f) => f.name === project.mountedFile) : null;
+    const code = mounted ? mounted.content : null;
+    const name = mounted ? mounted.name : null;
+    if (code !== jsxRef.current.code) {
+      setActiveJsx(code);
+      setActiveJsxName(name);
+    }
+  }, [project.id, project.mountedFile]);
 
   // ---------- refs mirrored for async agent tools ----------
   const undoRef = useRef([]);
@@ -313,10 +324,10 @@ export function useStudio() {
       if (!p) return;
       resetRuntime();
       setCurrentId(id);
-      setSelectedId(p.select === undefined ? "player" : p.select);
-      const mounted = p.mountedFile && p.files.find((f) => f.name === p.mountedFile);
-      setActiveJsx(mounted ? mounted.content : null);
-      setActiveJsxName(mounted ? mounted.name : null);
+      setSelectedId(p.select === undefined ? null : p.select);
+      const mounted = (p.mountedFile ? p.files?.find((f) => f.name === p.mountedFile) : null) || p.files?.find((f) => f.name === "GameComponent.jsx") || p.files?.[0];
+      setActiveJsx(mounted ? mounted.content : STARTER_CODE);
+      setActiveJsxName(mounted ? mounted.name : "GameComponent.jsx");
       setCodeError(null);
       log("Info", `Opened ${p.name}`);
     },
@@ -324,15 +335,15 @@ export function useStudio() {
   );
 
   const createProject = useCallback(
-    (name, template) => {
+    (name, template = "code") => {
       const p = makeProject(name, template, projectRef.current.groups);
       setProjects((list) => [...list, p]);
       resetRuntime();
       setCurrentId(p.id);
       setSelectedId(p.select);
-      const mounted = p.mountedFile ? p.files[0] : null;
-      setActiveJsx(mounted ? mounted.content : null);
-      setActiveJsxName(mounted ? mounted.name : null);
+      const mounted = p.mountedFile ? p.files?.[0] : null;
+      setActiveJsx(mounted ? mounted.content : STARTER_CODE);
+      setActiveJsxName(mounted ? mounted.name : "GameComponent.jsx");
       if (template === "fpp") setCameraMode("Game View");
       log("Success", `Created ${p.name}`);
       return p;
@@ -349,12 +360,12 @@ export function useStudio() {
     (id) => {
       const rest = projects.filter((p) => p.id !== id);
       if (!rest.length) {
-        const fresh = makeProject("My first game", "normal");
+        const fresh = makeProject("3D Ball Runner", "code");
         setProjects([fresh]);
         setCurrentId(fresh.id);
         setSelectedId(fresh.select);
-        setActiveJsx(null);
-        setActiveJsxName(null);
+        setActiveJsx(STARTER_CODE);
+        setActiveJsxName("GameComponent.jsx");
         return;
       }
       setProjects(rest);
@@ -362,10 +373,10 @@ export function useStudio() {
         const next = rest[0];
         resetRuntime();
         setCurrentId(next.id);
-        setSelectedId(next.select === undefined ? "player" : next.select);
-        const mounted = next.mountedFile && next.files.find((f) => f.name === next.mountedFile);
-        setActiveJsx(mounted ? mounted.content : null);
-        setActiveJsxName(mounted ? mounted.name : null);
+        setSelectedId(next.select === undefined ? null : next.select);
+        const mounted = (next.mountedFile ? next.files?.find((f) => f.name === next.mountedFile) : null) || next.files?.[0];
+        setActiveJsx(mounted ? mounted.content : STARTER_CODE);
+        setActiveJsxName(mounted ? mounted.name : "GameComponent.jsx");
       }
       log("Info", "Project deleted");
     },
@@ -472,7 +483,18 @@ export function useStudio() {
   const saveFile = useCallback(
     (name, content) => {
       try { ragStore.indexFile(name, content); } catch {}
-      return patchProject((p) => ({ ...p, files: p.files.some((f) => f.name === name) ? p.files.map((f) => (f.name === name ? { ...f, content } : f)) : [...p.files, { name, content }] }));
+      // When saving a file, if it is the mounted file or the primary GameComponent, update activeJsx live!
+      if (jsxRef.current.name === name || (!jsxRef.current.name && name === "GameComponent.jsx")) {
+        setActiveJsx(content);
+        setActiveJsxName(name);
+      }
+      return patchProject((p) => ({
+        ...p,
+        mountedFile: p.mountedFile || name,
+        files: p.files.some((f) => f.name === name)
+          ? p.files.map((f) => (f.name === name ? { ...f, content } : f))
+          : [...p.files, { name, content }]
+      }));
     },
     [patchProject]
   );
@@ -579,7 +601,12 @@ export function useStudio() {
   const keysRefLive = useRef({});
   keysRefLive.current = keys;
 
-  // hero loop (60ms) — mirrors the desktop engine
+  // Camera angle in Game View: camera is at (-7, 5, -9) looking at hero (0, 0, 0)
+  // Camera forward ray in XZ plane: (7, 9) => sin = 7/sqrt(130) ≈ 0.61394, cos = 9/sqrt(130) ≈ 0.78935
+  const CAM_SIN = 0.61394;
+  const CAM_COS = 0.78935;
+
+  // Ultra-responsive hero loop (30ms ~33 FPS) with smooth camera-relative steering & body turning
   useEffect(() => {
     const hasHero = flatten(projectRef.current.groups).some((c) => c.id === PLAYER.id);
     if (!isPlaying || jsxRef.current.code || !hasHero) return undefined;
@@ -587,42 +614,80 @@ export function useStudio() {
       patchProject((p) => {
         const blockers = flatten(p.groups)
           .filter((c) => c.visible !== false && c.collision === "BlockAll" && c.id !== PLAYER.id)
-          .map((c) => ({ x: c.pos?.x || 0, z: c.pos?.z || 0, r: Math.max(c.scale?.x || 1, c.scale?.z || 1) * 0.8 + 0.5 }));
+          .map((c) => ({ x: c.pos?.x || 0, z: c.pos?.z || 0, r: Math.max(c.scale?.x || 1, c.scale?.z || 1) * 0.75 + 0.35 }));
         let changed = false;
         const groupsNext = mapNodes(p.groups, (node) => {
           if (node.id === PLAYER.id) {
-            const step = PLAYER.moveStep;
+            const step = PLAYER.moveStep * 0.7;
+            const k = keysRefLive.current;
+            // Raw 2D input from virtual joystick or keyboard
+            let ix = Number(k.jx || 0);
+            let iz = Number(k.jz || 0);
+            if (k.d || k.arrowright || k.KeyD) ix += 1;
+            if (k.a || k.arrowleft || k.KeyA) ix -= 1;
+            if (k.w || k.arrowup || k.KeyW) iz += 1;
+            if (k.s || k.arrowdown || k.KeyS) iz -= 1;
+
+            const inputMag = Math.hypot(ix, iz);
+            if (inputMag > 1) {
+              ix /= inputMag;
+              iz /= inputMag;
+            }
+
+            // Camera-relative steering:
+            // Push UP on stick / W => move AWAY from camera
+            // Push DOWN on stick / S => move TOWARDS camera
+            // Push RIGHT on stick / D => move to screen RIGHT
+            // Push LEFT on stick / A => move to screen LEFT
+            const speed = inputMag > 0.05 ? step * Math.min(1, inputMag) : 0;
             let dx = 0;
             let dz = 0;
-            const k = keysRefLive.current;
-            if (k.w) dz += step;
-            if (k.s) dz -= step;
-            if (k.a) dx -= step;
-            if (k.d) dx += step;
-            if (k.jx) dx += k.jx * step;
-            if (k.jz) dz += k.jz * step;
+            if (speed > 0) {
+              dx = (ix * CAM_COS + iz * CAM_SIN) * speed;
+              dz = (-ix * CAM_SIN + iz * CAM_COS) * speed;
+            }
+
+            // Athletic parabolic jump with gravity
             const g = velY.current || 0;
-            let ny = Number((node.pos.y + g * 0.03).toFixed(2));
-            let nv = g - PLAYER.gravity;
+            let ny = Number((node.pos.y + g * 0.038).toFixed(2));
+            let nv = g - 0.75;
             if (ny <= PLAYER.groundY) {
               ny = PLAYER.groundY;
               nv = 0;
             }
             velY.current = nv;
+
             if (dx === 0 && dz === 0 && ny === node.pos.y) return node;
-            let nx = Number(Math.max(PLAYER.bounds.minX, Math.min(PLAYER.bounds.maxX, node.pos.x + dx)).toFixed(1));
-            let nz = Number(Math.max(PLAYER.bounds.minZ, Math.min(PLAYER.bounds.maxZ, node.pos.z + dz)).toFixed(1));
+
+            let nx = Number(Math.max(PLAYER.bounds.minX, Math.min(PLAYER.bounds.maxX, node.pos.x + dx)).toFixed(2));
+            let nz = Number(Math.max(PLAYER.bounds.minZ, Math.min(PLAYER.bounds.maxZ, node.pos.z + dz)).toFixed(2));
+
+            // Smooth collision slide along tangent of obstacles
             for (const b of blockers) {
               const ox = nx - b.x;
               const oz = nz - b.z;
               const d = Math.hypot(ox, oz);
               if (d < b.r && d > 1e-4) {
-                nx = Number((b.x + (ox / d) * b.r).toFixed(1));
-                nz = Number((b.z + (oz / d) * b.r).toFixed(1));
-              } else if (d <= 1e-4) nx = Number((b.x + b.r).toFixed(1));
+                nx = Number((b.x + (ox / d) * b.r).toFixed(2));
+                nz = Number((b.z + (oz / d) * b.r).toFixed(2));
+              } else if (d <= 1e-4) nx = Number((b.x + b.r).toFixed(2));
             }
+
+            // Smooth body rotation to face running direction
+            let nextRotY = node.rot?.y || 0;
+            if (speed > 0 && (Math.abs(dx) > 0.001 || Math.abs(dz) > 0.001)) {
+              const targetRotDeg = Math.atan2(dx, dz) * (180 / Math.PI);
+              let currentRot = node.rot?.y || 0;
+              let diff = ((targetRotDeg - currentRot + 540) % 360) - 180;
+              nextRotY = Number((currentRot + diff * 0.35).toFixed(1));
+            }
+
             changed = true;
-            return { ...node, pos: { ...node.pos, x: nx, z: nz, y: ny } };
+            return {
+              ...node,
+              pos: { ...node.pos, x: nx, z: nz, y: ny },
+              rot: { ...(node.rot || { x: 0, z: 0 }), y: nextRotY }
+            };
           }
           if (node.physics && node.pos.y > 0 && node.collision !== "NoCollision" && !CORE_IDS.has(node.id)) {
             const ny = Math.max(PLAYER.groundY, Number((node.pos.y - physicsFallSpeed(node.mass)).toFixed(2)));
@@ -634,7 +699,7 @@ export function useStudio() {
         });
         return changed ? { ...p, groups: groupsNext } : p;
       });
-    }, 60);
+    }, 30);
     return () => clearInterval(tick);
   }, [isPlaying, activeJsx, patchProject, project.id]);
 

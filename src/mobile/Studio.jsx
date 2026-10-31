@@ -224,9 +224,22 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
             </button>
           ))}
 
-        {full && isPlaying && (
-          <button type="button" className="sp-stop-fab" onClick={togglePlay} aria-label="Stop playing">
-            <Square size={14} fill="currentColor" /> Stop
+        {/* Floating exit button when in Fullscreen */}
+        {full && (
+          <button
+            type="button"
+            className="sp-stop-fab"
+            onClick={onToggleFull}
+            aria-label="Exit fullscreen"
+            style={{
+              top: "calc(14px + env(safe-area-inset-top, 0px))",
+              left: "calc(14px + env(safe-area-inset-left, 0px))",
+              zIndex: 9999,
+              cursor: "pointer",
+              touchAction: "manipulation"
+            }}
+          >
+            <Minimize2 size={14} /> Exit Full
           </button>
         )}
 
@@ -248,59 +261,61 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
                 )}
               </div>
             )}
-            {/* Universal Mobile Game Controls: Active in both custom games & arena levels */}
-            <Joystick onChange={(v) => setKeys((k) => ({ ...k, ...v }))} />
-            <button
-              type="button"
-              className="sp-jump"
-              onPointerDown={(e) => {
-                e.preventDefault();
-                jump();
-                window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space", key: " ", bubbles: true }));
-                if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
-                  window.__spiderVirtualTouch.jump = true;
-                }
-              }}
-              onPointerUp={() => {
-                window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space", key: " ", bubbles: true }));
-                if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
-                  window.__spiderVirtualTouch.jump = false;
-                }
-              }}
-              aria-label="Action / Attack"
-            >
-              Action
-            </button>
+            {/* Mobile joystick & jump button: only shown for legacy 3D levels without built-in gestures */}
+            {!customGame && (
+              <>
+                <Joystick onChange={(v) => setKeys((k) => ({ ...k, ...v }))} />
+                <button
+                  type="button"
+                  className="sp-jump"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    jump();
+                    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space", key: " ", bubbles: true }));
+                    if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
+                      window.__spiderVirtualTouch.jump = true;
+                    }
+                  }}
+                  onPointerUp={() => {
+                    window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space", key: " ", bubbles: true }));
+                    if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
+                      window.__spiderVirtualTouch.jump = false;
+                    }
+                  }}
+                  aria-label="Action / Attack"
+                >
+                  Action
+                </button>
+              </>
+            )}
           </>
         )}
 
-        {/* camera pills */}
-        {!isPlaying && (
-          camOpen ? (
-            <div className="sp-cams" role="radiogroup" aria-label="Camera">
-              {CAMERAS.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={cameraMode === c.id}
-                  className={cx(cameraMode === c.id && "is-on")}
-                  onClick={() => {
-                    setCameraMode(c.id);
-                    clearTimeout(camTimer.current);
-                    camTimer.current = setTimeout(() => setCamOpen(false), 900);
-                  }}
-                >
-                  <c.icon size={15} />
-                  <span>{c.label}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <button type="button" className="sp-cam-btn" onClick={openCams} aria-label={`Camera: ${currentCam.label}. Tap to change`}>
-              <Video size={20} />
-            </button>
-          )
+        {/* camera pills: accessible anytime for Game View, Cinematic, and Viewport */}
+        {camOpen ? (
+          <div className="sp-cams" role="radiogroup" aria-label="Camera">
+            {CAMERAS.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                role="radio"
+                aria-checked={cameraMode === c.id}
+                className={cx(cameraMode === c.id && "is-on")}
+                onClick={() => {
+                  setCameraMode(c.id);
+                  clearTimeout(camTimer.current);
+                  camTimer.current = setTimeout(() => setCamOpen(false), 900);
+                }}
+              >
+                <c.icon size={15} />
+                <span>{c.label}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button type="button" className="sp-cam-btn" onClick={openCams} aria-label={`Camera: ${currentCam.label}. Tap to change`}>
+            <Video size={20} />
+          </button>
         )}
 
         {empty && !isPlaying && (

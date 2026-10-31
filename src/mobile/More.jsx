@@ -47,7 +47,7 @@ function Back({ title, onBack, right }) {
 function Projects({ s, onBack, notify, onOpened }) {
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
-  const [tpl, setTpl] = useState("normal");
+  const [tpl, setTpl] = useState("code");
   const [del, setDel] = useState(null);
   const file = useRef(null);
 

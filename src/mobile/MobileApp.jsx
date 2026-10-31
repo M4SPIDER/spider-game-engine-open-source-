@@ -78,27 +78,31 @@ export default function MobileApp() {
   const hideChrome = onStudio && s.isPlaying;
   const [full, setFull] = useState(false);
 
-  // Fullscreen: CSS "immersive" layout everywhere, plus the browser Fullscreen API where it exists
+  // Fullscreen: Pure CSS immersive viewport layout + optional native Fullscreen API
   const toggleFull = useCallback(() => {
-    setFull((on) => {
-      const next = !on;
+    setFull((prev) => {
+      const next = !prev;
       try {
-        if (next) document.documentElement.requestFullscreen?.({ navigationUI: "hide" })?.catch(() => {});
-        else if (document.fullscreenElement) document.exitFullscreen?.()?.catch(() => {});
+        if (next) {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+          }
+        } else {
+          if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
       } catch {}
       setTimeout(() => window.dispatchEvent(new Event("resize")), 60);
       setTimeout(() => window.dispatchEvent(new Event("resize")), 250);
       return next;
     });
   }, []);
-  useEffect(() => {
-    const sync = () => {
-      if (!document.fullscreenElement) setFull(false);
-      setTimeout(() => window.dispatchEvent(new Event("resize")), 60);
-    };
-    document.addEventListener("fullscreenchange", sync);
-    return () => document.removeEventListener("fullscreenchange", sync);
-  }, []);
+
   useEffect(() => {
     const handleOrientationOrResize = () => {
       setTimeout(() => window.dispatchEvent(new Event("resize")), 60);

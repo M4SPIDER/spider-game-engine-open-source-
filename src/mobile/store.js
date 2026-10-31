@@ -7,36 +7,17 @@
  * try/catch (private windows and quota errors must never crash the UI).
  */
 import { GAME_WORLD } from "../game/index.js";
+import BALL_RUNNER_CODE from "../game/GameComponent.jsx?raw";
 
-export const STARTER_CODE = `import React from "react";
-import { OrbitControls } from "@react-three/drei";
-
-export default function GameComponent() {
-  return (
-    <group>
-      <OrbitControls makeDefault target={[0,0,0]} maxPolarAngle={Math.PI/2.05} enablePan={false} minDistance={6} maxDistance={26} />
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[8,16,10]} intensity={1.5} castShadow />
-      <mesh rotation-x={-Math.PI/2} receiveShadow>
-        <planeGeometry args={[20,20]} />
-        <meshStandardMaterial color="#15803d" />
-      </mesh>
-      <mesh position={[0,0.5,0]} castShadow>
-        <boxGeometry args={[1,1,1]} />
-        <meshStandardMaterial color="#3b82f6" />
-      </mesh>
-    </group>
-  );
-}
-`;
+export const STARTER_CODE = BALL_RUNNER_CODE;
 
 export const TEMPLATES = [
+  { id: "code", name: "3D Ball Runner", blurb: "Interactive 3D ball runner game", emoji: "⚡" },
   { id: "normal", name: "Third person", blurb: "Hero, coins, tutorial", emoji: "🧍" },
   { id: "blank", name: "Blank level", blurb: "Empty black viewport", emoji: "⬛" },
   { id: "tpp", name: "TPP shooting", blurb: "Rifle + 3 targets", emoji: "🎯" },
   { id: "fpp", name: "FPP shooting", blurb: "You are the camera", emoji: "👁️" },
   { id: "racing", name: "Racing", blurb: "Hero on the boat", emoji: "🏁" },
-  { id: "code", name: "Code game", blurb: "Starter JSX scene", emoji: "⌨️" },
 ];
 
 const K = {
@@ -174,12 +155,12 @@ export function makeProject(name, tpl = "normal", fallbackGroups) {
   const files = [{ name: "GameComponent.jsx", content: t.code || STARTER_CODE }];
   return {
     id: `project-${Date.now().toString(36)}${Math.floor(Math.random() * 1e3)}`,
-    name: (name || "").trim() || "Untitled",
+    name: (name || "").trim() || (tpl === "code" ? "3D Ball Runner" : "My first game"),
     template: tpl,
     groups: t.groups,
     select: t.select,
     files,
-    mountedFile: t.code ? "GameComponent.jsx" : null,
+    mountedFile: tpl === "code" ? "GameComponent.jsx" : null,
     updatedAt: Date.now(),
   };
 }
@@ -187,13 +168,30 @@ export function makeProject(name, tpl = "normal", fallbackGroups) {
 export function loadProjects() {
   const list = read(K.projects, null);
   if (Array.isArray(list) && list.length) {
-    return list.map((p) => ({
-      ...p,
-      groups: sanitizeGroups(p.groups),
-      files: Array.isArray(p.files) && p.files.length ? p.files : [{ name: "GameComponent.jsx", content: STARTER_CODE }],
-    }));
+    const listSanitized = list.map((p) => {
+      // If project has no groups or needs knight world restoration
+      if (p.name === "My first game" && (!p.groups || p.groups.length === 0)) {
+        const t = buildTemplate("normal");
+        return {
+          ...p,
+          groups: t.groups,
+          select: "player",
+          mountedFile: null,
+          files: Array.isArray(p.files) && p.files.length ? p.files : [{ name: "GameComponent.jsx", content: STARTER_CODE }],
+          updatedAt: Date.now(),
+        };
+      }
+      return {
+        ...p,
+        groups: sanitizeGroups(p.groups),
+        files: Array.isArray(p.files) && p.files.length ? p.files : [{ name: "GameComponent.jsx", content: STARTER_CODE }],
+      };
+    });
+    write(K.projects, listSanitized);
+    return listSanitized;
   }
   const first = makeProject("My first game", "normal");
+  write(K.projects, [first]);
   return [first];
 }
 

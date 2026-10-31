@@ -11,11 +11,11 @@
 // The Play-mode loop in app.jsx + Hero animation in GameViewport.jsx read this.
 export const PLAYER = {
   id: "player",
-  moveStep: 0.6, // per tick at 60ms
-  jumpImpulse: 9,
+  moveStep: 0.65, // per tick
+  jumpImpulse: 12, // athletic jump
   gravity: 0.85,
   groundY: 0,
-  bounds: { minX: -25, maxX: 25, minZ: -15, maxZ: 35 }
+  bounds: { minX: -24, maxX: 24, minZ: -14, maxZ: 32 }
 };
 
 /* [LINEAGE-AUTHORS]: m4spider */
