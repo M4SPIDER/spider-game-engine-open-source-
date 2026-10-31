@@ -41,6 +41,7 @@ It integrates directly with multimodal AI models (including Meta Llama and Muse 
 - **Interactive Agent Pipeline Controls (`Que` & `Continue`)**: In-stream message queuing (`Que` button) to queue prompt instructions while the agent is executing without aborting, plus dedicated `Continue` button for sequential multi-stage code generation, and single-press Enter submission without accidental newlines.
 - **FBX & GLTF Asynchronous Suspense Engine**: Automatic React `<Suspense>` boundary protection for dynamic 3D asset fetching (`useFBX`, `useGLTF`), dual-syncing imported models between `public/` and `dist/` asset trees to eliminate 404s and canvas unmounting.
 - **Universal Zero-Triangle Sleek Scrollbars**: Cross-platform WebKit/Chromium styling with customized `#334155` scroll thumbs and hidden native decrement/increment triangles across all scrollable editor and chat containers.
+- **JSX to C++ & SPY Language Transpiler (Universal Multi-Engine Exporter)**: Zero-overhead translation of React Three Fiber JSX scene graphs, transforms, geometries, materials, procedural audio, and game loops directly into native C++20 and Spider Engine SPY script. Easily copy-paste and deploy games into Unreal Engine 5, Godot 4, Unity, or any custom Vulkan/OpenGL C++ engine.
 
 ---
 
@@ -377,6 +378,169 @@ You have 100% control over how the AI agent interacts with your system:
 | :--- | :--- | :--- |
 | **🛡️ Ask Permission (Secure Mode)** | **Interactive Approval Gate**: The agent pauses and displays an approval card before running CLI commands, creating files, or making critical scene edits. You can review the exact command or file path and click **Allow** or **Deny**. | Safe development, critical project environments, and step-by-step code review. |
 | **⚡ Auto Mode (No Permission / Autonomous)** | **Zero-Friction Autonomy**: The agent executes CLI commands, creates files anywhere, and mounts 3D scenes automatically without pausing for permission. | High-speed prototyping, autonomous overnight game development, and unattended CI/agent loops. |
+
+---
+
+## 🚀 Exporting & Copy-Pasting to Unreal Engine, Godot, Unity & Custom Engines
+
+Spider Game Engine includes a native **JSX to C++ & SPY transpiler** and universal exporter. You can export any generated game or scene in **one click** as:
+- **`.jsx`**: React Three Fiber / WebGL game source.
+- **`.cpp`**: Native C++ source code with standard vectors, math, and game loop.
+- **`.spy`**: Declarative native Spider Engine script.
+- **`CMakeLists.txt`**: C++20 Vulkan build configuration.
+
+### How to Download from Spider Studio
+- **Desktop Studio**: Click **`Export ▾`** in the top viewport bar or click **`JSX`**, **`C++`**, or **`SPY`** in Code Mode.
+- **Pocket Studio Mobile**: Tap `Wand (🪄)` or File Menu → tap **Download JSX**, **Export Native C++**, or **Export SPY Script**.
+
+---
+
+### 1. 🎮 Unreal Engine 5 (UE5 / UE4)
+
+#### Option A: Native C++ Actor / Character
+1. In your Unreal Engine project, create a new C++ class inheriting from `AActor` (or `APawn` / `ACharacter`), e.g., `ASpiderGameActor`.
+2. Open `SpiderGameActor.h` and declare your component pointers and state variables from the exported `.cpp`:
+   ```cpp
+   #pragma once
+   #include "CoreMinimal.h"
+   #include "GameFramework/Actor.h"
+   #include "SpiderGameActor.generated.h"
+
+   UCLASS()
+   class YOURGAME_API ASpiderGameActor : public AActor {
+       GENERATED_BODY()
+   public:
+       ASpiderGameActor();
+
+   protected:
+       virtual void BeginPlay() override;
+
+   public:
+       virtual void Tick(float DeltaTime) override;
+
+       UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+       UStaticMeshComponent* HeroMesh;
+
+       UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spider Engine")
+       float MoveSpeed = 800.0f;
+
+       UPROPERTY(VisibleAnywhere, Category = "Spider Engine")
+       int32 Score = 0;
+   };
+   ```
+3. Open `SpiderGameActor.cpp` and copy the logic:
+   - **Scene Initialization (`Init` in exported C++)** -> Place in `BeginPlay()`:
+     ```cpp
+     void ASpiderGameActor::BeginPlay() {
+         Super::BeginPlay();
+         // Setup positions and materials matching exported scene
+     }
+     ```
+   - **Game Loop (`Update(float dt)` / `useFrame`)** -> Place in `Tick(float DeltaTime)`:
+     ```cpp
+     void ASpiderGameActor::Tick(float DeltaTime) {
+         Super::Tick(DeltaTime);
+
+         // Direct 1:1 match with Spider Engine's exported Update(dt) loop:
+         FVector Pos = GetActorLocation();
+         // Apply directional movement, rotation, and math translated from Math.sin / std::sin
+         SetActorLocation(Pos);
+     }
+     ```
+
+#### Option B: Blueprints
+- If you prefer Blueprints, map the exported variables to Actor variables, and recreate the `Update(dt)` logic in your **Event Tick** graph.
+
+---
+
+### 2. 🤖 Godot Engine 4 (GDScript / C# / GDExtension)
+
+#### Option A: GDScript (Instant Copy-Paste)
+The exported JSX / SPY logic maps directly to a `Node3D` in Godot:
+1. Create a `Node3D` scene (`SpiderGame.tscn`).
+2. Add child nodes matching the exported meshes (`MeshInstance3D` with `BoxMesh`, `SphereMesh`, or `PlaneMesh`).
+3. Attach a script (`SpiderGame.gd`) and paste the state and loop logic:
+   ```gdscript
+   extends Node3D
+
+   # 1. State variables mapped from useState()
+   var score: int = 0
+   var hero_pos: Vector3 = Vector3(0, 0.5, 0)
+   @export var speed: float = 8.0
+
+   func _ready() -> void:
+       # Initialize scene nodes matching Spider Engine init block
+       pass
+
+   func _process(delta: float) -> void:
+       # Direct 1:1 mapping from exported Update(dt) / useFrame:
+       var dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+       hero_pos.x += dir.x * speed * delta
+       hero_pos.z += dir.y * speed * delta
+       
+       if has_node("HeroMesh"):
+           $HeroMesh.position = hero_pos
+   ```
+
+#### Option B: GDExtension (Native C++)
+- Drop the exported `_native.cpp` into your GDExtension project directory.
+- Register class methods in `ClassDB::bind_method` and connect `Update(float dt)` directly to `_process(double delta)`.
+
+---
+
+### 3. 🎯 Unity (Unity 2022+ / C# / URP / HDRP)
+
+1. Create a new C# script `SpiderGameController.cs` and attach it to a GameObject in your Unity scene:
+   ```csharp
+   using UnityEngine;
+
+   public class SpiderGameController : MonoBehaviour {
+       [Header("State (from Spider Engine useState)")]
+       public int score = 0;
+       public float moveSpeed = 8.0f;
+       public Transform heroTransform;
+
+       void Start() {
+           // Scene setup matching exported Spider Engine scene
+       }
+
+       void Update() {
+           float dt = Time.deltaTime;
+           
+           // Direct 1:1 match with Spider Engine's exported Update(dt) / useFrame:
+           float moveX = Input.GetAxis("Horizontal");
+           float moveZ = Input.GetAxis("Vertical");
+           
+           if (heroTransform != null) {
+               heroTransform.position += new Vector3(moveX, 0, moveZ) * moveSpeed * dt;
+           }
+       }
+   }
+   ```
+2. **Native C++ Plugin in Unity**: You can also compile the exported `_native.cpp` into a native `.dll` (Windows) or `.so` (Linux/Android) and invoke it from C# via `[DllImport]`.
+
+---
+
+### 4. ⚡ Custom Engines (Vulkan, OpenGL, DirectX, Raylib, O3DE, Flax)
+
+The exported C++ file is clean, modern **C++20** that does **NOT** depend on WebGL, Electron, or JavaScript engines:
+- Uses standard `<cmath>`, `<vector>`, `<string>`, and GLM (`glm::vec3`, `glm::vec4`).
+- **CMake Support**: Build instantly using the exported `CMakeLists.txt`:
+  ```bash
+  mkdir build && cd build
+  cmake ..
+  cmake --build . --config Release
+  ```
+- **Raylib / Custom Game Loop**: Simply call `scene.Init()` in your engine's setup phase, and call `scene.Update(GetFrameTime())` inside your main frame loop (`while (!WindowShouldClose())`).
+
+---
+
+### 5. 🕷️ Upcoming Spider Game Engine Native Runtime (SPY Language)
+
+For maximum performance without browser or Electron overhead, games exported as `.spy` run directly on the upcoming Spider Game Engine C++ native runtime:
+```bash
+spider-engine run Game.spy --vulkan
+```
 
 ---
 
