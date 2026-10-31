@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
+import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { PauseOverlay, useKeyboardControls } from "./ArenaEnv.jsx";
@@ -24,6 +25,272 @@ const sfx = (f = 440, t = "sine", d = 0.12) => {
 
 // 3 Track Lanes
 const LANES = [-2.3, 0, 2.3];
+
+/**
+ * Animated 3D Cyber Knight Character
+ * Procedurally animated limbs, glowing cyber visor, pauldrons, fluttering trenchcoat & sprint lean.
+ */
+function CyberKnight({ isBoosting, isAirborne, isInvulnerable, isRunning }) {
+  const ref = useRef(null);
+  const leftLeg = useRef(null);
+  const rightLeg = useRef(null);
+  const leftArm = useRef(null);
+  const rightArm = useRef(null);
+  const coatLeft = useRef(null);
+  const coatRight = useRef(null);
+  const kickArc = useRef(null);
+
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    const now = Date.now();
+    const kickTime = typeof window !== "undefined" ? window.__spiderHeroKickTime || 0 : 0;
+    const isKicking = now - kickTime < 380;
+    const kickProgress = isKicking ? Math.min(1, (now - kickTime) / 380) : 0;
+    const kickPhase = isKicking
+      ? kickProgress < 0.35
+        ? Math.sin((kickProgress / 0.35) * (Math.PI / 2))
+        : kickProgress < 0.6
+        ? 1.0
+        : Math.cos(((kickProgress - 0.6) / 0.4) * (Math.PI / 2))
+      : 0;
+
+    if (isKicking) {
+      // Dynamic martial arts front kick (E key)
+      if (rightLeg.current) {
+        rightLeg.current.rotation.x = -1.65 * kickPhase;
+        rightLeg.current.position.y = 0.95 + 0.18 * kickPhase;
+        rightLeg.current.position.z = 0.16 * kickPhase;
+      }
+      if (leftLeg.current) {
+        leftLeg.current.rotation.x = 0.22 * kickPhase;
+        leftLeg.current.position.y = 0.95 - 0.04 * kickPhase;
+      }
+      if (leftArm.current) leftArm.current.rotation.x = 0.85 * kickPhase;
+      if (rightArm.current) rightArm.current.rotation.x = -0.65 * kickPhase;
+      if (coatLeft.current) coatLeft.current.rotation.x = 0.35 + 0.45 * kickPhase;
+      if (coatRight.current) coatRight.current.rotation.x = 0.45 + 0.55 * kickPhase;
+      if (ref.current) {
+        ref.current.rotation.x = -0.22 * kickPhase;
+        ref.current.position.y = kickPhase * 0.12;
+      }
+      if (kickArc.current) {
+        kickArc.current.visible = kickPhase > 0.25;
+        kickArc.current.scale.setScalar(0.7 + kickPhase * 0.7);
+      }
+    } else {
+      if (rightLeg.current) rightLeg.current.position.set(0.16, 0.95, 0);
+      if (leftLeg.current) leftLeg.current.position.set(-0.16, 0.95, 0);
+      if (kickArc.current) kickArc.current.visible = false;
+
+      if (isAirborne) {
+        // Dynamic airborne jump pose
+        if (leftLeg.current) leftLeg.current.rotation.x = -0.55;
+        if (rightLeg.current) rightLeg.current.rotation.x = 0.45;
+        if (leftArm.current) leftArm.current.rotation.x = -0.85;
+        if (rightArm.current) rightArm.current.rotation.x = -0.85;
+        if (coatLeft.current) coatLeft.current.rotation.x = 0.65;
+        if (coatRight.current) coatRight.current.rotation.x = 0.65;
+        if (ref.current) {
+          ref.current.rotation.x = -0.12;
+          ref.current.position.y = 0;
+        }
+      } else if (isRunning) {
+        // High-speed running animation with stride rate matching game speed
+        const strideRate = isBoosting ? 24 : 15;
+        const legSwing = Math.sin(t * strideRate) * 0.75;
+        const armSwing = -legSwing * 0.85;
+        const bounce = Math.abs(Math.sin(t * strideRate)) * (isBoosting ? 0.12 : 0.07);
+
+        if (leftLeg.current) leftLeg.current.rotation.x = legSwing;
+        if (rightLeg.current) rightLeg.current.rotation.x = -legSwing;
+        if (leftArm.current) leftArm.current.rotation.x = armSwing;
+        if (rightArm.current) rightArm.current.rotation.x = -armSwing;
+
+        const flutter = 0.35 + Math.abs(Math.sin(t * strideRate * 1.2)) * (isBoosting ? 0.35 : 0.18);
+        if (coatLeft.current) coatLeft.current.rotation.x = flutter;
+        if (coatRight.current) coatRight.current.rotation.x = flutter;
+
+        if (ref.current) {
+          ref.current.position.y = bounce;
+          // Athletic forward sprint lean
+          ref.current.rotation.x = isBoosting ? 0.28 : 0.16;
+        }
+      } else {
+        // Idle breathing sway in menu
+        const breath = Math.sin(t * 2.2) * 0.02;
+        if (ref.current) {
+          ref.current.position.y = breath;
+          ref.current.rotation.x = 0;
+        }
+        if (leftLeg.current) leftLeg.current.rotation.x = 0;
+        if (rightLeg.current) rightLeg.current.rotation.x = 0;
+        if (leftArm.current) leftArm.current.rotation.x = 0;
+        if (rightArm.current) rightArm.current.rotation.x = 0;
+        if (coatLeft.current) coatLeft.current.rotation.x = 0.08;
+        if (coatRight.current) coatRight.current.rotation.x = 0.08;
+      }
+    }
+  });
+
+  const visorGlow = isBoosting ? 4 : 2.5;
+  const visorColor = isBoosting ? "#38bdf8" : "#00e5ff";
+  const armorColor = isInvulnerable ? "#475569" : "#1e293b";
+
+  return (
+    <group ref={ref} rotation={[0, Math.PI, 0]}>
+      {/* 1. Cowl Hood & Glowing Cyber Visor */}
+      <group position={[0, 1.82, 0]}>
+        <mesh castShadow>
+          <sphereGeometry args={[0.32, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.8]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 0.08, 0.2]} rotation={[0.3, 0, 0]} castShadow>
+          <boxGeometry args={[0.36, 0.08, 0.24]} />
+          <meshStandardMaterial color="#090d16" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, -0.04, 0.12]}>
+          <sphereGeometry args={[0.22, 12, 12]} />
+          <meshBasicMaterial color="#020617" />
+        </mesh>
+        {/* Cyan Cyber Visor Eyes */}
+        <mesh position={[0, -0.02, 0.22]}>
+          <boxGeometry args={[0.22, 0.035, 0.04]} />
+          <meshStandardMaterial
+            color={visorColor}
+            emissive={visorColor}
+            emissiveIntensity={isInvulnerable ? 1.0 : visorGlow}
+          />
+        </mesh>
+      </group>
+
+      {/* 2. Torso Armor & High Collar */}
+      <group position={[0, 1.35, 0]}>
+        <mesh position={[0, 0.28, 0.02]} castShadow>
+          <cylinderGeometry args={[0.25, 0.32, 0.2, 12]} />
+          <meshStandardMaterial color="#090d16" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 0.02, 0]} castShadow>
+          <boxGeometry args={[0.54, 0.55, 0.34]} />
+          <meshStandardMaterial color={armorColor} roughness={0.5} metalness={0.4} />
+        </mesh>
+        {/* Cyan Spine Energy Rail */}
+        <mesh position={[0, 0.04, -0.18]}>
+          <boxGeometry args={[0.07, 0.44, 0.03]} />
+          <meshStandardMaterial
+            color="#06b6d4"
+            emissive="#06b6d4"
+            emissiveIntensity={isBoosting ? 3.5 : 2.0}
+          />
+        </mesh>
+        {/* Shoulder Pauldrons */}
+        <mesh position={[-0.34, 0.2, 0]} rotation={[0, 0, -0.15]} castShadow>
+          <boxGeometry args={[0.18, 0.16, 0.28]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.6} metalness={0.3} />
+        </mesh>
+        <mesh position={[0.34, 0.2, 0]} rotation={[0, 0, 0.15]} castShadow>
+          <boxGeometry args={[0.18, 0.16, 0.28]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.6} metalness={0.3} />
+        </mesh>
+      </group>
+
+      {/* 3. Arms */}
+      <group ref={leftArm} position={[-0.35, 1.45, 0]}>
+        <mesh position={[0, -0.25, 0]} castShadow>
+          <capsuleGeometry args={[0.085, 0.42, 6, 8]} />
+          <meshStandardMaterial color="#111827" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, -0.32, 0.02]}>
+          <cylinderGeometry args={[0.1, 0.09, 0.22, 8]} />
+          <meshStandardMaterial
+            color="#0284c7"
+            emissive="#0284c7"
+            emissiveIntensity={isBoosting ? 1.5 : 0.8}
+          />
+        </mesh>
+      </group>
+      <group ref={rightArm} position={[0.35, 1.45, 0]}>
+        <mesh position={[0, -0.25, 0]} castShadow>
+          <capsuleGeometry args={[0.085, 0.42, 6, 8]} />
+          <meshStandardMaterial color="#111827" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, -0.32, 0.02]}>
+          <cylinderGeometry args={[0.1, 0.09, 0.22, 8]} />
+          <meshStandardMaterial
+            color="#0284c7"
+            emissive="#0284c7"
+            emissiveIntensity={isBoosting ? 1.5 : 0.8}
+          />
+        </mesh>
+      </group>
+
+      {/* 4. Armored Trenchcoat Tails */}
+      <group position={[0, 1.05, 0]}>
+        <mesh position={[0, 0.02, 0]} castShadow>
+          <cylinderGeometry args={[0.31, 0.32, 0.1, 14]} />
+          <meshStandardMaterial color="#090d16" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.02, 0.31]}>
+          <boxGeometry args={[0.14, 0.08, 0.04]} />
+          <meshStandardMaterial color="#c79d42" metalness={0.8} roughness={0.2} />
+        </mesh>
+        <group ref={coatLeft} position={[-0.14, -0.05, -0.1]}>
+          <mesh position={[0, -0.42, 0]} castShadow>
+            <boxGeometry args={[0.26, 0.75, 0.06]} />
+            <meshStandardMaterial color="#090d16" roughness={0.8} />
+          </mesh>
+        </group>
+        <group ref={coatRight} position={[0.14, -0.05, -0.1]}>
+          <mesh position={[0, -0.42, 0]} castShadow>
+            <boxGeometry args={[0.26, 0.75, 0.06]} />
+            <meshStandardMaterial color="#090d16" roughness={0.8} />
+          </mesh>
+        </group>
+      </group>
+
+      {/* 5. Legs & Armored Boots */}
+      <group ref={leftLeg} position={[-0.16, 0.95, 0]}>
+        <mesh position={[0, -0.45, 0]} castShadow>
+          <capsuleGeometry args={[0.095, 0.75, 6, 8]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, -0.88, 0.06]} castShadow>
+          <boxGeometry args={[0.18, 0.18, 0.32]} />
+          <meshStandardMaterial color="#020617" roughness={0.9} />
+        </mesh>
+      </group>
+      <group ref={rightLeg} position={[0.16, 0.95, 0]}>
+        <mesh position={[0, -0.45, 0]} castShadow>
+          <capsuleGeometry args={[0.095, 0.75, 6, 8]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, -0.88, 0.06]} castShadow>
+          <boxGeometry args={[0.18, 0.18, 0.32]} />
+          <meshStandardMaterial color="#020617" roughness={0.9} />
+        </mesh>
+        {/* Glowing Martial Arts Kick Energy Blade / Arc */}
+        <mesh ref={kickArc} position={[0, -0.88, 0.35]} visible={false}>
+          <ringGeometry args={[0.18, 0.44, 16, 1, 0, Math.PI]} />
+          <meshBasicMaterial color="#38bdf8" side={THREE.DoubleSide} transparent opacity={0.88} />
+        </mesh>
+      </group>
+
+      {/* OP Hyper-Boost Energy Aura (Sprint flare) */}
+      {isBoosting && (
+        <mesh position={[0, 1.0, 0]}>
+          <sphereGeometry args={[0.95, 16, 16]} />
+          <meshStandardMaterial
+            color="#00e5ff"
+            emissive="#00e5ff"
+            emissiveIntensity={1.8}
+            transparent
+            opacity={0.25}
+            wireframe
+          />
+        </mesh>
+      )}
+    </group>
+  );
+}
 
 export default function GameComponent() {
   const pRef = useRef();
@@ -75,6 +342,7 @@ export default function GameComponent() {
     stateRef.current = state;
   }, [state]);
   const [isHyperBoosting, setIsHyperBoosting] = useState(false);
+  const [isAirborne, setIsAirborne] = useState(false);
   const [speedNotification, setSpeedNotification] = useState(null);
 
   const { getDir } = useKeyboardControls();
@@ -101,7 +369,7 @@ export default function GameComponent() {
       c.x = LANES[Math.floor(Math.random() * 3)];
       c.z = -10 - i * 15;
     });
-    if (pRef.current) pRef.current.position.set(0, 0.65, 0);
+    if (pRef.current) pRef.current.position.set(0, 0, 0);
   };
 
   // Start Run
@@ -115,11 +383,33 @@ export default function GameComponent() {
   // Physical Keyboard Listeners
   useEffect(() => {
     const dn = (e) => {
-      keys.current[e.key.toLowerCase()] = true;
+      const k = e.key.toLowerCase();
+      keys.current[k] = true;
       keys.current[e.code] = true;
+      if (k === "e" && !e.repeat) {
+        if (typeof window !== "undefined") {
+          window.__spiderHeroKickTime = Date.now();
+          window.__spiderCombat = { move: "front_kick", time: Date.now(), duration: 360 };
+        }
+        if (!muted) sfx(380, "triangle", 0.16);
+      }
+      if ((k === "f" || k === "q") && !e.repeat) {
+        if (typeof window !== "undefined") {
+          window.__spiderHeroKickTime = Date.now();
+          window.__spiderCombat = { move: "jab", time: Date.now(), duration: 240 };
+        }
+        if (!muted) sfx(460, "triangle", 0.12);
+      }
+      if (k === "x" && !e.repeat) {
+        if (typeof window !== "undefined") {
+          window.__spiderHeroKickTime = Date.now();
+          window.__spiderCombat = { move: "shadow_blast", time: Date.now(), duration: 520 };
+        }
+        if (!muted) sfx(120, "sawtooth", 0.35);
+      }
       if (e.key === "Escape") setPaused((p) => !p);
       if ((e.key === "Enter" || e.key === " ") && state !== "playing") start();
-      if (e.key.toLowerCase() === "r") {
+      if (k === "r") {
         reset();
         setState("playing");
       }
@@ -139,7 +429,6 @@ export default function GameComponent() {
   // Touch Gesture Listeners (Push Forward = Boost, Swipe Left/Right = Steer, Tap = Jump)
   useEffect(() => {
     const handleTouchStart = (e) => {
-      // Don't intercept touches on buttons or interactive UI (speaker, pause, etc.)
       if (e.target && (e.target.closest("button") || e.target.closest("a") || e.target.closest("[data-interactive]"))) {
         return;
       }
@@ -153,7 +442,6 @@ export default function GameComponent() {
         startTime: Date.now()
       };
 
-      // Tapping or swiping anywhere starts the run immediately!
       if (stateRef.current !== "playing") {
         start();
       }
@@ -179,7 +467,6 @@ export default function GameComponent() {
 
       if (typeof window !== "undefined") {
         window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
-        // Steer Left / Right (smooth responsive threshold)
         if (dx < -15) {
           window.__spiderVirtualTouch.x = -1;
         } else if (dx > 15) {
@@ -239,12 +526,11 @@ export default function GameComponent() {
     const p = pRef.current;
     if (!p) return;
 
-    // Menu Camera Sweep
+    // Menu Camera Sweep & Knight idle preview
     if (state !== "playing") {
-      const a = st.clock.elapsedTime * 0.25;
-      st.camera.position.set(Math.sin(a) * 9, 4.5, Math.cos(a) * 9);
-      st.camera.lookAt(0, 1, -4);
-      p.rotation.x += dt * 2;
+      const a = st.clock.elapsedTime * 0.3;
+      st.camera.position.set(Math.sin(a) * 7.5, 3.2, Math.cos(a) * 7.5);
+      st.camera.lookAt(0, 1.2, 0);
       return;
     }
 
@@ -300,7 +586,7 @@ export default function GameComponent() {
       (typeof window !== "undefined" && window.__spiderVirtualTouch?.jump)
     );
     if (jumpPressed && jumpCount.current < 2 && p.position.y <= 2.2) {
-      vy.current = 10.4;
+      vy.current = 11.2;
       jumpCount.current++;
       keys.current[" "] = false;
       keys.current["Space"] = false;
@@ -311,15 +597,18 @@ export default function GameComponent() {
     }
 
     vy.current -= 28 * dt;
-    p.position.y = Math.max(0.65, p.position.y + vy.current * dt);
-    if (p.position.y <= 0.66) {
+    p.position.y = Math.max(0, p.position.y + vy.current * dt);
+    const airborne = p.position.y > 0.05;
+    if (airborne !== isAirborne) setIsAirborne(airborne);
+
+    if (p.position.y <= 0.01) {
+      p.position.y = 0;
       vy.current = 0;
       jumpCount.current = 0;
     }
 
-    // Rapid ball rotation according to speed
-    p.rotation.x -= speed * dt * 0.95;
-    p.rotation.z = -x * 0.3;
+    // Knight banks smoothly into turns
+    p.rotation.z = -x * 0.25;
     inv.current -= dt;
 
     // Moving Ground Stripes
@@ -339,63 +628,80 @@ export default function GameComponent() {
       }
       m.position.set(o.x, o.h / 2, o.z);
       m.rotation.y = st.clock.elapsedTime * 0.4 + i;
+
+      // Martial Arts Kick Smash (E key)
+      const now = Date.now();
+      const kickTime = typeof window !== "undefined" ? window.__spiderHeroKickTime || 0 : 0;
+      const isKicking = now - kickTime < 380;
+      if (
+        isKicking &&
+        Math.abs(o.z) < 2.4 &&
+        Math.abs(o.x - p.position.x) < 1.4
+      ) {
+        // Kick smash! Launch obstacle backward and award bonus points
+        o.z -= 48;
+        sc.current += 150;
+        setScore(Math.floor(sc.current));
+        setSpeedNotification("🥋 KICK SMASH! +150 PTS");
+        if (!muted) {
+          sfx(440, "triangle", 0.18);
+          setTimeout(() => sfx(220, "sawtooth", 0.22), 50);
+        }
+        setTimeout(() => setSpeedNotification(null), 1600);
+        return;
+      }
+
       if (
         Math.abs(o.z) < 0.95 &&
         Math.abs(o.x - p.position.x) < 1.05 &&
-        p.position.y < 0.65 + o.h &&
+        p.position.y < o.h &&
         inv.current <= 0
       ) {
         inv.current = 1.6;
         hp.current--;
         setLives(hp.current);
-        if (!muted) sfx(85, "sawtooth", 0.22);
-        o.z -= 18;
-        if (hp.current <= 0) setState("gameover");
+        if (!muted) sfx(180, "sawtooth", 0.25);
+        if (hp.current <= 0) {
+          setState("gameover");
+          if (!muted) {
+            sfx(140, "sawtooth", 0.4);
+            setTimeout(() => sfx(90, "sawtooth", 0.5), 200);
+          }
+        }
       }
     });
 
-    // Coin Pickups
+    // Ring Collection (Rings float at chest height Y=1.1)
     coins.current.forEach((c, i) => {
       const m = cR.current[i];
       if (!m) return;
-      if (!c.a) {
-        m.position.y = -5;
-        return;
-      }
       c.z += speed * dt;
       if (c.z > 9) {
         c.z -= 210;
-        c.a = true;
         c.x = LANES[Math.floor(Math.random() * 3)];
+        c.a = true;
       }
-      m.position.set(c.x, 1 + Math.sin(st.clock.elapsedTime * 3 + i) * 0.15, c.z);
-      m.rotation.y += dt * 3;
-      if (
-        Math.abs(c.z) < 1 &&
-        Math.abs(c.x - p.position.x) < 1.1 &&
-        Math.abs(p.position.y + 0.3 - m.position.y) < 1.4
-      ) {
-        c.a = false;
-        sc.current += 30;
-        setScore(Math.floor(sc.current));
-        if (!muted) sfx(920, "sine", 0.14);
+      if (c.a) {
+        m.position.set(c.x, 1.1, c.z);
+        m.rotation.y = st.clock.elapsedTime * 2.5;
+        if (
+          Math.abs(c.z) < 1.1 &&
+          Math.abs(c.x - p.position.x) < 1.1 &&
+          Math.abs(p.position.y - 0.2) < 1.6
+        ) {
+          c.a = false;
+          sc.current += 30;
+          setScore(Math.floor(sc.current));
+          if (!muted) sfx(920, "sine", 0.14);
+        }
       }
     });
 
-    // Invulnerability Blink & Boost Emissive Pulse
-    if (p.children[0]) {
-      p.children[0].material.emissiveIntensity =
-        inv.current > 0 && Math.floor(st.clock.elapsedTime * 12) % 2 ? 0.15 : boostActive ? 1.8 : 1.0;
-    }
-    if (p.children[1]) {
-      p.children[1].material.emissiveIntensity = boostActive ? 2.6 : 1.2;
-    }
-
-    // Third-Person Chase Cam (Pulls back on OP Boost)
-    const targetCamZ = boostActive ? 10.5 : 8.2;
-    const targetCamY = boostActive ? 4.9 : 4.4;
+    // Third-Person Chase Cam behind Knight
+    const targetCamZ = boostActive ? 9.8 : 7.6;
+    const targetCamY = boostActive ? 4.2 : 3.8;
     st.camera.position.lerp({ x: p.position.x * 0.55, y: targetCamY, z: targetCamZ }, 0.1);
-    st.camera.lookAt(p.position.x, 1, -6);
+    st.camera.lookAt(p.position.x * 0.4, 1.3, -8);
   });
 
   return (
@@ -428,14 +734,18 @@ export default function GameComponent() {
 
       {/* Speed Lines */}
       {Array.from({ length: 12 }, (_, i) => (
-        <mesh key={i} ref={(el) => (sR.current[i] = el)} position={[0, 0.03, -i * 3]}>
-          <boxGeometry args={[8.8, 0.05, 0.22]} />
-          <meshStandardMaterial color="#facc15" emissive="#eab308" emissiveIntensity={isHyperBoosting ? 1.5 : 0.7} />
+        <mesh
+          key={i}
+          ref={(el) => (sR.current[i] = el)}
+          position={[((i % 3) - 1) * 2.3, 0.03, -i * 5]}
+        >
+          <planeGeometry args={[0.22, 1.8]} />
+          <meshBasicMaterial color="#38bdf8" transparent opacity={0.65} />
         </mesh>
       ))}
 
-      {/* Cyber Pylons */}
-      {[-9, -14, -24, -34].map((z, i) => (
+      {/* Distant Cyber Mountain Peaks */}
+      {[-35, -15, 5, 25].map((z, i) => (
         <group key={i}>
           <mesh position={[-8, 2.2, z]}>
             <coneGeometry args={[2.4, 5, 6]} />
@@ -448,26 +758,14 @@ export default function GameComponent() {
         </group>
       ))}
 
-      {/* Player Ball */}
-      <group ref={pRef} position={[0, 0.65, 0]}>
-        <mesh castShadow>
-          <sphereGeometry args={[0.65, 28, 28]} />
-          <meshStandardMaterial
-            color="#38bdf8"
-            emissive={isHyperBoosting ? "#0284c7" : "#0369a1"}
-            emissiveIntensity={isHyperBoosting ? 1.8 : 1}
-            metalness={0.35}
-            roughness={0.25}
-          />
-        </mesh>
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.66, 0.07, 10, 28]} />
-          <meshStandardMaterial
-            color="#facc15"
-            emissive={isHyperBoosting ? "#f59e0b" : "#ca8a04"}
-            emissiveIntensity={isHyperBoosting ? 2.5 : 1.2}
-          />
-        </mesh>
+      {/* 3D Cyber Knight Character */}
+      <group ref={pRef} position={[0, 0, 0]}>
+        <CyberKnight
+          isBoosting={isHyperBoosting}
+          isAirborne={isAirborne}
+          isInvulnerable={inv.current > 0}
+          isRunning={state === "playing"}
+        />
       </group>
 
       {/* Obstacles */}
@@ -556,18 +854,18 @@ export default function GameComponent() {
             }}
           >
             <div style={{ letterSpacing: 5, fontSize: 12, color: "#7dd3fc" }}>ENDLESS • FAST • OP BOOST RUNNER</div>
-            <h1 style={{ fontSize: "clamp(32px, 8vw, 54px)", margin: "8px 0", color: "#fde047", textShadow: "0 0 32px #0284c7" }}>
-              🏃 BALL RUNNER
+            <h1 style={{ fontSize: "clamp(30px, 7vw, 52px)", margin: "8px 0", color: "#fde047", textShadow: "0 0 32px #0284c7" }}>
+              ⚔️ CYBER KNIGHT RUNNER
             </h1>
             <p style={{ maxWidth: 440, opacity: 0.92, fontSize: "clamp(12px, 3.5vw, 14px)", padding: "0 14px" }}>
               {state === "gameover"
                 ? `💀 Run over! Distance: ${distance}m • Final score: ${score}`
-                : "Roll at high speed, push forward for OP BOOST, double-jump barriers and collect gold rings!"}
+                : "Sprint down the neon highway, push forward for OP BOOST, double-jump barriers and collect gold rings!"}
             </p>
             <p style={{ fontSize: "clamp(11px, 3vw, 13px)", opacity: 0.85, padding: "0 12px" }}>
               {typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0)
                 ? "🕹️ Touch anywhere to start • Swipe to Steer • Push Forward for BOOST • Tap to JUMP"
-                : "⌨️ A/D or ←/→ Move • SPACE Jump (x2) • Push W / ↑ or Shift for OP BOOST • Esc Pause • R Restart"}
+                : "⌨️ A/D Move • SPACE Jump • E KICK SMASH 🥋 • Shift / W Boost • Esc Pause • R Restart"}
             </p>
             <button
               type="button"
@@ -627,7 +925,7 @@ export default function GameComponent() {
               pointerEvents: "none"
             }}
           >
-            🏃 BALL RUNNER &nbsp; ❤️ {lives} &nbsp; 📏 {distance}m &nbsp; 🏆 {score}
+            ⚔️ CYBER KNIGHT RUNNER &nbsp; ❤️ {lives} &nbsp; 📏 {distance}m &nbsp; 🏆 {score}
             {isHyperBoosting && (
               <span style={{ marginLeft: 10, color: "#f59e0b", fontWeight: 900 }}>🔥 OP BOOST!</span>
             )}

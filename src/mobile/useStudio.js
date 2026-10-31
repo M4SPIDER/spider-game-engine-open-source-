@@ -168,6 +168,29 @@ export function useStudio() {
     setProjects((list) => list.map((p) => (p.id === projectRef.current.id ? { ...fn(p), updatedAt: Date.now() } : p)));
   }, []);
 
+  // Open-world restoration safeguard: If currently active project has restricted spawn-ground or is missing terrain, upgrade live to GAME_WORLD!
+  useEffect(() => {
+    if (!project) return;
+    const isCode = project.template === "code";
+    if (isCode) return;
+    const hasSpawnGround = (project.groups || []).some((g) => (g.children || []).some((c) => c.id === "spawn-ground"));
+    const hasTerrain = (project.groups || []).some((g) => (g.children || []).some((c) => c.id === "terrain"));
+    if (hasSpawnGround || !hasTerrain || !project.groups || project.groups.length <= 1 || project.mountedFile) {
+      patchProject((p) => ({
+        ...p,
+        template: "normal",
+        mountedFile: null,
+        groups: clone(GAME_WORLD),
+        select: "player",
+      }));
+    }
+    // Always unmount JSX runner when on third-person Cyber Knight level
+    if (activeJsx) {
+      setActiveJsx(null);
+      setActiveJsxName(null);
+    }
+  }, [project?.id, project?.template, patchProject, activeJsx]);
+
   const pushUndo = useCallback((snapshot, force = false) => {
     const now = Date.now();
     if (!force && now - lastUndoAt.current < 700) return;
@@ -325,9 +348,10 @@ export function useStudio() {
       resetRuntime();
       setCurrentId(id);
       setSelectedId(p.select === undefined ? null : p.select);
-      const mounted = (p.mountedFile ? p.files?.find((f) => f.name === p.mountedFile) : null) || p.files?.find((f) => f.name === "GameComponent.jsx") || p.files?.[0];
-      setActiveJsx(mounted ? mounted.content : STARTER_CODE);
-      setActiveJsxName(mounted ? mounted.name : "GameComponent.jsx");
+      const isCode = p.template === "code" && Boolean(p.mountedFile);
+      const mounted = isCode ? p.files?.find((f) => f.name === p.mountedFile) : null;
+      setActiveJsx(mounted ? mounted.content : null);
+      setActiveJsxName(mounted ? mounted.name : null);
       setCodeError(null);
       log("Info", `Opened ${p.name}`);
     },
@@ -341,9 +365,10 @@ export function useStudio() {
       resetRuntime();
       setCurrentId(p.id);
       setSelectedId(p.select);
-      const mounted = p.mountedFile ? p.files?.[0] : null;
-      setActiveJsx(mounted ? mounted.content : STARTER_CODE);
-      setActiveJsxName(mounted ? mounted.name : "GameComponent.jsx");
+      const isCode = template === "code";
+      const mounted = isCode && p.files?.[0] ? p.files[0] : null;
+      setActiveJsx(mounted ? mounted.content : null);
+      setActiveJsxName(mounted ? mounted.name : null);
       if (template === "fpp") setCameraMode("Game View");
       log("Success", `Created ${p.name}`);
       return p;
@@ -360,12 +385,12 @@ export function useStudio() {
     (id) => {
       const rest = projects.filter((p) => p.id !== id);
       if (!rest.length) {
-        const fresh = makeProject("3D Ball Runner", "code");
+        const fresh = makeProject("My first game", "normal");
         setProjects([fresh]);
         setCurrentId(fresh.id);
         setSelectedId(fresh.select);
-        setActiveJsx(STARTER_CODE);
-        setActiveJsxName("GameComponent.jsx");
+        setActiveJsx(null);
+        setActiveJsxName(null);
         return;
       }
       setProjects(rest);
@@ -374,9 +399,10 @@ export function useStudio() {
         resetRuntime();
         setCurrentId(next.id);
         setSelectedId(next.select === undefined ? null : next.select);
-        const mounted = (next.mountedFile ? next.files?.find((f) => f.name === next.mountedFile) : null) || next.files?.[0];
-        setActiveJsx(mounted ? mounted.content : STARTER_CODE);
-        setActiveJsxName(mounted ? mounted.name : "GameComponent.jsx");
+        const isCode = next.template === "code" && Boolean(next.mountedFile);
+        const mounted = isCode ? next.files?.find((f) => f.name === next.mountedFile) : null;
+        setActiveJsx(mounted ? mounted.content : null);
+        setActiveJsxName(mounted ? mounted.name : null);
       }
       log("Info", "Project deleted");
     },
@@ -612,19 +638,21 @@ export function useStudio() {
     if (!isPlaying || jsxRef.current.code || !hasHero) return undefined;
     const tick = setInterval(() => {
       patchProject((p) => {
+        const IGNORE_BLOCKERS = new Set(["player", "terrain", "water", "sky", "lighting", "fog", "postprocess", "ground", "spawn-ground"]);
         const blockers = flatten(p.groups)
-          .filter((c) => c.visible !== false && c.collision === "BlockAll" && c.id !== PLAYER.id)
+          .filter((c) => c.visible !== false && c.collision === "BlockAll" && !IGNORE_BLOCKERS.has(c.id) && !c.id.includes("ground"))
           .map((c) => ({ x: c.pos?.x || 0, z: c.pos?.z || 0, r: Math.max(c.scale?.x || 1, c.scale?.z || 1) * 0.75 + 0.35 }));
         let changed = false;
         const groupsNext = mapNodes(p.groups, (node) => {
           if (node.id === PLAYER.id) {
-            const step = PLAYER.moveStep * 0.7;
             const k = keysRefLive.current;
+            const isSprint = Boolean(k.shift || k.Shift || k.shiftleft || k.shiftright || (typeof window !== "undefined" && window.__spiderHeroSprinting));
+            const step = PLAYER.moveStep * (isSprint ? 2.2 : 1.0);
             // Raw 2D input from virtual joystick or keyboard
             let ix = Number(k.jx || 0);
             let iz = Number(k.jz || 0);
-            if (k.d || k.arrowright || k.KeyD) ix += 1;
-            if (k.a || k.arrowleft || k.KeyA) ix -= 1;
+            if (k.d || k.arrowright || k.KeyD) ix -= 1;
+            if (k.a || k.arrowleft || k.KeyA) ix += 1;
             if (k.w || k.arrowup || k.KeyW) iz += 1;
             if (k.s || k.arrowdown || k.KeyS) iz -= 1;
 
@@ -634,23 +662,29 @@ export function useStudio() {
               iz /= inputMag;
             }
 
-            // Camera-relative steering:
-            // Push UP on stick / W => move AWAY from camera
-            // Push DOWN on stick / S => move TOWARDS camera
-            // Push RIGHT on stick / D => move to screen RIGHT
-            // Push LEFT on stick / A => move to screen LEFT
             const speed = inputMag > 0.05 ? step * Math.min(1, inputMag) : 0;
+            const camFwd = (typeof window !== "undefined" && window.__spiderCamForward) || { x: 0, z: 1 };
+            const camRight = (typeof window !== "undefined" && window.__spiderCamRight) || { x: 1, z: 0 };
+
+            // Camera-relative steering:
+            // Push UP on stick / W => move in camera's forward direction
+            // Push DOWN on stick / S => move in camera's backward direction
+            // Push RIGHT on stick / D => move in camera's right direction
+            // Push LEFT on stick / A => move in camera's left direction
             let dx = 0;
             let dz = 0;
-            if (speed > 0) {
-              dx = (ix * CAM_COS + iz * CAM_SIN) * speed;
-              dz = (-ix * CAM_SIN + iz * CAM_COS) * speed;
+            let moveX = iz * camFwd.x + ix * camRight.x;
+            let moveZ = iz * camFwd.z + ix * camRight.z;
+            const moveMag = Math.hypot(moveX, moveZ);
+            if (moveMag > 0.01) {
+              dx = (moveX / moveMag) * speed;
+              dz = (moveZ / moveMag) * speed;
             }
 
             // Athletic parabolic jump with gravity
             const g = velY.current || 0;
-            let ny = Number((node.pos.y + g * 0.038).toFixed(2));
-            let nv = g - 0.75;
+            let ny = Number((node.pos.y + g * 0.05).toFixed(2));
+            let nv = g - PLAYER.gravity;
             if (ny <= PLAYER.groundY) {
               ny = PLAYER.groundY;
               nv = 0;

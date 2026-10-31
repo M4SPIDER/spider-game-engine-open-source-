@@ -12,7 +12,7 @@ import BALL_RUNNER_CODE from "../game/GameComponent.jsx?raw";
 export const STARTER_CODE = BALL_RUNNER_CODE;
 
 export const TEMPLATES = [
-  { id: "code", name: "3D Ball Runner", blurb: "Interactive 3D ball runner game", emoji: "⚡" },
+  { id: "code", name: "Cyber Knight Runner", blurb: "3D endless cyber knight runner game", emoji: "⚡" },
   { id: "normal", name: "Third person", blurb: "Hero, coins, tutorial", emoji: "🧍" },
   { id: "blank", name: "Blank level", blurb: "Empty black viewport", emoji: "⬛" },
   { id: "tpp", name: "TPP shooting", blurb: "Rifle + 3 targets", emoji: "🎯" },
@@ -72,26 +72,9 @@ const prop = (id, name, mesh, color, pos, scale = { x: 1, y: 1, z: 1 }) => ({
   anim: "None", physics: false, mass: 100, collision: "BlockAll",
 });
 
-/** Plain starter level: flat ground, a few shapes, the hero, coins. No forest, rocks or water. */
+/** Full open world starter level: Terrain, Water, Trees, Rocks, Castle, Boat, Guards, Hero, Coins */
 export function starterWorld() {
-  const full = clone(GAME_WORLD);
-  const groups = full
-    .map((g) => ({ ...g, children: (g.children || []).filter((c) => !DROP_FROM_STARTER.has(c.id)) }))
-    .filter((g) => g.children.length);
-  const props = {
-    id: "props-group",
-    name: "Level",
-    type: "folder",
-    expanded: true,
-    children: [
-      prop("spawn-ground", "Ground", "platform", "#5aa845", { x: 0, y: -1, z: 5 }, { x: 3.4, y: 1, z: 3.4 }),
-      prop("spawn-tree-1", "Tree", "tree", "#2f8f3a", { x: -16, y: 0, z: 14 }, { x: 0.8, y: 0.8, z: 0.8 }),
-      prop("spawn-tree-2", "Tree", "tree", "#3a9d45", { x: 18, y: 0, z: 22 }, { x: 0.7, y: 0.7, z: 0.7 }),
-      prop("spawn-rock-1", "Rock", "rock", "#8b8f98", { x: 13, y: 0, z: 6 }, { x: 0.5, y: 0.4, z: 0.5 }),
-      prop("spawn-crate-1", "Crate", "box", "#b9803f", { x: -9, y: 0, z: 7 }, { x: 0.6, y: 0.6, z: 0.6 }),
-    ],
-  };
-  return [...groups, props];
+  return clone(GAME_WORLD);
 }
 
 export function buildTemplate(tpl, fallbackGroups) {
@@ -169,14 +152,20 @@ export function loadProjects() {
   const list = read(K.projects, null);
   if (Array.isArray(list) && list.length) {
     const listSanitized = list.map((p) => {
-      // If project has no groups or needs knight world restoration
-      if (p.name === "My first game" && (!p.groups || p.groups.length === 0)) {
-        const t = buildTemplate("normal");
+      // If project has no groups or needs open world knight restoration
+      const hasTerrain = (p.groups || []).some((g) => (g.children || []).some((c) => c.id === "terrain"));
+      const hasSpawnGround = (p.groups || []).some((g) => (g.children || []).some((c) => c.id === "spawn-ground"));
+      const isMyFirstGame = p.name === "My first game";
+      const isCustomCode = p.template === "code" && !isMyFirstGame;
+      const needsFullWorld = !isCustomCode && (!hasTerrain || hasSpawnGround || !p.groups || p.groups.length <= 1 || Boolean(p.mountedFile) || isMyFirstGame);
+
+      if (needsFullWorld) {
         return {
           ...p,
-          groups: t.groups,
-          select: "player",
+          template: "normal",
           mountedFile: null,
+          groups: clone(GAME_WORLD),
+          select: "player",
           files: Array.isArray(p.files) && p.files.length ? p.files : [{ name: "GameComponent.jsx", content: STARTER_CODE }],
           updatedAt: Date.now(),
         };

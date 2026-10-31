@@ -23,12 +23,24 @@ export function useKeyboardControls() {
     const onDown = (e) => {
       const k = e.key.toLowerCase();
       keys.current[k] = true;
+      if (k === 'e' && !e.repeat) {
+        if (typeof window !== "undefined") {
+          window.__spiderHeroKickTime = Date.now();
+          window.__spiderHeroKicking = true;
+        }
+      }
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) {
         e.preventDefault();
       }
     };
     const onUp = (e) => {
-      keys.current[e.key.toLowerCase()] = false;
+      const k = e.key.toLowerCase();
+      keys.current[k] = false;
+      if (k === 'e') {
+        if (typeof window !== "undefined") {
+          window.__spiderHeroKicking = false;
+        }
+      }
     };
 
     // Mobile touch controls: swipe & drag to move, tap to jump
@@ -74,8 +86,8 @@ export function useKeyboardControls() {
     getDir: () => {
       const k = keys.current;
       let x = 0, z = 0;
-      if (k.arrowleft || k.a) x -= 1;
-      if (k.arrowright || k.d) x += 1;
+      if (k.arrowleft || k.a) x += 1;
+      if (k.arrowright || k.d) x -= 1;
       if (k.arrowup || k.w) z -= 1;
       if (k.arrowdown || k.s) z += 1;
 

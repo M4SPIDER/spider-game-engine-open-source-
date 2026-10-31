@@ -89,8 +89,8 @@ export function useTouchControls() {
     let z = 0;
 
     // Keyboard (WASD & Arrows)
-    if (k.arrowleft || k.a) x -= 1;
-    if (k.arrowright || k.d) x += 1;
+    if (k.arrowleft || k.a) x += 1;
+    if (k.arrowright || k.d) x -= 1;
     if (k.arrowup || k.w) z -= 1;
     if (k.arrowdown || k.s) z += 1;
 

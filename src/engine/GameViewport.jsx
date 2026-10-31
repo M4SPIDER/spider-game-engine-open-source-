@@ -79,11 +79,25 @@ function CameraRig({ isPlaying, followRef, mode, keysPressed, activeGizmo, hasCh
   const controls = useThree((s) => s.controls);
   const camera = useThree((s) => s.camera);
   const target = useMemo(() => new THREE.Vector3(), []);
-  const chase = useMemo(() => new THREE.Vector3(), []);
   const fwd = useMemo(() => new THREE.Vector3(), []);
   const right = useMemo(() => new THREE.Vector3(), []);
   const up = useMemo(() => new THREE.Vector3(0, 1, 0), []);
+  const lastTarget = useRef(null);
+
   useFrame(({ clock }) => {
+    // Continuously publish normalized camera screen-forward and screen-right vectors from camera matrix
+    const m = camera.matrixWorld.elements;
+    const rx = -m[0];
+    const rz = -m[2];
+    const rLen = Math.hypot(rx, rz);
+    const fx = -m[8];
+    const fz = -m[10];
+    const fLen = Math.hypot(fx, fz);
+    if (typeof window !== "undefined") {
+      window.__spiderCamForward = fLen > 1e-4 ? { x: fx / fLen, z: fz / fLen } : { x: 0, z: 1 };
+      window.__spiderCamRight = rLen > 1e-4 ? { x: rx / rLen, z: rz / rLen } : { x: 1, z: 0 };
+    }
+
     if (hasChess) {
       if (controls && controls.target.lengthSq() > 0.05) {
         controls.target.lerp(new THREE.Vector3(0, 0, 0), 0.1);
@@ -101,13 +115,18 @@ function CameraRig({ isPlaying, followRef, mode, keysPressed, activeGizmo, hasCh
     const follow = mode === "Game View" || (mode === "Viewport" && isPlaying);
     if (follow && controls && followRef.current) {
       followRef.current.getWorldPosition(target);
-      if (mode === "Game View") {
-        // Chase cam: behind + above hero, looking at hero
-        chase.set(target.x - 7, target.y + 5, target.z - 9);
-        camera.position.lerp(chase, 0.06);
-        controls.target.lerp(target, 0.12);
+      if (!lastTarget.current) {
+        lastTarget.current = target.clone();
+        camera.position.set(target.x, target.y + 3.6, target.z - 8.5);
+        controls.target.set(target.x, target.y + 1.2, target.z);
       } else {
-        controls.target.lerp(target, 0.08);
+        const dx = target.x - lastTarget.current.x;
+        const dz = target.z - lastTarget.current.z;
+        // Translate camera with player so distance and user's orbit angle are seamlessly preserved!
+        camera.position.x += dx;
+        camera.position.z += dz;
+        controls.target.set(target.x, target.y + 1.2, target.z);
+        lastTarget.current.copy(target);
       }
       controls.update();
       return;
@@ -752,24 +771,288 @@ function Hero({ node, wire, selected, moving }) {
   const rightArm = useRef(null);
   const coatLeft = useRef(null);
   const coatRight = useRef(null);
+  const kickArc = useRef(null);
+  const punchArc = useRef(null);
+  const shadowAura = useRef(null);
+  const shockwave = useRef(null);
 
   useFrame(({ clock }) => {
     if (!ref.current) return;
     const t = clock.elapsedTime;
-    const amp = moving ? 0.08 : 0.02;
-    ref.current.position.y = Math.abs(Math.sin(t * (moving ? 10 : 2))) * amp;
-    ref.current.rotation.x = moving ? 0.1 : 0;
+    const now = Date.now();
+    const combat = (typeof window !== "undefined" && window.__spiderCombat) || { move: "front_kick", time: 0, duration: 380 };
+    const elapsed = now - combat.time;
+    const isCombat = elapsed < (combat.duration || 380);
+    const progress = isCombat ? Math.min(1, elapsed / (combat.duration || 380)) : 0;
+    const phase = isCombat
+      ? progress < 0.35
+        ? Math.sin((progress / 0.35) * (Math.PI / 2))
+        : progress < 0.65
+        ? 1.0
+        : Math.cos(((progress - 0.65) / 0.35) * (Math.PI / 2))
+      : 0;
 
-    // Procedural arm, leg and trenchcoat sway
-    const swing = moving ? Math.sin(t * 10) * 0.5 : 0;
-    if (leftLeg.current) leftLeg.current.rotation.x = swing;
-    if (rightLeg.current) rightLeg.current.rotation.x = -swing;
-    if (leftArm.current) leftArm.current.rotation.x = -swing * 0.8;
-    if (rightArm.current) rightArm.current.rotation.x = swing * 0.8;
+    const isSprint = Boolean(typeof window !== "undefined" && window.__spiderHeroSprinting);
+    const rate = isSprint ? 20 : 10;
+    const amp = moving ? (isSprint ? 0.15 : 0.08) : 0.02;
 
-    const coatFlutter = moving ? 0.2 + Math.sin(t * 12) * 0.08 : 0.04;
-    if (coatLeft.current) coatLeft.current.rotation.x = coatFlutter;
-    if (coatRight.current) coatRight.current.rotation.x = coatFlutter;
+    if (isCombat) {
+      const move = combat.move || "front_kick";
+      if (move === "front_kick") {
+        ref.current.position.y = Math.abs(Math.sin(t * 2)) * 0.02 + phase * 0.14;
+        ref.current.rotation.x = -0.22 * phase;
+        ref.current.rotation.y = 0.24 * phase;
+        ref.current.rotation.z = 0;
+        if (rightLeg.current) {
+          rightLeg.current.rotation.x = -1.65 * phase;
+          rightLeg.current.rotation.z = 0;
+          rightLeg.current.position.set(0.16, 0.95 + 0.18 * phase, 0.16 * phase);
+        }
+        if (leftLeg.current) {
+          leftLeg.current.rotation.x = 0.22 * phase;
+          leftLeg.current.rotation.z = 0;
+          leftLeg.current.position.set(-0.16, 0.95 - 0.04 * phase, 0);
+        }
+        if (leftArm.current) leftArm.current.rotation.x = 0.85 * phase;
+        if (rightArm.current) rightArm.current.rotation.x = -0.65 * phase;
+        if (coatLeft.current) coatLeft.current.rotation.x = 0.35 + 0.45 * phase;
+        if (coatRight.current) coatRight.current.rotation.x = 0.45 + 0.55 * phase;
+        if (kickArc.current) {
+          kickArc.current.visible = phase > 0.2;
+          kickArc.current.scale.setScalar(0.7 + phase * 0.7);
+        }
+        if (punchArc.current) punchArc.current.visible = false;
+        if (shadowAura.current) shadowAura.current.visible = false;
+        if (shockwave.current) shockwave.current.visible = false;
+      } else if (move === "roundhouse") {
+        ref.current.position.y = 0.08 + Math.sin(progress * Math.PI) * 0.26;
+        ref.current.rotation.x = -0.15 * Math.sin(progress * Math.PI);
+        ref.current.rotation.y = progress * Math.PI * 2;
+        ref.current.rotation.z = 0.2 * Math.sin(progress * Math.PI);
+        if (rightLeg.current) {
+          rightLeg.current.rotation.x = -1.55 * Math.sin(progress * Math.PI);
+          rightLeg.current.rotation.z = 0.55 * Math.sin(progress * Math.PI);
+          rightLeg.current.position.set(0.16, 0.95 + 0.22 * phase, 0.18 * phase);
+        }
+        if (leftLeg.current) {
+          leftLeg.current.rotation.x = 0.15;
+          leftLeg.current.rotation.z = -0.2;
+        }
+        if (leftArm.current) leftArm.current.rotation.x = 0.9 * Math.sin(progress * Math.PI);
+        if (rightArm.current) rightArm.current.rotation.x = -0.9 * Math.sin(progress * Math.PI);
+        if (coatLeft.current) coatLeft.current.rotation.x = 0.65 * Math.sin(progress * Math.PI);
+        if (coatRight.current) coatRight.current.rotation.x = 0.75 * Math.sin(progress * Math.PI);
+        if (kickArc.current) {
+          kickArc.current.visible = progress > 0.2 && progress < 0.8;
+          kickArc.current.scale.setScalar(1.2 + Math.sin(progress * Math.PI) * 0.5);
+        }
+        if (punchArc.current) punchArc.current.visible = false;
+        if (shadowAura.current) {
+          shadowAura.current.visible = true;
+          shadowAura.current.scale.setScalar(1.0 + Math.sin(progress * Math.PI) * 0.3);
+        }
+        if (shockwave.current) shockwave.current.visible = false;
+      } else if (move === "axe_kick") {
+        const lift = progress < 0.45 ? progress / 0.45 : Math.max(0, 1 - (progress - 0.45) / 0.2);
+        ref.current.position.y = progress < 0.5 ? lift * 0.2 : -0.12 * Math.sin((progress - 0.5) * Math.PI * 2);
+        ref.current.rotation.x = progress < 0.45 ? -0.35 * lift : 0.3 * (1 - progress);
+        ref.current.rotation.y = 0;
+        ref.current.rotation.z = 0;
+        if (rightLeg.current) {
+          rightLeg.current.rotation.x = progress < 0.45 ? -2.25 * lift : -0.25;
+          rightLeg.current.position.set(0.16, 0.95 + 0.25 * lift, 0.2 * lift);
+        }
+        if (leftLeg.current) {
+          leftLeg.current.rotation.x = 0.35 * (1 - lift);
+          leftLeg.current.position.set(-0.16, 0.95 - 0.08 * (1 - lift), 0);
+        }
+        if (leftArm.current) leftArm.current.rotation.x = 0.8 * lift;
+        if (rightArm.current) rightArm.current.rotation.x = -0.7 * lift;
+        if (coatLeft.current) coatLeft.current.rotation.x = 0.4 + 0.5 * lift;
+        if (coatRight.current) coatRight.current.rotation.x = 0.4 + 0.6 * lift;
+        if (kickArc.current) {
+          kickArc.current.visible = progress > 0.35 && progress < 0.7;
+          kickArc.current.scale.setScalar(1.4);
+        }
+        if (punchArc.current) punchArc.current.visible = false;
+        if (shockwave.current) {
+          shockwave.current.visible = progress >= 0.45;
+          const s = (progress - 0.45) / 0.55;
+          shockwave.current.scale.setScalar(0.5 + s * 3.5);
+          if (shockwave.current.material) shockwave.current.material.opacity = Math.max(0, 1 - s);
+        }
+        if (shadowAura.current) {
+          shadowAura.current.visible = true;
+          shadowAura.current.scale.setScalar(1.1);
+        }
+      } else if (move === "low_sweep") {
+        ref.current.position.y = -0.42 * Math.sin(progress * Math.PI);
+        ref.current.rotation.x = 0.32 * Math.sin(progress * Math.PI);
+        ref.current.rotation.y = progress * Math.PI * 2;
+        ref.current.rotation.z = 0;
+        if (rightLeg.current) {
+          rightLeg.current.rotation.x = -1.45 * Math.sin(progress * Math.PI);
+          rightLeg.current.rotation.z = 0.75 * Math.sin(progress * Math.PI);
+          rightLeg.current.position.set(0.16, 0.95 - 0.25 * Math.sin(progress * Math.PI), 0.1);
+        }
+        if (leftLeg.current) {
+          leftLeg.current.rotation.x = 0.95 * Math.sin(progress * Math.PI);
+          leftLeg.current.position.set(-0.16, 0.95 - 0.3 * Math.sin(progress * Math.PI), 0);
+        }
+        if (leftArm.current) leftArm.current.rotation.x = -0.6;
+        if (rightArm.current) rightArm.current.rotation.x = 0.6;
+        if (coatLeft.current) coatLeft.current.rotation.x = 0.6;
+        if (coatRight.current) coatRight.current.rotation.x = 0.6;
+        if (kickArc.current) {
+          kickArc.current.visible = true;
+          kickArc.current.scale.setScalar(1.3);
+        }
+        if (punchArc.current) punchArc.current.visible = false;
+        if (shadowAura.current) shadowAura.current.visible = false;
+        if (shockwave.current) shockwave.current.visible = false;
+      } else if (move === "air_kick") {
+        ref.current.position.y = 0.55 * Math.sin(progress * Math.PI);
+        ref.current.rotation.x = 0.45 * Math.sin(progress * Math.PI);
+        ref.current.rotation.y = 0;
+        ref.current.rotation.z = 0;
+        if (rightLeg.current) {
+          rightLeg.current.rotation.x = -1.85 * phase;
+          rightLeg.current.position.set(0.16, 0.95 + 0.15 * phase, 0.25 * phase);
+        }
+        if (leftLeg.current) {
+          leftLeg.current.rotation.x = -1.25 * phase;
+          leftLeg.current.position.set(-0.16, 0.95 + 0.1 * phase, 0.15 * phase);
+        }
+        if (leftArm.current) leftArm.current.rotation.x = -1.1 * phase;
+        if (rightArm.current) rightArm.current.rotation.x = -1.1 * phase;
+        if (coatLeft.current) coatLeft.current.rotation.x = 0.85 * phase;
+        if (coatRight.current) coatRight.current.rotation.x = 0.85 * phase;
+        if (kickArc.current) {
+          kickArc.current.visible = phase > 0.2;
+          kickArc.current.scale.setScalar(1.5);
+        }
+        if (punchArc.current) punchArc.current.visible = false;
+        if (shadowAura.current) {
+          shadowAura.current.visible = true;
+          shadowAura.current.scale.setScalar(1.2);
+        }
+        if (shockwave.current) shockwave.current.visible = false;
+      } else if (move === "jab") {
+        ref.current.position.y = 0;
+        ref.current.rotation.x = 0.05 * phase;
+        ref.current.rotation.y = 0.32 * phase;
+        ref.current.rotation.z = 0;
+        if (leftArm.current) {
+          leftArm.current.rotation.x = -1.65 * phase;
+          leftArm.current.position.z = 0.28 * phase;
+        }
+        if (rightArm.current) rightArm.current.rotation.x = 0.65 * phase;
+        if (leftLeg.current) leftLeg.current.rotation.x = 0.1;
+        if (rightLeg.current) rightLeg.current.rotation.x = -0.1;
+        if (punchArc.current) {
+          punchArc.current.visible = phase > 0.2;
+          punchArc.current.position.set(-0.35, 1.45, 0.45);
+          punchArc.current.scale.setScalar(0.7 + phase * 0.6);
+        }
+        if (kickArc.current) kickArc.current.visible = false;
+        if (shadowAura.current) shadowAura.current.visible = false;
+        if (shockwave.current) shockwave.current.visible = false;
+      } else if (move === "cross") {
+        ref.current.position.y = 0;
+        ref.current.rotation.x = 0.08 * phase;
+        ref.current.rotation.y = -0.42 * phase;
+        ref.current.rotation.z = 0;
+        if (rightArm.current) {
+          rightArm.current.rotation.x = -1.75 * phase;
+          rightArm.current.position.z = 0.32 * phase;
+        }
+        if (leftArm.current) leftArm.current.rotation.x = 0.75 * phase;
+        if (leftLeg.current) leftLeg.current.rotation.x = -0.15;
+        if (rightLeg.current) rightLeg.current.rotation.x = 0.15;
+        if (punchArc.current) {
+          punchArc.current.visible = phase > 0.2;
+          punchArc.current.position.set(0.35, 1.45, 0.45);
+          punchArc.current.scale.setScalar(0.8 + phase * 0.7);
+        }
+        if (kickArc.current) kickArc.current.visible = false;
+        if (shadowAura.current) shadowAura.current.visible = false;
+        if (shockwave.current) shockwave.current.visible = false;
+      } else if (move === "spinning_backfist") {
+        ref.current.position.y = 0.06 * Math.sin(progress * Math.PI);
+        ref.current.rotation.x = 0;
+        ref.current.rotation.y = progress * Math.PI * 2;
+        ref.current.rotation.z = 0;
+        if (rightArm.current) {
+          rightArm.current.rotation.x = -1.35 * Math.sin(progress * Math.PI);
+          rightArm.current.rotation.z = 0.85 * Math.sin(progress * Math.PI);
+        }
+        if (leftArm.current) leftArm.current.rotation.x = 0.5;
+        if (punchArc.current) {
+          punchArc.current.visible = progress > 0.3 && progress < 0.8;
+          punchArc.current.position.set(0.35, 1.45, 0.35);
+          punchArc.current.scale.setScalar(1.2);
+        }
+        if (kickArc.current) kickArc.current.visible = false;
+        if (shadowAura.current) {
+          shadowAura.current.visible = true;
+          shadowAura.current.scale.setScalar(1.15);
+        }
+        if (shockwave.current) shockwave.current.visible = false;
+      } else if (move === "shadow_blast") {
+        ref.current.position.y = progress < 0.45 ? 0.35 * (progress / 0.45) : -0.18 * Math.sin((progress - 0.45) * Math.PI * 2);
+        ref.current.rotation.x = progress < 0.45 ? -0.35 : 0.45 * (1 - progress);
+        ref.current.rotation.y = 0;
+        ref.current.rotation.z = 0;
+        if (leftArm.current) leftArm.current.rotation.x = progress < 0.45 ? 1.2 : -1.4;
+        if (rightArm.current) rightArm.current.rotation.x = progress < 0.45 ? 1.2 : -1.4;
+        if (leftLeg.current) leftLeg.current.rotation.x = 0.35;
+        if (rightLeg.current) rightLeg.current.rotation.x = 0.35;
+        if (coatLeft.current) coatLeft.current.rotation.x = 0.8;
+        if (coatRight.current) coatRight.current.rotation.x = 0.8;
+        if (shadowAura.current) {
+          shadowAura.current.visible = true;
+          shadowAura.current.scale.setScalar(1.3 + Math.sin(progress * Math.PI) * 0.7);
+        }
+        if (shockwave.current) {
+          shockwave.current.visible = progress >= 0.4;
+          const s = (progress - 0.4) / 0.6;
+          shockwave.current.scale.setScalar(0.4 + s * 5.5);
+          if (shockwave.current.material) shockwave.current.material.opacity = Math.max(0, 1 - s);
+        }
+        if (kickArc.current) kickArc.current.visible = false;
+        if (punchArc.current) punchArc.current.visible = false;
+      }
+    } else {
+      if (rightLeg.current) {
+        rightLeg.current.position.set(0.16, 0.95, 0);
+        rightLeg.current.rotation.z = 0;
+      }
+      if (leftLeg.current) {
+        leftLeg.current.position.set(-0.16, 0.95, 0);
+        leftLeg.current.rotation.z = 0;
+      }
+      if (leftArm.current) leftArm.current.position.set(-0.35, 1.45, 0);
+      if (rightArm.current) rightArm.current.position.set(0.35, 1.45, 0);
+      if (kickArc.current) kickArc.current.visible = false;
+      if (punchArc.current) punchArc.current.visible = false;
+      if (shadowAura.current) shadowAura.current.visible = false;
+      if (shockwave.current) shockwave.current.visible = false;
+
+      ref.current.position.y = Math.abs(Math.sin(t * (moving ? rate : 2))) * amp;
+      ref.current.rotation.x = moving ? (isSprint ? 0.32 : 0.12) : 0;
+      ref.current.rotation.y = 0;
+      ref.current.rotation.z = 0;
+
+      const swing = moving ? Math.sin(t * rate) * (isSprint ? 0.85 : 0.5) : 0;
+      if (leftLeg.current) leftLeg.current.rotation.x = swing;
+      if (rightLeg.current) rightLeg.current.rotation.x = -swing;
+      if (leftArm.current) leftArm.current.rotation.x = -swing * 0.8;
+      if (rightArm.current) rightArm.current.rotation.x = swing * 0.8;
+
+      const coatFlutter = moving ? (isSprint ? 0.45 + Math.sin(t * 24) * 0.2 : 0.2 + Math.sin(t * 12) * 0.08) : 0.04;
+      if (coatLeft.current) coatLeft.current.rotation.x = coatFlutter;
+      if (coatRight.current) coatRight.current.rotation.x = coatFlutter;
+    }
   });
 
   const e = selected ? "#3b82f6" : undefined;
@@ -889,7 +1172,37 @@ function Hero({ node, wire, selected, moving }) {
           <boxGeometry args={[0.18, 0.18, 0.32]} />
           <Std color="#020617" wire={wire} />
         </mesh>
+        {/* Glowing Martial Arts Kick Energy Blade / Arc */}
+        <mesh ref={kickArc} position={[0, -0.88, 0.35]} rotation={[0, 0, 0]} visible={false}>
+          <ringGeometry args={[0.18, 0.44, 16, 1, 0, Math.PI]} />
+          <meshBasicMaterial color="#38bdf8" side={THREE.DoubleSide} transparent opacity={0.88} />
+        </mesh>
       </group>
+
+      {/* Shadow Fight Martial Arts Punch Blade Arc */}
+      <mesh ref={punchArc} visible={false}>
+        <ringGeometry args={[0.14, 0.35, 16, 1, 0, Math.PI * 1.5]} />
+        <meshBasicMaterial color="#00e5ff" side={THREE.DoubleSide} transparent opacity={0.9} />
+      </mesh>
+
+      {/* Shadow Fight Dark Energy Silhouette & Aura */}
+      <mesh ref={shadowAura} position={[0, 1.1, 0]} visible={false}>
+        <sphereGeometry args={[1.05, 18, 18]} />
+        <meshStandardMaterial
+          color="#06b6d4"
+          emissive="#0284c7"
+          emissiveIntensity={3.2}
+          transparent
+          opacity={0.35}
+          wireframe
+        />
+      </mesh>
+
+      {/* Radial Ground Shockwave */}
+      <mesh ref={shockwave} position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
+        <ringGeometry args={[0.25, 1.1, 32]} />
+        <meshBasicMaterial color="#38bdf8" side={THREE.DoubleSide} transparent opacity={0.92} />
+      </mesh>
     </group>
   );
 }
@@ -1277,7 +1590,7 @@ export default function GameViewport({
   const gizmoMode =
     activeGizmo === "rotate" ? "rotate" : activeGizmo === "scale" ? "scale" : "translate";
   const showTransform = activeGizmo !== "select" && selectedObj && selectedObj.parent && !isPlaying;
-  const heroMoving = isPlaying && keysPressed && Object.values(keysPressed).some(Boolean);
+  const heroMoving = Boolean((keysPressed && Object.values(keysPressed).some(Boolean)) || (typeof window !== "undefined" && window.__spiderHeroMoving));
 
   return (
     <div
@@ -1304,7 +1617,7 @@ export default function GameViewport({
             ? { position: [0, 13, 14], fov: 44 / cameraZoom }
             : isBoardGame
             ? { position: [0, 16, 18], fov: 46 / cameraZoom }
-            : { position: [14, 10, 18], fov: 55 / cameraZoom }
+            : { position: [0, 4.5, -8.5], fov: 55 / cameraZoom }
         }
         dpr={[1, 2]}
         gl={{ preserveDrawingBuffer: true, antialias: true, logarithmicDepthBuffer: true }}

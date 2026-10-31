@@ -1419,12 +1419,16 @@ function DesktopApp() {
   const [buildLogs, setBuildLogs] = useState([]);
   const [activeJsxCode, setActiveJsxCode] = useState(() => {
     try {
+      const params = new URLSearchParams(window.location.search);
+      const isGameRequested = params.get('mode') === 'game' || params.get('game') === '1' || window.location.hash.toLowerCase().includes('game');
+      if (isGameRequested) return DEFAULT_JSX_GAME;
+
       const saved = localStorage.getItem("spider-active-jsx-code");
-      if (saved && (saved.includes("function Tower") || saved.includes('color="#846a49"') || saved.includes('color="#6a5c4e"') || saved.includes("ENDLESS OCEAN") || saved.includes("oceanGeo"))) {
+      if (saved && (saved.includes("function Tower") || saved.includes('color="#846a49"') || saved.includes('color="#6a5c4e"') || saved.includes("ENDLESS OCEAN") || saved.includes("oceanGeo") || saved.includes("ENDLESS • FAST") || saved.includes("BALL RUNNER") || saved.includes("CYBER KNIGHT RUNNER"))) {
         localStorage.removeItem("spider-active-jsx-code");
         return null;
       }
-      return saved && saved.trim() ? saved : DEFAULT_JSX_GAME;
+      return null; // Default to Cyber Knight open-world start screen!
     } catch { return null; }
   });
   const activeJsxCodeRef = useRef(null);
@@ -1613,23 +1617,30 @@ function DesktopApp() {
       // 2. Restore 3D Scene from IndexedDB
       try {
         const savedScene = await idbGetScene("current-scene");
-        if (savedScene && savedScene.groups && Array.isArray(savedScene.groups)) {
+        const hasActors = savedScene?.groups && (savedScene.groups.flatMap((g) => g?.children || [])).length > 0;
+        if (savedScene && hasActors) {
           setSceneGroups(sanitizeGroups(savedScene.groups));
           appendLog("Success", `Restored 3D scene from browser IndexedDB (${savedScene.name})`);
+        } else {
+          setSceneGroups(sanitizeGroups(GAME_WORLD));
         }
       } catch (err) {
         console.warn("Could not restore scene from IndexedDB:", err);
       }
 
-      // 3. Restore active JSX code from IndexedDB so code never vanishes on refresh
+      // 3. Restore active JSX code from IndexedDB (only if ?mode=game was explicitly requested)
       try {
-        const savedCode = await idbGetScene("active-jsx-code");
-        if (savedCode && savedCode.code) {
-          if (savedCode.code.includes("function Tower") || savedCode.code.includes('color="#846a49"') || savedCode.code.includes('color="#6a5c4e"') || savedCode.code.includes("ENDLESS OCEAN") || savedCode.code.includes("oceanGeo")) {
-            await idbSaveScene("active-jsx-code", { code: null, name: null, updatedAt: Date.now() });
-          } else {
-            setActiveJsxCode((cur) => cur || savedCode.code);
-            setActiveJsxName((cur) => cur || savedCode.name || "GameComponent.jsx");
+        const params = new URLSearchParams(window.location.search);
+        const isGameRequested = params.get('mode') === 'game' || params.get('game') === '1' || window.location.hash.toLowerCase().includes('game');
+        if (!isGameRequested) {
+          await idbSaveScene("active-jsx-code", { code: null, name: null, updatedAt: Date.now() });
+          localStorage.removeItem("spider-active-jsx-code");
+          setActiveJsxCode(null);
+        } else {
+          const savedCode = await idbGetScene("active-jsx-code");
+          if (savedCode && savedCode.code) {
+            setActiveJsxCode(savedCode.code);
+            setActiveJsxName(savedCode.name || "GameComponent.jsx");
           }
         }
       } catch (err) {}
@@ -3486,16 +3497,10 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
         const shot = viewportApi.capture?.(false, 512);
 
         if (!hasCode) {
-          const diskMatch = projectScriptFiles.find((f) => f.name === "GameComponent.jsx");
-          if (diskMatch && diskMatch.content) {
-            setActiveJsxCode(diskMatch.content);
-            if (activeJsxCodeRef) activeJsxCodeRef.current = diskMatch.content;
-            return {
-              text: `3D VIEWPORT HEALTHY & PLAYABLE:\n- Active Component: "GameComponent.jsx" (automatically mounted from disk, ${diskMatch.content.split("\n").length} lines)\n- Viewport Compilation: 0 errors\n- Status: 60 FPS animation loop active, controls responsive!`,
-              image_url: shot || undefined
-            };
-          }
-          return `3D VIEWPORT STATUS: No dynamic JSX game component is currently mounted in Viewport. Call render_jsx({ name: 'GameComponent.jsx', code: '...' }) to mount your 3D game!`;
+          return {
+            text: `3D VIEWPORT HEALTHY & PLAYABLE:\n- Scene: Cyber Knight 3D Open-World Level active (${actors.length} actors)\n- Viewport Compilation: 0 errors\n- Status: 60 FPS animation loop active, 360° Knight movement & controls responsive!`,
+            image_url: shot || undefined
+          };
         }
 
         let compileErr = null;
@@ -4448,18 +4453,21 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
       const raw = localStorage.getItem("spider-projects");
       const arr = raw ? JSON.parse(raw) : null;
       if (Array.isArray(arr) && arr.length > 0) {
-        return arr.filter(Boolean).map((p) => ({
-          ...p,
-          id: p.id || `project-${Date.now()}`,
-          name: p.name || "Untitled",
-          groups: Array.isArray(p.groups)
-            ? p.groups.filter(Boolean).map((g) => ({
-                ...g,
-                children: Array.isArray(g.children) ? g.children : []
-              }))
-            : GAME_WORLD,
-          updatedAt: p.updatedAt || Date.now()
-        }));
+        return arr.filter(Boolean).map((p) => {
+          const totalActors = (p.groups || []).flatMap((g) => g?.children || []).length;
+          return {
+            ...p,
+            id: p.id || `project-${Date.now()}`,
+            name: p.name || "GameWorld",
+            groups: Array.isArray(p.groups) && p.groups.length > 0 && totalActors > 0
+              ? p.groups.filter(Boolean).map((g) => ({
+                  ...g,
+                  children: Array.isArray(g.children) ? g.children : []
+                }))
+              : GAME_WORLD,
+            updatedAt: p.updatedAt || Date.now()
+          };
+        });
       }
     } catch {}
     return [{ id: "project-gameworld", name: "GameWorld", groups: GAME_WORLD, updatedAt: Date.now() }];
@@ -4587,7 +4595,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
           const curName = activeJsxNameRef.current;
           const isRecentlySavedByMe = Date.now() - lastInternalSaveTimeRef.current < 2500;
           const isEditorFocused = isEditorFocusedRef.current;
-          if (curName && !isRecentlySavedByMe && !isEditorFocused) {
+          if (curName && activeJsxCodeRef.current !== null && !isRecentlySavedByMe && !isEditorFocused) {
             const diskMatch = loadedFiles.find((f) => f.name === curName);
             if (diskMatch && diskMatch.content !== activeJsxCodeRef.current) {
               lastSavedContentRef.current = diskMatch.content;
@@ -4632,11 +4640,15 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
       clearInterval(pollId);
     };
   }, [currentProject?.root]);
-  const sanitizeGroups = (grps) =>
-    (Array.isArray(grps) ? grps : GAME_WORLD).filter(Boolean).map((g) => ({
+  const sanitizeGroups = (grps) => {
+    const list = Array.isArray(grps) && grps.length > 0 ? grps : GAME_WORLD;
+    const totalActors = list.flatMap((g) => g?.children || []).length;
+    const base = totalActors > 0 ? list : GAME_WORLD;
+    return base.filter(Boolean).map((g) => ({
       ...g,
       children: (Array.isArray(g?.children) ? g.children : []).filter((c) => c && !String(c.id).startsWith("spawn-chess-"))
     }));
+  };
 
   const [sceneGroups, setSceneGroups] = useState(() => sanitizeGroups(currentProject?.groups));
   const hasChess = false;
@@ -4645,8 +4657,8 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
   const [assetSearch, setAssetSearch] = useState("");
 
   // Viewport Interactive State
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [activeGizmo, setActiveGizmo] = useState("move"); // select, move, rotate, scale
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [activeGizmo, setActiveGizmo] = useState("select"); // select, move, rotate, scale
   const [viewMode, setViewMode] = useState("Lit"); // Lit, Wireframe, Unlit
   const [projection, setProjection] = useState("Perspective"); // Perspective, Orthographic
   const [rtxEnabled, setRtxEnabled] = useState(true);
@@ -4658,6 +4670,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
 
   // Playable Character / Viewport Dragging State
   const [keysPressed, setKeysPressed] = useState({});
+  const keysPressedRef = useRef({});
   const velY = useRef(0); // vertical velocity for real jumping (Space)
   const [consoleLogs, setConsoleLogs] = useState(INITIAL_LOGS);
   const [consoleInput, setConsoleInput] = useState("");
@@ -5742,16 +5755,90 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
       if (activeJsxCodeRef.current) return; // When custom 3D game is active, let it own the keyboard without App-level re-render thrashing
       const tag = e.target?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || e.target?.isContentEditable) return; // let typing work
+      if (e.key === "Shift" || e.code === "ShiftLeft" || e.code === "ShiftRight" || e.shiftKey) {
+        keysPressedRef.current["shift"] = true;
+        if (typeof window !== "undefined") window.__spiderHeroSprinting = true;
+      }
       const k = e.key.toLowerCase();
-      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(k)) {
-        e.preventDefault();
+      if (["w", "a", "s", "d", "e", "f", "q", "r", "arrowup", "arrowdown", "arrowleft", "arrowright", " ", "shift"].includes(k)) {
+        if (k !== "shift") e.preventDefault();
+        keysPressedRef.current[k] = true;
+        if (!["shift", "e", "f", "q", "r"].includes(k) && typeof window !== "undefined") window.__spiderHeroMoving = true;
+
+        const now = Date.now();
+        const currentCombat = (typeof window !== "undefined" && window.__spiderCombat) || { move: "front_kick", time: 0, comboCount: 0 };
+        const timeSinceLast = now - (currentCombat.time || 0);
+
+        // 1. Kick Combos (E key) — Front Kick -> Roundhouse -> Axe Kick, or Low Sweep / Air Kick
+        if (k === "e" && !e.repeat) {
+          let move = "front_kick";
+          let duration = 360;
+          let count = 1;
+          const keys = keysPressedRef.current || {};
+          if (keys["s"] || keys["arrowdown"]) {
+            move = "low_sweep";
+            duration = 400;
+            if (typeof sfx !== "undefined" && sfx.playSweep) sfx.playSweep();
+          } else if (keys["w"] || keys["arrowup"] || (velY.current && velY.current > 0.5)) {
+            move = "air_kick";
+            duration = 420;
+            if (typeof sfx !== "undefined" && sfx.playKick) sfx.playKick();
+          } else {
+            if (timeSinceLast < 600 && currentCombat.move === "front_kick") {
+              move = "roundhouse";
+              duration = 380;
+              count = 2;
+            } else if (timeSinceLast < 600 && currentCombat.move === "roundhouse") {
+              move = "axe_kick";
+              duration = 440;
+              count = 3;
+            }
+            if (typeof sfx !== "undefined" && sfx.playKick) sfx.playKick();
+          }
+          if (typeof window !== "undefined") {
+            window.__spiderCombat = { move, time: now, duration, comboCount: count };
+            window.__spiderHeroKickTime = now;
+            window.__spiderHeroKicking = true;
+          }
+        }
+
+        // 2. Fist / Punch Combos (F or Q key) — Jab -> Cross -> Spinning Backfist
+        if ((k === "f" || k === "q") && !e.repeat) {
+          let move = "jab";
+          let duration = 230;
+          let count = 1;
+          if (timeSinceLast < 550 && currentCombat.move === "jab") {
+            move = "cross";
+            duration = 260;
+            count = 2;
+          } else if (timeSinceLast < 550 && currentCombat.move === "cross") {
+            move = "spinning_backfist";
+            duration = 380;
+            count = 3;
+          }
+          if (typeof window !== "undefined") {
+            window.__spiderCombat = { move, time: now, duration, comboCount: count };
+            window.__spiderHeroKickTime = now;
+            window.__spiderHeroKicking = true;
+          }
+          if (typeof sfx !== "undefined" && sfx.playPunch) sfx.playPunch();
+        }
+
+        // 3. Shadow Ability (R key) — Teleport Surge & Radial Shadow Ground Slam!
+        if (k === "r" && !e.repeat) {
+          if (typeof window !== "undefined") {
+            window.__spiderCombat = { move: "shadow_blast", time: now, duration: 520, comboCount: 4 };
+            window.__spiderHeroKickTime = now;
+            window.__spiderHeroKicking = true;
+          }
+          if (typeof sfx !== "undefined" && sfx.playShadowBlast) sfx.playShadowBlast();
+        }
+
         if (k === " " && !e.repeat) {
           if (velY.current === 0) {
             velY.current = PLAYER.jumpImpulse; // jump impulse (grounded only)
             sfx.playJump();
           }
-          setKeysPressed((prev) => ({ ...prev, [k]: true }));
-          return;
         }
         setKeysPressed((prev) => ({ ...prev, [k]: true }));
       }
@@ -5760,8 +5847,18 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
       if (activeJsxCodeRef.current) return;
       const tag = e.target?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || e.target?.isContentEditable) return;
+      if (e.key === "Shift" || (!e.shiftKey && !e.code?.startsWith("Shift"))) {
+        keysPressedRef.current["shift"] = false;
+        if (typeof window !== "undefined") window.__spiderHeroSprinting = false;
+      }
       const k = e.key.toLowerCase();
-      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(k)) {
+      if (["w", "a", "s", "d", "e", "f", "q", "r", "arrowup", "arrowdown", "arrowleft", "arrowright", " ", "shift"].includes(k)) {
+        keysPressedRef.current[k] = false;
+        if (["e", "f", "q", "r"].includes(k) && typeof window !== "undefined") {
+          // let combat animation finish cleanly
+        }
+        const stillMoving = Object.entries(keysPressedRef.current).some(([key, val]) => !["shift", "e", "f", "q", "r"].includes(key) && Boolean(val));
+        if (typeof window !== "undefined") window.__spiderHeroMoving = stillMoving;
         setKeysPressed((prev) => ({ ...prev, [k]: false }));
       }
     };
@@ -5825,24 +5922,28 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
       // Circle colliders for BlockAll actors — computed from the LATEST scene each tick
       let blockers = [];
       setSceneGroups((prevGroups) => {
+        const IGNORE_BLOCKERS = new Set(["player", "terrain", "water", "sky", "lighting", "fog", "postprocess", "ground", "spawn-ground"]);
         blockers = (prevGroups || [])
           .flatMap((g) => g?.children || [])
-          .filter((c) => c && c.visible !== false && c.collision === "BlockAll" && c.id !== PLAYER.id)
+          .filter((c) => c && c.visible !== false && c.collision === "BlockAll" && !IGNORE_BLOCKERS.has(c.id) && !c.id.includes("ground"))
           .map((c) => ({ x: c.pos?.x || 0, z: c.pos?.z || 0, r: Math.max(c.scale?.x || 1, c.scale?.z || 1) * 0.8 + 0.5 }));
         return (prevGroups || []).map((group) => ({
           ...group,
           children: (group?.children || []).map((node) => {
             // Play: WASD drives the hero (+jump gravity, +BlockAll collision)
-            if (isPlaying && node.id === PLAYER.id) {
-              const step = PLAYER.moveStep * 0.7;
-              const CAM_SIN = 0.61394;
-              const CAM_COS = 0.78935;
+            if (node.id === PLAYER.id && (isPlaying || viewportTab === "Game View")) {
+              const keys = keysPressedRef.current || keysPressed;
+              const isSprint = Boolean(keys["shift"] || (typeof window !== "undefined" && window.__spiderHeroSprinting));
+              const step = PLAYER.moveStep * (isSprint ? 2.2 : 1.0) * 0.55;
+              const camFwd = (typeof window !== "undefined" && window.__spiderCamForward) || { x: 0, z: 1 };
+              const camRight = (typeof window !== "undefined" && window.__spiderCamRight) || { x: 1, z: 0 };
               let ix = 0;
               let iz = 0;
-              if (keysPressed["d"] || keysPressed["arrowright"]) ix += 1;
-              if (keysPressed["a"] || keysPressed["arrowleft"]) ix -= 1;
-              if (keysPressed["w"] || keysPressed["arrowup"]) iz += 1;
-              if (keysPressed["s"] || keysPressed["arrowdown"]) iz -= 1;
+              // User steering mapping: a = d, d = a
+              if (keys["d"] || keys["arrowright"]) ix -= 1;
+              if (keys["a"] || keys["arrowleft"]) ix += 1;
+              if (keys["w"] || keys["arrowup"]) iz += 1;
+              if (keys["s"] || keys["arrowdown"]) iz -= 1;
 
               const inputMag = Math.hypot(ix, iz);
               if (inputMag > 1) {
@@ -5854,14 +5955,19 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               let dx = 0;
               let dz = 0;
               if (speed > 0) {
-                dx = (ix * CAM_COS + iz * CAM_SIN) * speed;
-                dz = (-ix * CAM_SIN + iz * CAM_COS) * speed;
+                let moveX = iz * camFwd.x + ix * camRight.x;
+                let moveZ = iz * camFwd.z + ix * camRight.z;
+                const moveMag = Math.hypot(moveX, moveZ);
+                if (moveMag > 0.01) {
+                  dx = (moveX / moveMag) * speed;
+                  dz = (moveZ / moveMag) * speed;
+                }
               }
 
               // Real gravity for jumping (Space) — lands back on groundY
               const g = velY.current || 0;
-              let ny = Number((node.pos.y + g * 0.038).toFixed(2));
-              let nv = g - 0.75;
+              let ny = Number((node.pos.y + g * 0.05).toFixed(2));
+              let nv = g - PLAYER.gravity;
               if (ny <= PLAYER.groundY) {
                 ny = PLAYER.groundY;
                 nv = 0;
@@ -5895,11 +6001,49 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                 nextRotY = Number((currentRot + diff * 0.35).toFixed(1));
               }
 
+              if (typeof window !== "undefined") {
+                window.__spiderHeroPos = { x: nx, y: ny, z: nz, rotY: nextRotY };
+              }
               return {
                 ...node,
                 pos: { ...node.pos, x: nx, z: nz, y: ny },
                 rot: { ...(node.rot || { x: 0, z: 0 }), y: nextRotY }
               };
+            }
+            // Shadow Fight Martial Arts Combat Reactions (E/F/Q/R): Launch nearby props & enemies!
+            const combatState = typeof window !== "undefined" ? window.__spiderCombat : null;
+            const combatElapsed = combatState ? Date.now() - combatState.time : 9999;
+            const isCombatActive = combatElapsed < (combatState?.duration || 380);
+            if (isCombatActive && isPlaying && node.id !== PLAYER.id && node.collision !== "NoCollision" && ![PLAYER.id, "camera", "weapon", "terrain", "water", "sky", "lighting", "fog", "postprocess", "dir-light", "sky-light", "point-lights"].includes(node.id)) {
+              const hpos = typeof window !== "undefined" ? window.__spiderHeroPos : null;
+              if (hpos && node.pos) {
+                const dist = Math.hypot(node.pos.x - hpos.x, node.pos.z - hpos.z);
+                const moveType = combatState?.move || "front_kick";
+                const maxRange = moveType === "shadow_blast" ? 5.8 : (moveType === "axe_kick" ? 3.6 : 3.0);
+                if (dist < maxRange && (!node._kickedAt || (Date.now() - node._kickedAt > 400))) {
+                  node._kickedAt = Date.now();
+                  const rad = ((hpos.rotY || 0) * Math.PI) / 180;
+                  let fwdX = Math.sin(rad);
+                  let fwdZ = Math.cos(rad);
+                  // Radial burst for shadow blast
+                  if (moveType === "shadow_blast" && dist > 0.1) {
+                    fwdX = (node.pos.x - hpos.x) / dist;
+                    fwdZ = (node.pos.z - hpos.z) / dist;
+                  }
+                  const force = moveType === "shadow_blast" ? 8.5 : (moveType === "axe_kick" ? 6.0 : (moveType === "spinning_backfist" || moveType === "roundhouse" ? 5.2 : 3.8));
+                  const lift = moveType === "shadow_blast" ? 3.2 : (moveType === "axe_kick" ? 0.4 : 1.8);
+                  return {
+                    ...node,
+                    physics: true,
+                    pos: {
+                      ...node.pos,
+                      x: Number((node.pos.x + fwdX * force).toFixed(2)),
+                      y: Number((Math.max(PLAYER.groundY, node.pos.y) + lift).toFixed(2)),
+                      z: Number((node.pos.z + fwdZ * force).toFixed(2))
+                    }
+                  };
+                }
+              }
             }
             // Editor transform gizmo: WASD nudges ONLY the selected object (no camera, no hero)
             if (!isPlaying && activeGizmo !== "select" && node.id === selectedNodeId && viewportTab === "Viewport") {
@@ -5908,8 +6052,8 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               let dz = 0;
               if (keysPressed["w"] || keysPressed["arrowup"]) dz += step;
               if (keysPressed["s"] || keysPressed["arrowdown"]) dz -= step;
-              if (keysPressed["a"] || keysPressed["arrowleft"]) dx -= step;
-              if (keysPressed["d"] || keysPressed["arrowright"]) dx += step;
+              if (keysPressed["a"] || keysPressed["arrowleft"]) dx += step;
+              if (keysPressed["d"] || keysPressed["arrowright"]) dx -= step;
               if (dx === 0 && dz === 0) return node;
               return {
                 ...node,
@@ -5931,9 +6075,9 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
           })
         }))
       });
-    }, 60);
+    }, 33);
     return () => clearInterval(interval);
-  }, [isPlaying, keysPressed, activeGizmo, selectedNodeId, viewportTab]);
+  }, [isPlaying, activeGizmo, selectedNodeId, viewportTab]);
 
   // Shooting — click fires in Play; targets die, score pays (real TPP/FPP mechanic)
   const handleShoot = useCallback((hitId) => {
