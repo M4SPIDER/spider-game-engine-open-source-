@@ -152,6 +152,8 @@ export function loadProjects() {
   const list = read(K.projects, null);
   if (Array.isArray(list) && list.length) {
     const listSanitized = list.map((p) => {
+      const hasTerrain = (p.groups || []).some((g) => (g.children || []).some((c) => c.id === "terrain"));
+      const hasSpawnGround = (p.groups || []).some((g) => (g.children || []).some((c) => c.id === "spawn-ground"));
       // Restore open world only if no custom JSX code is mounted and terrain is missing
       const needsFullWorld = !p.mountedFile && (!hasTerrain || hasSpawnGround || !p.groups || p.groups.length <= 1);
 
