@@ -137,6 +137,23 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
   const left = coins.filter((c) => !c.taken).length;
   const customGame = Boolean(activeJsx);
 
+  const [sprintOn, setSprintOn] = useState(false);
+  const toggleSprint = useCallback(() => {
+    setSprintOn((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") window.__spiderHeroSprinting = next;
+      setKeys((k) => ({ ...k, shift: next }));
+      return next;
+    });
+  }, [setKeys]);
+
+  const triggerKey = useCallback((code, key) => {
+    window.dispatchEvent(new KeyboardEvent("keydown", { code, key, bubbles: true }));
+    setTimeout(() => {
+      window.dispatchEvent(new KeyboardEvent("keyup", { code, key, bubbles: true }));
+    }, 120);
+  }, []);
+
   const shot = useCallback(() => {
     try {
       const url = viewportApi.capture?.(true, 1280);
@@ -261,33 +278,85 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
                 )}
               </div>
             )}
-            {/* Mobile joystick & jump button: only shown for legacy 3D levels without built-in gestures */}
-            {!customGame && (
-              <>
-                <Joystick onChange={(v) => setKeys((k) => ({ ...k, ...v }))} />
+            {/* Mobile joystick & Shadow Fight Combat Actions Pad */}
+            <Joystick onChange={(v) => setKeys((k) => ({ ...k, ...v }))} />
+            <div className="sp-combat-pad">
+              <div className="sp-combat-row">
+                {/* Sprint Boost */}
                 <button
                   type="button"
-                  className="sp-jump"
+                  className={cx("sp-btn-combat is-sprint", sprintOn && "is-active")}
+                  onClick={toggleSprint}
+                  aria-label="Sprint Boost"
+                  title="Sprint / Run"
+                >
+                  ⚡<span>RUN</span>
+                </button>
+                {/* Shadow Blast */}
+                <button
+                  type="button"
+                  className="sp-btn-combat is-shadow"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    triggerKey("KeyR", "r");
+                  }}
+                  aria-label="Shadow Blast"
+                  title="Shadow Blast (R)"
+                >
+                  ✨<span>SLAM</span>
+                </button>
+              </div>
+              <div className="sp-combat-row">
+                {/* Martial Arts Front Snap Kick / Combo */}
+                <button
+                  type="button"
+                  className="sp-btn-combat is-kick"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    triggerKey("KeyE", "e");
+                  }}
+                  aria-label="Martial Arts Kick"
+                  title="Kick Combo (E)"
+                >
+                  🥋<span>KICK</span>
+                </button>
+                {/* Martial Arts Punch / Fist Combo */}
+                <button
+                  type="button"
+                  className="sp-btn-combat is-punch"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    triggerKey("KeyF", "f");
+                  }}
+                  aria-label="Martial Arts Punch"
+                  title="Punch Combo (F)"
+                >
+                  🥊<span>PUNCH</span>
+                </button>
+                {/* Jump */}
+                <button
+                  type="button"
+                  className="sp-btn-combat is-jump"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     jump();
-                    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space", key: " ", bubbles: true }));
+                    triggerKey("Space", " ");
                     if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
                       window.__spiderVirtualTouch.jump = true;
                     }
                   }}
                   onPointerUp={() => {
-                    window.dispatchEvent(new KeyboardEvent("keyup", { code: "Space", key: " ", bubbles: true }));
                     if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
                       window.__spiderVirtualTouch.jump = false;
                     }
                   }}
-                  aria-label="Action / Attack"
+                  aria-label="Jump / Leap"
+                  title="Jump (Space)"
                 >
-                  Action
+                  🦘<span>JUMP</span>
                 </button>
-              </>
-            )}
+              </div>
+            </div>
           </>
         )}
 

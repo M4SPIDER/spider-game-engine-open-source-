@@ -11,6 +11,7 @@ import { viewportApi } from "../engine/GameViewport.jsx";
 import { compileJsxComponent } from "../engine/DynamicJsxRenderer.jsx";
 import { runAgent, systemPrompt, GAME_STEPS, GAME_BUILDER_PRIMER, extractFilesFromRawJson } from "../engine/agentHarness.js";
 import { COINS, COIN_RULES, PLAYER, physicsFallSpeed, PRIMITIVE_SHAPES, GAME_WORLD } from "../game/index.js";
+import { sfx } from "../engine/audioSynthesizer.js";
 import {
   STARTER_CODE,
   clone,
@@ -171,8 +172,6 @@ export function useStudio() {
   // Open-world restoration safeguard: If currently active project has restricted spawn-ground or is missing terrain, upgrade live to GAME_WORLD!
   useEffect(() => {
     if (!project) return;
-    const isCode = project.template === "code";
-    if (isCode) return;
     const hasSpawnGround = (project.groups || []).some((g) => (g.children || []).some((c) => c.id === "spawn-ground"));
     const hasTerrain = (project.groups || []).some((g) => (g.children || []).some((c) => c.id === "terrain"));
     if (hasSpawnGround || !hasTerrain || !project.groups || project.groups.length <= 1 || project.mountedFile) {
@@ -189,7 +188,7 @@ export function useStudio() {
       setActiveJsx(null);
       setActiveJsxName(null);
     }
-  }, [project?.id, project?.template, patchProject, activeJsx]);
+  }, [project?.id, patchProject, activeJsx]);
 
   const pushUndo = useCallback((snapshot, force = false) => {
     const now = Date.now();
@@ -648,13 +647,19 @@ export function useStudio() {
             const k = keysRefLive.current;
             const isSprint = Boolean(k.shift || k.Shift || k.shiftleft || k.shiftright || (typeof window !== "undefined" && window.__spiderHeroSprinting));
             const step = PLAYER.moveStep * (isSprint ? 2.2 : 1.0);
-            // Raw 2D input from virtual joystick or keyboard
-            let ix = Number(k.jx || 0);
-            let iz = Number(k.jz || 0);
-            if (k.d || k.arrowright || k.KeyD) ix -= 1;
-            if (k.a || k.arrowleft || k.KeyA) ix += 1;
-            if (k.w || k.arrowup || k.KeyW) iz += 1;
-            if (k.s || k.arrowdown || k.KeyS) iz -= 1;
+            // Raw 2D input: virtual joystick takes priority for smooth analog steering
+            let ix = 0;
+            let iz = 0;
+            const hasStick = Math.abs(k.jx || 0) > 0.04 || Math.abs(k.jz || 0) > 0.04;
+            if (hasStick) {
+              ix = Number(k.jx || 0);
+              iz = Number(k.jz || 0);
+            } else {
+              if (k.d || k.arrowright || k.KeyD) ix -= 1;
+              if (k.a || k.arrowleft || k.KeyA) ix += 1;
+              if (k.w || k.arrowup || k.KeyW) iz += 1;
+              if (k.s || k.arrowdown || k.KeyS) iz -= 1;
+            }
 
             const inputMag = Math.hypot(ix, iz);
             if (inputMag > 1) {
@@ -716,6 +721,10 @@ export function useStudio() {
               nextRotY = Number((currentRot + diff * 0.35).toFixed(1));
             }
 
+            if (typeof window !== "undefined") {
+              window.__spiderHeroPos = { x: nx, y: ny, z: nz, rotY: nextRotY };
+            }
+
             changed = true;
             return {
               ...node,
@@ -723,6 +732,43 @@ export function useStudio() {
               rot: { ...(node.rot || { x: 0, z: 0 }), y: nextRotY }
             };
           }
+
+          // Shadow Fight Martial Arts Combat Reactions (E/F/Q/R): Launch nearby props & enemies!
+          const combatState = typeof window !== "undefined" ? window.__spiderCombat : null;
+          const combatElapsed = combatState ? Date.now() - combatState.time : 9999;
+          const isCombatActive = combatElapsed < (combatState?.duration || 380);
+          if (isCombatActive && isPlaying && node.id !== PLAYER.id && node.collision !== "NoCollision" && !IGNORE_BLOCKERS.has(node.id)) {
+            const hpos = typeof window !== "undefined" ? window.__spiderHeroPos : null;
+            if (hpos && node.pos) {
+              const dist = Math.hypot(node.pos.x - hpos.x, node.pos.z - hpos.z);
+              const moveType = combatState?.move || "front_kick";
+              const maxRange = moveType === "shadow_blast" ? 5.8 : (moveType === "axe_kick" ? 3.6 : 3.0);
+              if (dist < maxRange && (!node._kickedAt || (Date.now() - node._kickedAt > 400))) {
+                node._kickedAt = Date.now();
+                const rad = ((hpos.rotY || 0) * Math.PI) / 180;
+                let fwdX = Math.sin(rad);
+                let fwdZ = Math.cos(rad);
+                if (moveType === "shadow_blast" && dist > 0.1) {
+                  fwdX = (node.pos.x - hpos.x) / dist;
+                  fwdZ = (node.pos.z - hpos.z) / dist;
+                }
+                const force = moveType === "shadow_blast" ? 8.5 : (moveType === "axe_kick" ? 6.0 : (moveType === "spinning_backfist" || moveType === "roundhouse" ? 5.2 : 3.8));
+                const lift = moveType === "shadow_blast" ? 3.2 : (moveType === "axe_kick" ? 0.4 : 1.8);
+                changed = true;
+                return {
+                  ...node,
+                  physics: true,
+                  pos: {
+                    ...node.pos,
+                    x: Number((node.pos.x + fwdX * force).toFixed(2)),
+                    y: Number((Math.max(PLAYER.groundY, node.pos.y) + lift).toFixed(2)),
+                    z: Number((node.pos.z + fwdZ * force).toFixed(2))
+                  }
+                };
+              }
+            }
+          }
+
           if (node.physics && node.pos.y > 0 && node.collision !== "NoCollision" && !CORE_IDS.has(node.id)) {
             const ny = Math.max(PLAYER.groundY, Number((node.pos.y - physicsFallSpeed(node.mass)).toFixed(2)));
             if (ny === node.pos.y) return node;
@@ -737,7 +783,7 @@ export function useStudio() {
     return () => clearInterval(tick);
   }, [isPlaying, activeJsx, patchProject, project.id]);
 
-  // keyboard (desktop, tablets with keyboards): WASD / arrows move, Space jumps
+  // keyboard (desktop, tablets with keyboards): WASD / arrows move, Space jumps, Combat (E, F, R)
   useEffect(() => {
     const map = { w: "w", arrowup: "w", s: "s", arrowdown: "s", a: "a", arrowleft: "a", d: "d", arrowright: "d" };
     const typing = (e) => {
@@ -746,16 +792,99 @@ export function useStudio() {
     };
     const down = (e) => {
       if (!playRef.current || jsxRef.current.code || typing(e)) return;
+      if (e.key === "Shift") {
+        if (typeof window !== "undefined") window.__spiderHeroSprinting = true;
+        setKeys((p) => ({ ...p, shift: true }));
+      }
       const k = e.key.toLowerCase();
+      const now = Date.now();
+      const currentCombat = (typeof window !== "undefined" && window.__spiderCombat) || { move: "front_kick", time: 0, comboCount: 0 };
+      const timeSinceLast = now - (currentCombat.time || 0);
+
+      // Kick Combos (E key)
+      if (k === "e" && !e.repeat) {
+        e.preventDefault();
+        let move = "front_kick";
+        let duration = 360;
+        let count = 1;
+        const curKeys = keysRefLive.current || {};
+        if (curKeys.s || curKeys.arrowdown) {
+          move = "low_sweep";
+          duration = 400;
+          if (sfx.playSweep) sfx.playSweep();
+        } else if (curKeys.w || curKeys.arrowup || (velY.current && velY.current > 0.5)) {
+          move = "air_kick";
+          duration = 420;
+          if (sfx.playKick) sfx.playKick();
+        } else {
+          if (timeSinceLast < 600 && currentCombat.move === "front_kick") {
+            move = "roundhouse";
+            duration = 380;
+            count = 2;
+          } else if (timeSinceLast < 600 && currentCombat.move === "roundhouse") {
+            move = "axe_kick";
+            duration = 440;
+            count = 3;
+          }
+          if (sfx.playKick) sfx.playKick();
+        }
+        if (typeof window !== "undefined") {
+          window.__spiderCombat = { move, time: now, duration, comboCount: count };
+          window.__spiderHeroKickTime = now;
+          window.__spiderHeroKicking = true;
+        }
+      }
+
+      // Punch Combos (F or Q key)
+      if ((k === "f" || k === "q") && !e.repeat) {
+        e.preventDefault();
+        let move = "jab";
+        let duration = 230;
+        let count = 1;
+        if (timeSinceLast < 550 && currentCombat.move === "jab") {
+          move = "cross";
+          duration = 260;
+          count = 2;
+        } else if (timeSinceLast < 550 && currentCombat.move === "cross") {
+          move = "spinning_backfist";
+          duration = 380;
+          count = 3;
+        }
+        if (typeof window !== "undefined") {
+          window.__spiderCombat = { move, time: now, duration, comboCount: count };
+          window.__spiderHeroKickTime = now;
+          window.__spiderHeroKicking = true;
+        }
+        if (sfx.playPunch) sfx.playPunch();
+      }
+
+      // Shadow Ability (R key)
+      if (k === "r" && !e.repeat) {
+        e.preventDefault();
+        if (typeof window !== "undefined") {
+          window.__spiderCombat = { move: "shadow_blast", time: now, duration: 520, comboCount: 4 };
+          window.__spiderHeroKickTime = now;
+          window.__spiderHeroKicking = true;
+        }
+        if (sfx.playShadowBlast) sfx.playShadowBlast();
+      }
+
       if (k === " ") {
         e.preventDefault();
-        if (!e.repeat) jump();
+        if (!e.repeat) {
+          jump();
+          if (sfx.playJump) sfx.playJump();
+        }
       } else if (map[k]) {
         e.preventDefault();
         setKeys((p) => (p[map[k]] ? p : { ...p, [map[k]]: true }));
       }
     };
     const up = (e) => {
+      if (e.key === "Shift") {
+        if (typeof window !== "undefined") window.__spiderHeroSprinting = false;
+        setKeys((p) => ({ ...p, shift: false }));
+      }
       const k = e.key.toLowerCase();
       if (map[k]) setKeys((p) => (p[map[k]] ? { ...p, [map[k]]: false } : p));
     };

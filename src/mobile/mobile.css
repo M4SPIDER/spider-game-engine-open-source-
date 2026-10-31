@@ -342,6 +342,81 @@ html.sp-mobile body:has(.is-full) {
 .sp-jump { position: absolute; z-index: 12; right: calc(24px + env(safe-area-inset-right, 0px)); bottom: calc(44px + env(safe-area-inset-bottom, 0px)); width: 88px; height: 88px; border-radius: 50%; background: rgba(42, 91, 215, 0.75); border: 1.5px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(6px); color: #fff; font-weight: 700; font-size: 15px; letter-spacing: 0.04em; touch-action: none; }
 .sp-jump:active { background: var(--accent); }
 
+/* Shadow Fight Mobile Combat Action Cluster */
+.sp-combat-pad {
+  position: absolute;
+  z-index: 12;
+  right: calc(14px + env(safe-area-inset-right, 0px));
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  touch-action: none;
+  pointer-events: auto;
+}
+.sp-combat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sp-btn-combat {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.08s ease, background 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sp-btn-combat:active {
+  transform: scale(0.92);
+}
+.sp-btn-combat.is-kick {
+  background: rgba(220, 38, 38, 0.8);
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+}
+.sp-btn-combat.is-punch {
+  background: rgba(217, 119, 6, 0.8);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
+}
+.sp-btn-combat.is-shadow {
+  background: rgba(147, 51, 234, 0.85);
+  box-shadow: 0 4px 14px rgba(147, 51, 234, 0.4);
+}
+.sp-btn-combat.is-sprint {
+  width: 46px;
+  height: 46px;
+  background: rgba(30, 41, 59, 0.85);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+.sp-btn-combat.is-sprint.is-active {
+  background: rgba(217, 119, 6, 0.95);
+  color: #fff;
+  border-color: #fff;
+  box-shadow: 0 0 12px rgba(217, 119, 6, 0.7);
+}
+.sp-btn-combat.is-jump {
+  width: 62px;
+  height: 62px;
+  background: rgba(37, 99, 235, 0.88);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.5);
+  font-size: 12px;
+}
+
 .sp-hint-card { position: absolute; z-index: 11; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; max-width: 240px; padding: 18px; border-radius: var(--r-l); background: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: blur(14px); color: #dfe4f3; font-size: 13px; }
 .sp-hint-card b { font-size: 15px; color: #fff; }
 .sp-hint-card button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; margin-top: 4px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 700; font-size: 13px; }

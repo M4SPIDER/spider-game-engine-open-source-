@@ -152,12 +152,10 @@ export function loadProjects() {
   const list = read(K.projects, null);
   if (Array.isArray(list) && list.length) {
     const listSanitized = list.map((p) => {
-      // If project has no groups or needs open world knight restoration
+      // Force open world restoration on mobile so the knight has the full world to explore
       const hasTerrain = (p.groups || []).some((g) => (g.children || []).some((c) => c.id === "terrain"));
       const hasSpawnGround = (p.groups || []).some((g) => (g.children || []).some((c) => c.id === "spawn-ground"));
-      const isMyFirstGame = p.name === "My first game";
-      const isCustomCode = p.template === "code" && !isMyFirstGame;
-      const needsFullWorld = !isCustomCode && (!hasTerrain || hasSpawnGround || !p.groups || p.groups.length <= 1 || Boolean(p.mountedFile) || isMyFirstGame);
+      const needsFullWorld = !hasTerrain || hasSpawnGround || !p.groups || p.groups.length <= 1 || Boolean(p.mountedFile);
 
       if (needsFullWorld) {
         return {

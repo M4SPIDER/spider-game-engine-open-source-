@@ -10723,6 +10723,19 @@ function useIsMobileOrTablet() {
 }
 
 export default function App() {
-  // Unified engine for PC, Tablet & Mobile — runs the full open world, combat, and touch controls everywhere!
+  const isMobile = useIsMobileOrTablet();
+  if (isMobile) {
+    return (
+      <React.Suspense
+        fallback={
+          <div style={{ height: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0b0f19", color: "#94a3b8", fontFamily: "system-ui, sans-serif" }}>
+            Loading Pocket Studio…
+          </div>
+        }
+      >
+        <MobileApp />
+      </React.Suspense>
+    );
+  }
   return <DesktopApp />;
 }
