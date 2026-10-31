@@ -40,12 +40,13 @@ const MAX_UNDO = 40;
 
 // Rules the agent must follow for on-screen controls in games it writes.
 const TOUCH_CONTROLS_RULES = [
-  "ENVIRONMENT DETECTION & CONTROLS MANDATE (DETECT ENV!):",
-  "- ALWAYS detect runtime environment: const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0 || window.matchMedia?.('(pointer: coarse)').matches);",
-  "- If on touchscreens (isTouch): Use touch controls (tap, swipe, drag, virtual joystick, on-screen action buttons). NEVER require mouse clicks, mouse hover, right-clicks, or pointer lock on mobile!",
-  "- If on PC (!isTouch): Use keyboard (WASD / arrows, Space) and mouse. ABSOLUTELY NEVER render virtual joysticks or touch buttons on PC! Keep desktop screen clean.",
-  "- Minimal pattern with spider-touch: import { useTouch, TouchControls } from 'spider-touch'; const touch = useTouch(); const ref = useRef(); useFrame((_, dt) => { ref.current.position.x += touch.move.x * 6 * dt; ref.current.position.z -= touch.move.y * 6 * dt; }); return (<group><mesh ref={ref}>...</mesh>{isTouch && <TouchControls touch={touch} buttons={['Jump']} />}</group>);",
-  "- The same input system unifies both desktop keyboard and mobile touch, but mobile UI widgets are ONLY rendered when isTouch is true.",
+  "POCKET STUDIO MOBILE TOUCH CONTROLS (MANDATORY):",
+  "- The user is on a MOBILE PHONE touchscreen. All movement, steering and actions must be 100% touch controlled (virtual joystick, touch buttons, swipe, tap).",
+  "- NEVER write keyboard event listeners (WASD / arrows / space) or require mouse clicks. Zero keyboard!",
+  "- Standard input pattern: import { useTouchControls, VirtualJoystick } from './ArenaEnv.jsx';",
+  "- Or use built-in spider-touch: import { useTouch, TouchControls } from 'spider-touch'; const touch = useTouch(); return (<group><mesh ref={ref}>...</mesh><TouchControls touch={touch} buttons={['Jump']} /></group>);",
+  "- Render on-screen buttons for actions (Jump, Attack, Boost, Block) with minimum 48px hit targets.",
+  "- Dock score, health and lives at top-centre so thumbs never block HUD.",
   "",
 ].join("\n");
 const CORE_IDS = new Set(["player", "camera", "weapon", "terrain", "water", "sky", "lighting", "fog", "postprocess", "dir-light", "sky-light", "point-lights"]);
@@ -176,26 +177,20 @@ export function useStudio() {
     setProjects((list) => list.map((p) => (p.id === projectRef.current.id ? { ...fn(p), updatedAt: Date.now() } : p)));
   }, []);
 
-  // Open-world restoration safeguard: If currently active project has restricted spawn-ground or is missing terrain, upgrade live to GAME_WORLD!
+  // Open-world restoration safeguard: only restore open world when no custom JSX code is mounted
   useEffect(() => {
-    if (!project) return;
+    if (!project || project.mountedFile || activeJsx) return;
     const hasSpawnGround = (project.groups || []).some((g) => (g.children || []).some((c) => c.id === "spawn-ground"));
     const hasTerrain = (project.groups || []).some((g) => (g.children || []).some((c) => c.id === "terrain"));
-    if (hasSpawnGround || !hasTerrain || !project.groups || project.groups.length <= 1 || project.mountedFile) {
+    if (hasSpawnGround || !hasTerrain || !project.groups || project.groups.length <= 1) {
       patchProject((p) => ({
         ...p,
         template: "normal",
-        mountedFile: null,
         groups: clone(GAME_WORLD),
         select: "player",
       }));
     }
-    // Always unmount JSX runner when on third-person Cyber Knight level
-    if (activeJsx) {
-      setActiveJsx(null);
-      setActiveJsxName(null);
-    }
-  }, [project?.id, patchProject, activeJsx]);
+  }, [project?.id, patchProject, project?.mountedFile, activeJsx]);
 
   const pushUndo = useCallback((snapshot, force = false) => {
     const now = Date.now();
@@ -1383,13 +1378,14 @@ export function useStudio() {
           }
           const ragContext = retrieveRagContext(task || goal || "");
           const sys =
-            systemPrompt(snapshotText(), { isMobile: touch }) +
-            (ragContext ? `${ragContext}\n` : "") +
+            systemPrompt(snapshotText(), { isMobile: true }) +
+            (ragContext ? `\n${ragContext}\n` : "") +
             (mem.text ? `\n\nCONVERSATION SO FAR (oldest first; the current goal comes below):\n${mem.text}\n` : "") +
-            "\n\nCRITICAL ENVIRONMENT DETECTION MANDATE: Detect the user's environment (`const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)`). If isTouch is true, provide full touch controls (tap, swipe, virtual joystick, touch buttons) without mouse dependencies. If on PC, use keyboard/mouse without any on-screen touch joystick clutter. NEVER generate both on-screen at once!\n" +
-            "\nCRITICAL COMBAT GAMES ARCHITECTURE: When asked for combat, fighting, boxing or martial arts games, always implement a complete moveset (Jab, Kick, Slam, Guard/Block), distance-based hitboxes in useFrame, 380ms iframes/cooldown to prevent multi-hit glitches, guard mitigation, dynamic knockback, procedural punch sound effects, hit spark flash, top-docked HP/stamina bars, and responsive opponent AI!\n" +
+            "\n\n" +
             TOUCH_CONTROLS_RULES +
-            GAME_BUILDER_PRIMER;
+            "\nHOW TO BUILD COMBAT & FIGHTING GAMES IN POCKET STUDIO:\n" +
+            "- Always implement full touch combat: Light Jab [JAB], Heavy Kick [KICK], Special Slam [SLAM], Guard [BLOCK], and Virtual Joystick for analog movement.\n" +
+            "- In useFrame, detect proximity (Math.hypot(p.x - e.x, p.z - e.z) < 2.2), apply 380ms invulnerability cooldown (iframes), push defender along facing direction, and render top-docked HP & stamina bars!\n";
           const messages =
             history.length === 0
               ? [

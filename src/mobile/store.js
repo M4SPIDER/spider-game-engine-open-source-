@@ -152,16 +152,13 @@ export function loadProjects() {
   const list = read(K.projects, null);
   if (Array.isArray(list) && list.length) {
     const listSanitized = list.map((p) => {
-      // Force open world restoration on mobile so the knight has the full world to explore
-      const hasTerrain = (p.groups || []).some((g) => (g.children || []).some((c) => c.id === "terrain"));
-      const hasSpawnGround = (p.groups || []).some((g) => (g.children || []).some((c) => c.id === "spawn-ground"));
-      const needsFullWorld = !hasTerrain || hasSpawnGround || !p.groups || p.groups.length <= 1 || Boolean(p.mountedFile);
+      // Restore open world only if no custom JSX code is mounted and terrain is missing
+      const needsFullWorld = !p.mountedFile && (!hasTerrain || hasSpawnGround || !p.groups || p.groups.length <= 1);
 
       if (needsFullWorld) {
         return {
           ...p,
           template: "normal",
-          mountedFile: null,
           groups: clone(GAME_WORLD),
           select: "player",
           files: Array.isArray(p.files) && p.files.length ? p.files : [{ name: "GameComponent.jsx", content: STARTER_CODE }],
