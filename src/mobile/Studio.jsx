@@ -36,8 +36,9 @@ function Joystick({ onChange }) {
 
   const dispatchKeys = (jx, jz) => {
     const nextKeys = new Set();
-    if (jx > 0.25) { nextKeys.add("KeyD"); nextKeys.add("ArrowRight"); }
-    if (jx < -0.25) { nextKeys.add("KeyA"); nextKeys.add("ArrowLeft"); }
+    // User steering mapping: a = d, d = a (tilt right -> KeyA/ArrowLeft, tilt left -> KeyD/ArrowRight)
+    if (jx > 0.25) { nextKeys.add("KeyA"); nextKeys.add("ArrowLeft"); }
+    if (jx < -0.25) { nextKeys.add("KeyD"); nextKeys.add("ArrowRight"); }
     if (jz > 0.25) { nextKeys.add("KeyW"); nextKeys.add("ArrowUp"); }
     if (jz < -0.25) { nextKeys.add("KeyS"); nextKeys.add("ArrowDown"); }
 
@@ -55,7 +56,7 @@ function Joystick({ onChange }) {
 
     if (typeof window !== "undefined") {
       window.__spiderVirtualTouch = {
-        x: jx,
+        x: -jx,
         z: jz,
         jump: false
       };

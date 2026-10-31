@@ -59,7 +59,7 @@ export function useKeyboardControls() {
       const dx = t.clientX - touchStart.current.x;
       const dy = t.clientY - touchStart.current.y;
       if (Math.hypot(dx, dy) > 15) {
-        touchDir.current.x = Math.max(-1, Math.min(1, dx / 40));
+        touchDir.current.x = Math.max(-1, Math.min(1, -dx / 40));
         touchDir.current.z = Math.max(-1, Math.min(1, dy / 40));
       }
     };

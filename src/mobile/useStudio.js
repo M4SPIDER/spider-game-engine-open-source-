@@ -662,14 +662,15 @@ export function useStudio() {
             const stickZ = Math.abs(k.jz || 0) > 0.04 ? Number(k.jz) : (Math.abs(touch.z || 0) > 0.04 ? Number(touch.z) : 0);
             const hasStick = Math.abs(stickX) > 0.04 || Math.abs(stickZ) > 0.04;
             if (hasStick) {
-              ix = stickX;
+              // User steering mapping: a = d, d = a (inverted horizontal analog stick)
+              ix = -stickX;
               iz = stickZ;
             } else {
               // User steering mapping: a = d, d = a
               if (k.d || k.arrowright || k.KeyD) ix -= 1;
               if (k.a || k.arrowleft || k.KeyA) ix += 1;
               if (k.w || k.arrowup || k.KeyW) iz += 1;
-              if (k.s || k.arrowdown || k.KeyS) iz += 1;
+              if (k.s || k.arrowdown || k.KeyS) iz -= 1;
             }
 
             const inputMag = Math.hypot(ix, iz);

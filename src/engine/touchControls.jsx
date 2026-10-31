@@ -129,7 +129,7 @@ function Overlay({ touch, buttons, always }) {
     const dead = 0.12;
     const nx = dx / max;
     const ny = -dy / max;
-    touch._stick.x = Math.abs(nx) < dead ? 0 : Number(nx.toFixed(2));
+    touch._stick.x = Math.abs(nx) < dead ? 0 : Number((-nx).toFixed(2));
     touch._stick.y = Math.abs(ny) < dead ? 0 : Number(ny.toFixed(2));
     touch._sync();
   };

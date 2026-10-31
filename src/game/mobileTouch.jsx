@@ -57,7 +57,7 @@ export function useTouchControls() {
       const dx = t.clientX - touchStart.current.x;
       const dy = t.clientY - touchStart.current.y;
       if (Math.hypot(dx, dy) > 12) {
-        touchDir.current.x = Math.max(-1, Math.min(1, dx / 35));
+        touchDir.current.x = Math.max(-1, Math.min(1, -dx / 35));
         touchDir.current.z = Math.max(-1, Math.min(1, dy / 35));
       }
     };
@@ -178,7 +178,7 @@ export function VirtualJoystick({
 
       if (typeof window !== "undefined") {
         window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
-        window.__spiderVirtualTouch.x = normX;
+        window.__spiderVirtualTouch.x = -normX;
         window.__spiderVirtualTouch.z = normY;
       }
 
