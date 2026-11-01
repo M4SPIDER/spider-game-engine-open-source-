@@ -332,6 +332,25 @@ html.sp-mobile body:has(.is-full) {
 .sp-cams button { min-height: 36px; padding: 0 16px; border-radius: 999px; font-size: 13px; font-weight: 700; color: #b8c0d6; }
 .sp-cams button.is-on { background: rgba(255, 255, 255, 0.16); color: #fff; }
 
+/* Ensure all dynamic start menu / title screen overlays fit within mobile viewport */
+.sp-viewport div[style*="radial-gradient"],
+.sp-viewport div[style*="gradient"] {
+  max-height: 100% !important;
+  box-sizing: border-box !important;
+  padding: 10px 14px !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  pointer-events: auto !important;
+}
+.sp-viewport div[style*="radial-gradient"] button,
+.sp-viewport div[style*="gradient"] button {
+  padding: 10px 24px !important;
+  font-size: clamp(14px, 4vw, 18px) !important;
+  margin: 6px auto !important;
+  flex-shrink: 0 !important;
+  touch-action: manipulation !important;
+}
+
 .sp-hud { position: absolute; z-index: 12; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; pointer-events: none; }
 .sp-hud-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border-radius: 999px; background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--glass-line); color: #fff; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .sp-hud-pill b { font-size: 15px; }

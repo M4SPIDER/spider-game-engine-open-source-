@@ -61,6 +61,43 @@ export default function MobileApp() {
   const closeTour = () => { markTourSeen(); setTour(false); };
   useTheme(s.settings.theme);
 
+  // Live telemetry bridge to report mobile health & mounting status
+  useEffect(() => {
+    const reportHeartbeat = () => {
+      try {
+        fetch('/__mobile_heartbeat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            timestamp: Date.now(),
+            projectName: s.project?.name,
+            projectId: s.project?.id,
+            mountedFile: s.project?.mountedFile,
+            activeJsxName: s.activeJsxName,
+            activeJsxLength: s.activeJsx ? s.activeJsx.length : 0,
+            activeJsxCode: s.activeJsx || null,
+            codeError: s.codeError || (typeof window !== "undefined" ? window.__lastDynamicJsxError : null),
+            isPlaying: s.isPlaying,
+            isBusy: s.busy,
+            streamThought: s.stream?.thought,
+            lastMessage: s.session?.messages?.slice(-1)[0],
+            logs: s.logs?.slice(-5)
+          })
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data?.patchCode && s.mountCode) {
+              s.mountCode('GameComponent.jsx', data.patchCode);
+            }
+          })
+          .catch(() => {});
+      } catch {}
+    };
+    reportHeartbeat();
+    const interval = setInterval(reportHeartbeat, 2500);
+    return () => clearInterval(interval);
+  }, [s.project?.id, s.project?.mountedFile, s.activeJsxName, s.codeError, s.isPlaying, s.busy, s.stream?.thought, s.session?.messages?.length]);
+
   const notify = useCallback((text, tone = "ok") => toast(text, tone), [toast]);
   const go = useCallback((id, page = null) => {
     setTab(id);

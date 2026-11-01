@@ -166,7 +166,7 @@ async function readSSE(res, onEvent) {
  * One chat turn. messages: [{role, content}] in OpenAI shape (images as image_url parts).
  * Streams via onToken(chunk). Retries once on 5xx; Meta also falls back to sibling models on 400.
  */
-export async function chat({ provider, key, model, baseUrl, messages, onToken, signal, maxTokens = 4096 }) {
+export async function chat({ provider, key, model, baseUrl, messages, onToken, signal, maxTokens = 131072 }) {
   const base = String(baseUrl || provider.baseUrl).replace(/\/+$/, "");
   if (!base) throw new Error("No base URL set for this provider. Open More, then Settings, then AI.");
   if (!key && !provider.custom) throw new Error(`No ${provider.name} key yet. Open More, then Settings, then AI.`);

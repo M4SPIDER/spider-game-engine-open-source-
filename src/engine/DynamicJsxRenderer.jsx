@@ -21,6 +21,93 @@ import * as PiecesModule from "../game/pieces.jsx";
 import * as ChessRulesModule from "../game/ChessRules.js";
 import * as MobileTouchModule from "../game/mobileTouch.jsx";
 
+// Bulletproof R3F HTML tag extension shims: prevents "R3F: Span is not part of the THREE namespace" crashes
+try {
+  Fiber.extend({
+    Span: THREE.Group,
+    Div: THREE.Group,
+    P: THREE.Group,
+    Button: THREE.Group,
+    A: THREE.Group,
+    Img: THREE.Group,
+    Section: THREE.Group,
+    Header: THREE.Group,
+    Main: THREE.Group,
+    Nav: THREE.Group
+  });
+} catch (e) {
+  console.warn("Failed to extend Fiber with safe HTML shims:", e);
+}
+
+// Bulletproof Html wrapper: guarantees <Html fullscreen> stays 100% fixed in screen space regardless of camera position!
+const SafeHtml = React.forwardRef(({ fullscreen, calculatePosition, style, children, ...rest }, ref) => {
+  const anchorRef = React.useRef(null);
+
+  Fiber.useFrame(({ camera }) => {
+    if (fullscreen && anchorRef.current && camera) {
+      // Keep the 3D anchor strictly in front of the camera so Drei's isObjectBehindCamera NEVER sets display = 'none'!
+      const dir = camera.getWorldDirection(new THREE.Vector3());
+      anchorRef.current.position.copy(camera.position).addScaledVector(dir, 2);
+      anchorRef.current.quaternion.copy(camera.quaternion);
+      anchorRef.current.updateMatrixWorld(true);
+    }
+  });
+
+  const calcPos = fullscreen && !calculatePosition
+    ? (_, __, size) => [size.width / 2, size.height / 2]
+    : calculatePosition;
+
+  const handleContainerPointer = (e) => {
+    if (e.target && !e.target.closest("button") && !e.target.closest("a")) {
+      const container = e.currentTarget;
+      if (container) {
+        const startBtn = container.querySelector("button");
+        if (startBtn) {
+          const txt = (startBtn.textContent || "").toLowerCase();
+          if (txt.includes("start") || txt.includes("play") || txt.includes("tap")) {
+            startBtn.click();
+          }
+        }
+      }
+    }
+  };
+
+  return (
+    <group ref={anchorRef}>
+      <Drei.Html
+        ref={ref}
+        fullscreen={fullscreen}
+        calculatePosition={calcPos}
+        style={{
+          ...(fullscreen && {
+            pointerEvents: "none",
+          }),
+          ...style
+        }}
+        {...rest}
+      >
+        {fullscreen ? (
+          <div
+            onPointerDown={handleContainerPointer}
+            onTouchStart={handleContainerPointer}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none",
+            }}
+          >
+            {children}
+          </div>
+        ) : children}
+      </Drei.Html>
+    </group>
+  );
+});
+SafeHtml.displayName = "SafeHtml";
+
 class JsxErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -33,6 +120,13 @@ class JsxErrorBoundary extends Component {
     console.warn("[DynamicJsxRenderer] Runtime error in dynamic JSX component:", error);
     if (typeof window !== "undefined") {
       window.__lastDynamicJsxError = `Runtime error in ${this.props.name || "GameComponent"}: ${error?.message || String(error)}`;
+      try {
+        fetch('/__client_error', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'DynamicJsxRenderer_RuntimeError', name: this.props.name, msg: error?.message, stack: error?.stack })
+        }).catch(() => {});
+      } catch {}
     }
     if (this.props.onError) this.props.onError(error);
   }
@@ -151,7 +245,7 @@ export function compileJsxComponent(rawCode, customScope = EMPTY_SCOPE, onError 
       react: React,
       three: THREE,
       "@react-three/fiber": { ...Fiber, Canvas: SafeCanvas },
-      "@react-three/drei": Drei,
+      "@react-three/drei": { ...Drei, Html: SafeHtml },
       "lucide-react": safeLucide,
       "chess.js": { Chess, default: Chess },
       audio: { sfx, SoundEffects, playSound: (k) => sfx[k]?.() || sfx.play?.(k), default: sfx },
@@ -266,7 +360,7 @@ export function compileJsxComponent(rawCode, customScope = EMPTY_SCOPE, onError 
               Drei.Sky,
               Drei.Stars,
               Drei.Grid,
-              Drei.Html,
+              SafeHtml,
               Drei.useFBX,
               Drei.useGLTF,
               Drei.useAnimations,
@@ -383,7 +477,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
       Drei.Sky,
       Drei.Stars,
       Drei.Grid,
-      Drei.Html,
+      SafeHtml,
       Drei.Billboard,
       Drei.Center,
       Drei.RoundedBox,

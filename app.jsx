@@ -3001,7 +3001,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
       { role: "user", content: prompt }
     ];
 
-    let maxTokens = 8192;
+    let maxTokens = 131072;
     let messages = compactMetaMessages(rawMessages, 24000);
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     let lastError = null;
@@ -3025,7 +3025,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
         try { appendLog("Warning", `Meta API retry (attempt 2) — switching to model "${currentModel}"...`); } catch {}
         await sleep(600);
         messages = compactMetaMessages(rawMessages, 16000);
-        maxTokens = 8192;
+        maxTokens = 131072;
       } else if (attempt === 3) {
         try { appendLog("Warning", `Meta API retry (attempt 3) — trying with simplified message payload on "${currentModel}"...`); } catch {}
         await sleep(1000);
@@ -3035,7 +3035,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
           { role: "system", content: typeof sysMsg.content === "string" ? sysMsg.content.slice(0, 8000) : sys },
           { role: "user", content: typeof lastUser.content === "string" ? lastUser.content : String(prompt || "") }
         ];
-        maxTokens = 4096;
+        maxTokens = 131072;
       } else if (attempt === 4) {
         try { appendLog("Warning", `Meta API retry (attempt 4) — single-turn developer context prompt on "${currentModel}"...`); } catch {}
         await sleep(1500);
@@ -3043,7 +3043,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
         messages = [
           { role: "user", content: `Context: ${sys.slice(0, 3000)}\n\nGoal: ${typeof lastUser.content === "string" ? lastUser.content : prompt}` }
         ];
-        maxTokens = 4096;
+        maxTokens = 131072;
       }
 
       const shouldStream = opts.stream !== false && attempt === 1;
@@ -3435,11 +3435,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
         if (compileErr) {
           const errMsg = compileErr.message || String(compileErr);
           if (typeof window !== "undefined") window.__lastDynamicJsxError = errMsg;
-          const isTruncated = errMsg.includes("Unexpected token") || errMsg.includes("Unterminated");
-          const advisory = isTruncated
-            ? "\n(TOKEN LIMIT ADVISORY: Code was cut off mid-expression. Re-mount using render_jsx with a compact, dense component under 60 lines!)"
-            : "";
-          return `Live 3D JSX component "${name}" mounted, BUT COMPILATION ERROR DETECTED: ${errMsg}${advisory}\nPlease diagnose and fix this error in your code so the game is playable!`;
+          return `Live 3D JSX component "${name}" mounted, BUT COMPILATION ERROR DETECTED: ${errMsg}\nPlease diagnose and fix this error in your code so the game is playable!`;
         } else {
           if (typeof window !== "undefined") window.__lastDynamicJsxError = null;
         }

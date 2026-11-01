@@ -40,13 +40,24 @@ const MAX_UNDO = 40;
 
 // Rules the agent must follow for on-screen controls in games it writes.
 const TOUCH_CONTROLS_RULES = [
-  "POCKET STUDIO MOBILE TOUCH CONTROLS (MANDATORY):",
-  "- The user is on a MOBILE PHONE touchscreen. All movement, steering and actions must be 100% touch controlled (virtual joystick, touch buttons, swipe, tap).",
-  "- NEVER write keyboard event listeners (WASD / arrows / space) or require mouse clicks. Zero keyboard!",
-  "- Standard input pattern: import { useTouchControls, VirtualJoystick } from './ArenaEnv.jsx';",
-  "- Or use built-in spider-touch: import { useTouch, TouchControls } from 'spider-touch'; const touch = useTouch(); return (<group><mesh ref={ref}>...</mesh><TouchControls touch={touch} buttons={['Jump']} /></group>);",
-  "- Render on-screen buttons for actions (Jump, Attack, Boost, Block) with minimum 48px hit targets.",
-  "- Dock score, health and lives at top-centre so thumbs never block HUD.",
+  "POCKET STUDIO MOBILE CONTROLS & TITLE MENU MANDATE:",
+  "- START MENU & TITLE SCREEN MANDATE (TAP TO START):",
+  "  * Every game MUST start in a 'menu' state before active gameplay: const [gameState, setGameState] = useState('menu'); // 'menu' | 'playing' | 'gameover'",
+  "  * In 'menu' state, show a clean, stylish Start Screen with game title and a bold '▶ TAP TO START' / 'START GAME' button (<MobileMenu title='...' subtitle='...' onStart={() => setGameState('playing')} /> from './ArenaEnv.jsx').",
+  "  * TAP ANYWHERE TO START: Add onClick={() => setGameState('playing')} and onTouchStart={() => setGameState('playing')} to the outer overlay <div> so tapping ANYWHERE on the phone screen immediately starts the game!",
+  "  * NEVER OVERFLOW VIEWPORT: Set maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', compact padding (10px), and responsive font clamps so the button is ALWAYS visible in the viewport!",
+  "- JOYSTICK CONTROLS (EXACTLY ONE JOYSTICK — DO NOT DUPLICATE!):",
+  "  * The engine shell ALREADY renders the analog Virtual Joystick & Jump button during Play mode!",
+  "  * ABSOLUTELY NEVER render a virtual joystick, floating touch stick, or touch-stick divs inside your JSX code! Zero duplicate joysticks!",
+  "  * For movement, simply import { useKeyboardControls } from './ArenaEnv.jsx'. In useFrame, const { x, z, jump } = getDir(); — this automatically connects to the engine's Virtual Joystick with smooth analog steering!",
+  "  * RUNNER EXCEPTION: For endless runners / lane runners ONLY, use horizontal touch drag / swipe to steer and switch lanes.",
+  "- STRICT BUTTON MANDATE (NO BUTTONS UNTIL ASKED):",
+  "  * DO NOT CREATE ON-SCREEN ACTION/ATTACK BUTTONS UNLESS EXPLICITLY ASKED! Keep the screen clean, immersive, and uncluttered. The engine already provides the joystick and controls.",
+  "- IN-GAME HUD MANDATE (TOP-CENTER ONLY):",
+  "  * ALWAYS dock in-game HUDs (Score, Coins, Lives, Health, Ammo) at TOP-CENTER:",
+  "    <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 14, alignItems: 'center', background: 'rgba(15, 23, 42, 0.85)', padding: '6px 18px', borderRadius: 20, border: '1px solid rgba(255, 255, 255, 0.2)', color: '#fff', fontWeight: 800, whiteSpace: 'nowrap', zIndex: 40, pointerEvents: 'none' }}>...</div>",
+  "  * NEVER place HUDs in the top-left corner (top-left is strictly reserved for the red 'Exit Full' button and tool rail) or top-right (reserved for camera & settings).",
+  "  * Or simply use <GameHud hp={...} score={...} total={...} /> from './ArenaEnv.jsx' which automatically docks top-center.",
   "",
 ].join("\n");
 const CORE_IDS = new Set(["player", "camera", "weapon", "terrain", "water", "sky", "lighting", "fog", "postprocess", "dir-light", "sky-light", "point-lights"]);
@@ -89,7 +100,9 @@ export function useStudio() {
   const flat = useMemo(() => flatten(groups), [groups]);
 
   const [selectedId, setSelectedId] = useState(project.select === undefined ? "player" : project.select);
-  const mountedAtBoot = project.mountedFile ? project.files?.find((f) => f.name === project.mountedFile) : null;
+  const mountedAtBoot = (project.mountedFile ? project.files?.find((f) => f.name === project.mountedFile) : null)
+    || project.files?.find((f) => f.name === "GameComponent.jsx" && f.content && f.content.length > 100)
+    || (project.template === "code" ? project.files?.[0] : null);
   const [activeJsx, setActiveJsx] = useState(() => (mountedAtBoot ? mountedAtBoot.content : null));
   const [activeJsxName, setActiveJsxName] = useState(() => (mountedAtBoot ? mountedAtBoot.name : null));
   const [codeError, setCodeError] = useState(null);
@@ -116,14 +129,15 @@ export function useStudio() {
 
   // Sync activeJsx when project changes or files update
   useEffect(() => {
-    const mounted = project.mountedFile ? project.files?.find((f) => f.name === project.mountedFile) : null;
+    const targetFile = project.mountedFile || (project.files?.some((f) => f.name === "GameComponent.jsx" && f.content && f.content.length > 100) ? "GameComponent.jsx" : null);
+    const mounted = targetFile ? project.files?.find((f) => f.name === targetFile) : null;
     const code = mounted ? mounted.content : null;
     const name = mounted ? mounted.name : null;
     if (code !== jsxRef.current.code) {
       setActiveJsx(code);
       setActiveJsxName(name);
     }
-  }, [project.id, project.mountedFile]);
+  }, [project.id, project.mountedFile, project.files]);
 
   // ---------- refs mirrored for async agent tools ----------
   const undoRef = useRef([]);
@@ -174,7 +188,11 @@ export function useStudio() {
 
   // ---------- project / scene mutation ----------
   const patchProject = useCallback((fn) => {
-    setProjects((list) => list.map((p) => (p.id === projectRef.current.id ? { ...fn(p), updatedAt: Date.now() } : p)));
+    setProjects((list) => {
+      const next = list.map((p) => (p.id === projectRef.current.id ? { ...fn(p), updatedAt: Date.now() } : p));
+      try { saveProjects(next); } catch {}
+      return next;
+    });
   }, []);
 
   // Open-world restoration safeguard: only restore open world when no custom JSX code is mounted
@@ -1201,10 +1219,7 @@ export function useStudio() {
           if (!code) throw new Error("render_jsx requires JSX code string");
           const r = mountCode(name, code);
           if (!r.ok) {
-            const trunc = /Unexpected token|Unterminated/.test(r.error)
-              ? "\n(TOKEN LIMIT ADVISORY: code was cut off mid-expression. Re-mount a compact component under 60 lines.)"
-              : "";
-            return `COMPILATION ERROR in "${name}": ${r.error}${trunc}\nFix the code and call render_jsx again.`;
+            return `COMPILATION ERROR in "${name}": ${r.error}\nFix the syntax or logic error and call render_jsx again.`;
           }
           return `Component "${name}" compiled, mounted and verified error-free in the 3D viewport. Ready to play.`;
         }
@@ -1402,8 +1417,10 @@ export function useStudio() {
             "\n\n" +
             TOUCH_CONTROLS_RULES +
             "\nHOW TO BUILD COMBAT & FIGHTING GAMES IN POCKET STUDIO:\n" +
-            "- Always implement full touch combat: Light Jab [JAB], Heavy Kick [KICK], Special Slam [SLAM], Guard [BLOCK], and Virtual Joystick for analog movement.\n" +
-            "- In useFrame, detect proximity (Math.hypot(p.x - e.x, p.z - e.z) < 2.2), apply 380ms invulnerability cooldown (iframes), push defender along facing direction, and render top-docked HP & stamina bars!\n";
+            "- Title Menu: ALWAYS include a title screen with Start button (<MobileMenu title='...' onStart={() => setGameState('playing')} /> from './ArenaEnv.jsx').\n" +
+            "- Movement: ALWAYS use { useKeyboardControls } from './ArenaEnv.jsx' for smooth footwork driven by the engine's Virtual Joystick.\n" +
+            "- Combat mechanics: detect proximity (Math.hypot(p.x - e.x, p.z - e.z) < 2.2), apply 380ms invulnerability cooldown (iframes), push defender along facing direction, and render clean top-docked HP & stamina bars.\n" +
+            "- STRICT BUTTON MANDATE: DO NOT CREATE ATTACK BUTTONS UNTIL ASKED! Strike on tap (tap anywhere or tap enemy to punch/kick), swipe to dash/dodge. Only add on-screen combat buttons if the user explicitly asks for buttons!\n";
           const messages =
             history.length === 0
               ? [
@@ -1431,6 +1448,7 @@ export function useStudio() {
             model: cfg.model[prov.id] || (cfg.models[prov.id] || prov.models)[0],
             messages,
             signal: ctrlRef.current.signal,
+            maxTokens: 131072,
             onToken: (tok) => {
               acc += tok;
               window.__lastStreamedAgentText = acc;

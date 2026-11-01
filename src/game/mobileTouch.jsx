@@ -146,6 +146,20 @@ export function VirtualJoystick({
   onEnd,
   style = {}
 }) {
+  // If the engine shell already provides the native .sp-stick, do not render a duplicate
+  const [hasShellStick, setHasShellStick] = useState(() => {
+    return typeof document !== "undefined" && Boolean(document.querySelector(".sp-stick"));
+  });
+  useEffect(() => {
+    const check = () => {
+      setHasShellStick(typeof document !== "undefined" && Boolean(document.querySelector(".sp-stick")));
+    };
+    check();
+    const t = setInterval(check, 1000);
+    return () => clearInterval(t);
+  }, []);
+  if (hasShellStick) return null;
+
   const [knobPos, setKnobPos] = useState({ x: 0, y: 0 });
   const [active, setActive] = useState(false);
   const containerRef = useRef(null);
@@ -429,6 +443,12 @@ export function MobileMenu({
   return (
     <Html fullscreen calculatePosition={(_, __, s) => [s.width / 2, s.height / 2]} style={{ pointerEvents: "none" }}>
       <div
+        onClick={onStart}
+        onTouchStart={(e) => {
+          if (e.target && (e.target.closest("button") || e.target.closest("a"))) return;
+          e.preventDefault();
+          onStart?.();
+        }}
         style={{
           position: "absolute",
           inset: 0,
@@ -440,20 +460,24 @@ export function MobileMenu({
           color: "#ffffff",
           fontFamily: "system-ui, -apple-system, sans-serif",
           textAlign: "center",
-          padding: "20px",
+          padding: "12px 16px",
           boxSizing: "border-box",
           pointerEvents: "auto",
-          zIndex: 50
+          zIndex: 50,
+          maxHeight: "100%",
+          overflowY: "auto",
+          cursor: "pointer",
+          touchAction: "manipulation"
         }}
       >
-        <div style={{ letterSpacing: 4, fontSize: 11, color: "#7dd3fc", fontWeight: 700, textTransform: "uppercase" }}>
+        <div style={{ letterSpacing: 3, fontSize: 10, color: "#7dd3fc", fontWeight: 700, textTransform: "uppercase" }}>
           {isGameOver ? "RUN FINISHED" : "SPIDER ENGINE 3D"}
         </div>
 
         <h1
           style={{
-            fontSize: "clamp(32px, 8vw, 56px)",
-            margin: "10px 0",
+            fontSize: "clamp(22px, 6vw, 38px)",
+            margin: "4px 0",
             color: "#fde047",
             textShadow: "0 0 35px rgba(2, 132, 199, 0.8)",
             fontWeight: 900,
@@ -465,11 +489,11 @@ export function MobileMenu({
 
         <p
           style={{
-            maxWidth: 440,
-            fontSize: "clamp(13px, 3.5vw, 16px)",
+            maxWidth: 400,
+            fontSize: "clamp(11px, 2.8vw, 14px)",
             opacity: 0.92,
-            margin: "0 0 16px 0",
-            lineHeight: 1.4
+            margin: "0 0 8px 0",
+            lineHeight: 1.3
           }}
         >
           {isGameOver ? (
@@ -484,26 +508,30 @@ export function MobileMenu({
           style={{
             background: "rgba(15, 23, 42, 0.75)",
             border: "1px solid rgba(255, 255, 255, 0.15)",
-            borderRadius: 14,
-            padding: "8px 18px",
-            fontSize: "clamp(11px, 2.8vw, 13px)",
+            borderRadius: 12,
+            padding: "5px 14px",
+            fontSize: "clamp(10px, 2.5vw, 12px)",
             color: "#e2e8f0",
-            marginBottom: 20,
-            maxWidth: "min(90vw, 420px)"
+            marginBottom: 10,
+            maxWidth: "min(90vw, 380px)"
           }}
         >
           {isTouch ? (
-            <span>🕹️ <b>Touch Controls:</b> Use Virtual Joystick to move • Tap <b>JUMP</b> • Tap <b>BOOST</b></span>
+            <span>🕹️ <b>Touch Controls:</b> Virtual Joystick to move • Tap anywhere to start</span>
           ) : (
-            <span>⌨️ <b>Desktop:</b> WASD / Arrows to Move • <b>Space</b> Jump • <b>Shift</b> Boost • <b>Esc</b> Pause</span>
+            <span>⌨️ <b>Desktop:</b> WASD / Arrows to Move • <b>Space</b> Jump • <b>Esc</b> Pause</span>
           )}
         </div>
 
-        {/* Big Touch-Friendly Start Button (48px+ touch target) */}
+        {/* Big Touch-Friendly Start Button (fits within mobile viewport) */}
         <button
           type="button"
-          onClick={onStart}
+          onClick={(e) => {
+            e.stopPropagation();
+            onStart?.();
+          }}
           onTouchStart={(e) => {
+            e.stopPropagation();
             e.preventDefault();
             onStart?.();
           }}
@@ -511,18 +539,19 @@ export function MobileMenu({
             background: "linear-gradient(135deg, #22c55e, #16a34a)",
             color: "#ffffff",
             border: "none",
-            padding: "16px 44px",
-            borderRadius: 16,
-            fontSize: "clamp(16px, 4.5vw, 20px)",
+            padding: "10px 32px",
+            borderRadius: 14,
+            fontSize: "clamp(14px, 4vw, 18px)",
             fontWeight: 900,
             cursor: "pointer",
-            boxShadow: "0 0 30px rgba(34, 197, 94, 0.6)",
+            boxShadow: "0 0 24px rgba(34, 197, 94, 0.6)",
             letterSpacing: 1,
             display: "flex",
             alignItems: "center",
-            gap: 10,
+            gap: 8,
             transition: "transform 0.1s ease, filter 0.1s ease",
-            outline: "none"
+            outline: "none",
+            flexShrink: 0
           }}
           onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.95)")}
           onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
@@ -533,7 +562,7 @@ export function MobileMenu({
 
         {/* Stats footer if score/lives present */}
         {(lives !== undefined || score !== undefined || highScore !== undefined) && (
-          <div style={{ marginTop: 18, fontSize: 13, opacity: 0.85, display: "flex", gap: 16 }}>
+          <div style={{ marginTop: 10, fontSize: 12, opacity: 0.85, display: "flex", gap: 14 }}>
             {lives !== undefined && <span>❤️ Lives: {lives}</span>}
             {score !== undefined && <span>⭐ Score: {score}</span>}
             {highScore !== undefined && <span>🏆 High: {highScore}</span>}

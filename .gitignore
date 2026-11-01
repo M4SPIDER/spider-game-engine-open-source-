@@ -30,3 +30,21 @@ public/assets/
 *.obj
 *.blend*
 
+# Local telemetry & scratch files
+mobile_heartbeat.json
+patch_mobile_code.jsx
+phone_latest.jsx
+current_phone_code.jsx
+active_jsx_now.jsx
+scratch_active_code.jsx
+check_component.js
+check_engine.js
+extract_img.js
+force_update_code.js
+reload_app.js
+reload_engine.js
+recovered_scripts.json
+recovered_spider_active_code.jsx
+client_errors.log
+
+

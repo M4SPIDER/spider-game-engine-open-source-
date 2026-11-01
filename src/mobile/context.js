@@ -13,11 +13,8 @@ export const WINDOWS = { "128k": 128000, "200k": 200000, "1m": 1000000 };
 /** Context window in tokens. `setting` is the user's choice: auto | 128k | 200k | 1m. */
 export function contextWindow(providerId, model, setting = "auto") {
   if (setting && setting !== "auto" && WINDOWS[setting]) return WINDOWS[setting];
-  const m = String(model || "").toLowerCase();
-  if (/gemini/.test(m) || /gpt-4\.1/.test(m)) return WINDOWS["1m"];
-  if (providerId === "meta" || /muse/.test(m)) return WINDOWS["1m"];
-  if (/claude/.test(m)) return WINDOWS["200k"];
-  return WINDOWS["128k"];
+  // Default to 1M (1,000,000 tokens) context window!
+  return WINDOWS["1m"];
 }
 
 export const estimateTokens = (text) => Math.ceil(String(text || "").length / 4);
@@ -60,12 +57,12 @@ export function buildMemory(messages, budgetChars) {
   }
 
   // Tail Reservation: Reserve 85% of budget exclusively for the most recent turns (at least 20 turns)
-  const tailBudget = budgetChars * 0.85;
+  const tailBudget = budgetChars * 0.95;
   let tailCount = 0;
   let tailChars = 0;
   for (let i = turns.length - 1; i >= 0; i--) {
     const len = turns[i].text.length + turns[i].who.length + 4;
-    if (tailChars + len > tailBudget && tailCount >= 20) break;
+    if (tailChars + len > tailBudget && tailCount >= 40) break;
     tailChars += len;
     tailCount++;
   }
@@ -101,7 +98,7 @@ export function buildMemory(messages, budgetChars) {
 
 /** Adaptive memory budget (50-70% of window depending on token scale). */
 export function memoryBudget(windowTokens) {
-  const ratio = windowTokens >= 500000 ? 0.7 : windowTokens >= 190000 ? 0.6 : 0.5;
+  const ratio = windowTokens >= 500000 ? 0.9 : windowTokens >= 190000 ? 0.85 : 0.8;
   return Math.floor(windowTokens * 4 * ratio);
 }
 

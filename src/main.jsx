@@ -34,6 +34,22 @@ if (typeof window !== 'undefined') {
   window.ReactDOM = ReactDOM;
   window.THREE = THREE;
   window.Chess = Chess;
+
+  const sendErr = (data) => {
+    try {
+      fetch('/__client_error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).catch(() => {});
+    } catch {}
+  };
+  window.addEventListener('error', (e) => {
+    sendErr({ type: 'window.error', msg: e.message, stack: e.error?.stack, filename: e.filename, lineno: e.lineno });
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    sendErr({ type: 'unhandledrejection', reason: String(e.reason?.stack || e.reason?.message || e.reason) });
+  });
 }
 
 /* [LINEAGE-AUTHORS]: m4spider */
@@ -52,6 +68,13 @@ class RootErrorBoundary extends React.Component {
   }
   componentDidCatch(error, errorInfo) {
     console.error("FATAL ROOT ERROR IN APP:", error, errorInfo);
+    try {
+      fetch('/__client_error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'RootErrorBoundary', msg: error?.message, stack: error?.stack, componentStack: errorInfo?.componentStack })
+      }).catch(() => {});
+    } catch {}
   }
   render() {
     if (this.state.error) {
