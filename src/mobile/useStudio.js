@@ -56,7 +56,7 @@ const TOUCH_CONTROLS_RULES = [
   "- IN-GAME HUD MANDATE (TOP-CENTER ONLY):",
   "  * ALWAYS dock in-game HUDs (Score, Coins, Lives, Health, Ammo) at TOP-CENTER:",
   "    <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 14, alignItems: 'center', background: 'rgba(15, 23, 42, 0.85)', padding: '6px 18px', borderRadius: 20, border: '1px solid rgba(255, 255, 255, 0.2)', color: '#fff', fontWeight: 800, whiteSpace: 'nowrap', zIndex: 40, pointerEvents: 'none' }}>...</div>",
-  "  * NEVER place HUDs in the top-left corner (top-left is strictly reserved for the red 'Exit Full' button and tool rail) or top-right (reserved for camera & settings).",
+  "  * NEVER place HUDs in the top-left or top-right corners (reserved for system tools, camera & fullscreen controls).",
   "  * Or simply use <GameHud hp={...} score={...} total={...} /> from './ArenaEnv.jsx' which automatically docks top-center.",
   "",
 ].join("\n");

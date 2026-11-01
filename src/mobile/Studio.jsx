@@ -281,7 +281,7 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
           <button type="button" className="sp-fab" onClick={shot} aria-label="Screenshot">
             <Camera size={18} />
           </button>
-          <button type="button" className="sp-fab" onClick={onToggleFull} aria-label={full ? "Exit fullscreen" : "Fullscreen"} aria-pressed={full}>
+          <button type="button" className={cx("sp-fab", full && "is-active")} onClick={onToggleFull} aria-label={full ? "Exit fullscreen" : "Fullscreen"} aria-pressed={full}>
             {full ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
           </button>
           <button type="button" className="sp-fab" onClick={onOpenView} aria-label="View options">
@@ -315,25 +315,6 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
               <currentTool.icon size={19} />
             </button>
           ))}
-
-        {/* Floating exit button when in Fullscreen */}
-        {full && (
-          <button
-            type="button"
-            className="sp-stop-fab"
-            onClick={onToggleFull}
-            aria-label="Exit fullscreen"
-            style={{
-              top: "calc(14px + env(safe-area-inset-top, 0px))",
-              left: "calc(14px + env(safe-area-inset-left, 0px))",
-              zIndex: 9999,
-              cursor: "pointer",
-              touchAction: "manipulation"
-            }}
-          >
-            <Minimize2 size={14} /> Exit Full
-          </button>
-        )}
 
         {fps > 0 && <div className="sp-fps">{fps} fps</div>}
 
