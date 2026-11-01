@@ -54,6 +54,14 @@ html, body, #root {
   touch-action: none;
 }
 
+/* Universal full-bleed WebGL canvas styling — fills 100% of parent container with zero gaps */
+canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: none;
+}
+
 .spider-viewport-root {
   touch-action: none;
   overscroll-behavior: contain;

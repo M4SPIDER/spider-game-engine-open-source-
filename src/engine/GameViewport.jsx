@@ -132,7 +132,6 @@ function CameraRig({ isPlaying, followRef, mode, keysPressed, activeGizmo, hasCh
       return;
     }
     // Free Viewport + select tool + not playing: WASD/arrows fly, Q/E (or Space) rise/sink — camera-relative.
-    // In move/rotate/scale gizmo modes WASD belongs to the selected object, so the camera stays put.
     if (!isPlaying && mode === "Viewport" && activeGizmo === "select" && controls) {
       const k = keysPressed || {};
       const f = (k["w"] || k["arrowup"] ? 1 : 0) - (k["s"] || k["arrowdown"] ? 1 : 0);
@@ -1594,7 +1593,7 @@ export default function GameViewport({
 
   return (
     <div
-      className="absolute inset-0 focus:outline-none"
+      className="absolute inset-0 w-full h-full focus:outline-none overflow-hidden"
       tabIndex={0}
       onClick={() => {
         try {
@@ -1608,6 +1607,8 @@ export default function GameViewport({
     >
       <Canvas
         key={`${projection}-${hasCustomJsx}`}
+        style={{ width: "100%", height: "100%", position: "absolute", inset: 0, display: "block" }}
+        className="w-full h-full"
         shadows={rtxEnabled ? "pcf" : false}
         orthographic={projection === "Orthographic"}
         camera={
@@ -1775,16 +1776,6 @@ export default function GameViewport({
         {/* Weapon follows hero */}
         {!isolateCustomGame && weapon && weapon.visible !== false && player && (
           <WeaponFollow player={player} weapon={weapon} wire={wire} selected={selId === "weapon"} onSelect={onSelectNode} />
-        )}
-
-        {/* Camera helper */}
-        {cameraNode && cameraNode.visible !== false && (
-          <LiveGroup node={cameraNode} selected={selId === "camera"} onSelect={onSelectNode} register={register}>
-            <mesh position={[0, 1.2, 0]} onClick={(e) => { e.stopPropagation(); onSelectNode("camera"); }}>
-              <boxGeometry args={[0.5, 0.35, 0.7]} />
-              <Std color="#3b82f6" wire={wire} emissive={selId === "camera" ? "#6366f1" : undefined} />
-            </mesh>
-          </LiveGroup>
         )}
 
         {/* Spawned props & 3D Chess Pieces / Board */}

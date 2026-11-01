@@ -47,6 +47,7 @@ import {
   Settings,
   Terminal,
   FileText,
+  Clock,
   Sparkles,
   Volume2,
   Cpu,
@@ -1412,6 +1413,34 @@ function DesktopApp() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState("Rendering");
   const [openMenu, setOpenMenu] = useState(null); // File/Edit/... dropdown
+  const [showTopMenuBar, setShowTopMenuBar] = useState(() => {
+    try {
+      const saved = localStorage.getItem("spider-top-menu-bar");
+      if (saved !== null) return saved === "true";
+      return false;
+    } catch { return false; }
+  });
+  const toggleTopMenuBar = () => {
+    setShowTopMenuBar((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("spider-top-menu-bar", String(next)); } catch {}
+      return next;
+    });
+  };
+  const [leftRailCollapsed, setLeftRailCollapsed] = useState(() => {
+    try {
+      const saved = localStorage.getItem("spider-left-rail-collapsed");
+      if (saved !== null) return saved === "true";
+      return true; // Collapsed slim icon-rail by default
+    } catch { return true; }
+  });
+  const toggleLeftRail = () => {
+    setLeftRailCollapsed((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("spider-left-rail-collapsed", String(next)); } catch {}
+      return next;
+    });
+  };
   const [score, setScore] = useState(0);
   const [coins, setCoins] = useState(COINS);
   const [timelinePlaying, setTimelinePlaying] = useState(false);
@@ -1506,6 +1535,7 @@ function DesktopApp() {
     }
   });
   const [isDirectGameOverlayCollapsed, setIsDirectGameOverlayCollapsed] = useState(false);
+  const [showDevOverlay, setShowDevOverlay] = useState(false);
   const [isGameControlsCollapsed, setIsGameControlsCollapsed] = useState(false);
   const [controlsPos, setControlsPos] = useState(() => {
     try {
@@ -2964,7 +2994,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
       });
   };
 
-  const compactMetaMessages = (msgs, maxChars = 24000) => {
+  const compactMetaMessages = (msgs, maxChars = 400000) => {
     const list = sanitizeMetaMessages(msgs);
     let total = list.reduce((acc, m) => {
       if (Array.isArray(m.content)) {
@@ -2978,10 +3008,10 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
     const firstUser = list.find((m) => m.role === "user") || { role: "user", content: "Build game." };
     const rest = list.filter((m) => m !== sys && m !== firstUser);
 
-    // Keep the most recent 6 messages and truncate excessive text lengths
-    const recent = rest.slice(-6).map((m) => {
-      if (typeof m.content === "string" && m.content.length > 2500) {
-        return { ...m, content: m.content.slice(0, 2500) + "\n...[truncated long output]..." };
+    // Full 128K context: keep up to 30 recent turns verbatim without clipping
+    const recent = rest.slice(-30).map((m) => {
+      if (typeof m.content === "string" && m.content.length > 50000) {
+        return { ...m, content: m.content.slice(0, 50000) + "\n...[truncated extremely long output]..." };
       }
       return m;
     });
@@ -3002,7 +3032,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
     ];
 
     let maxTokens = 131072;
-    let messages = compactMetaMessages(rawMessages, 24000);
+    let messages = compactMetaMessages(rawMessages, 400000);
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     let lastError = null;
 
@@ -3024,7 +3054,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
       if (attempt === 2) {
         try { appendLog("Warning", `Meta API retry (attempt 2) — switching to model "${currentModel}"...`); } catch {}
         await sleep(600);
-        messages = compactMetaMessages(rawMessages, 16000);
+        messages = compactMetaMessages(rawMessages, 200000);
         maxTokens = 131072;
       } else if (attempt === 3) {
         try { appendLog("Warning", `Meta API retry (attempt 3) — trying with simplified message payload on "${currentModel}"...`); } catch {}
@@ -4549,7 +4579,6 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
         allNames.add(root.name);
         setSelectedScriptNames(allNames);
 
-        setViewportTab("Game View");
         setArtifactViewMode("preview");
         appendLog("Success", `🎮 Direct Game Launched: "${root.name}" with ${files.length} linked project files!`);
       } else {
@@ -4559,7 +4588,6 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
               setActiveJsxCode(res.content);
               setActiveJsxName("GameComponent.jsx");
               setSelectedScriptNames(new Set(["GameComponent.jsx"]));
-              setViewportTab("Game View");
               appendLog("Success", `🎮 Direct Game Loaded from disk: GameComponent.jsx`);
             } else {
               appendLog("Warning", "No playable game component found yet. Ask Muse AI: 'create a 3D chess game'!");
@@ -5369,14 +5397,14 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
     return { groups: full, select: "player" }; // normal third person
   };
   // Per-project UI memory — each project keeps its own panel layout (own index in storage)
-  const DEFAULT_UI = { hierarchyOpen: false, inspectorOpen: false, bottomLeftOpen: false, consoleOpen: false, viewportTab: "Title Menu", bottomTab: "Content Browser", rightTab: "Inspector" };
+  const DEFAULT_UI = { hierarchyOpen: false, inspectorOpen: false, bottomLeftOpen: false, consoleOpen: false, viewportTab: "Viewport", bottomTab: "Content Browser", rightTab: "Inspector" };
   const applyUi = (ui) => {
     const u = { ...DEFAULT_UI, ...(ui || {}) };
     setHierarchyOpen(Boolean(u.hierarchyOpen));
     setInspectorOpen(Boolean(u.inspectorOpen));
     setBottomLeftOpen(Boolean(u.bottomLeftOpen));
     setConsoleOpen(Boolean(u.consoleOpen));
-    setViewportTab(u.viewportTab || "Title Menu");
+    setViewportTab(u.viewportTab || "Viewport");
     setBottomTab(u.bottomTab || "Content Browser");
     setRightTab(u.rightTab || "Inspector");
   };
@@ -5685,12 +5713,10 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
         appendLog("Success", "Chess Play Mode active! White to move — click a white piece to play against AI.");
       } else if (activeJsxCode) {
         setSelectedNodeId(null);
-        setViewportTab("Game View");
         appendLog("Success", `Playing ${activeJsxName || "Game"}! WASD / Arrows to move • Space to Fire.`);
       } else {
         setSelectedNodeId("player");
-        setViewportTab("Game View");
-        appendLog("Info", "Play mode started — chase cam locked, WASD + Space, grab the coins");
+        appendLog("Info", "Play mode started — WASD + Space, grab the coins");
         appendLog("Info", "Possessing Actor: PlayerCharacter (WASD / Arrows to move)");
       }
 
@@ -5702,7 +5728,6 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
     } else {
       sfx.playBack();
       setIsPlaying(false);
-      setViewportTab("Viewport");
       appendLog("Info", "Play mode stopped");
     }
   };
@@ -5921,12 +5946,12 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
     };
   }, []);
 
-  // Quick return to Title Menu listener (from HUD button or Escape key)
+  // Quick return to Viewport listener (from HUD button or Escape key)
   useEffect(() => {
     const handleReturnToMenu = () => {
-      setViewportTab("Title Menu");
+      setViewportTab("Viewport");
       setIsPlaying(false);
-      appendLog("Info", "Returned to Title Menu");
+      appendLog("Info", "Returned to Viewport");
     };
     const handleGlobalEsc = (e) => {
       if (e.key === "Escape") {
@@ -5935,9 +5960,9 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
           return;
         }
         if (viewportTab === "Game View") {
-          setViewportTab("Title Menu");
+          setViewportTab("Viewport");
           setIsPlaying(false);
-          appendLog("Info", "Paused & returned to Title Menu");
+          appendLog("Info", "Paused & returned to Viewport");
         }
       }
     };
@@ -6321,16 +6346,32 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
     if (label === "Reset Transform") { updateSelectedNode({ pos: { x: 0, y: 0, z: 0 }, rot: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }); return close(); }
     if (label === "Play / Stop") { handleTogglePlay(); return close(); }
     if (label === "Main Menu (AAA Title Screen)" || label === "Game Main Menu") {
-      setViewportTab("Title Menu");
-      appendLog("Success", "🎮 Switched to AAA Game Main Menu (Knowledge Park)");
+      setViewportTab("Viewport");
+      appendLog("Success", "🎮 Switched to Viewport");
       return close();
     }
     if (label === "Reset Score") { setScore(0); setCoins((prev) => prev.map((c) => ({ ...c, taken: false }))); return close(); }
     if (label === "Build + Export scene.json") { handleBuildProject(); return close(); }
+    if (label.includes("Record MP4") || label.includes("Recording (MP4)") || label.includes("Record Viewport")) {
+      toggleViewportRecording();
+      return close();
+    }
+    if (label === "Screenshot PNG") {
+      const url = viewportApi.capture?.(true);
+      if (url) appendLog("Success", "Viewport screenshot captured (Image downloaded)");
+      else appendLog("Warning", "Viewport not ready — screenshot unavailable");
+      return close();
+    }
+    if (label === "Toggle Editor Overlay") {
+      setShowDevOverlay((p) => !p);
+      appendLog("Info", `Editor overlay ${!showDevOverlay ? "enabled" : "hidden"}`);
+      return close();
+    }
     if (label === "Clear Console") { setConsoleLogs([]); return close(); }
     if (label === "Inspector Tab") { setRightTab("Inspector"); setInspectorOpen(true); return close(); }
     if (label === "World Settings Tab") { setRightTab("World Settings"); setInspectorOpen(true); return close(); }
     if (label === "Content Browser Tab") { setBottomTab("Content Browser"); setBottomLeftOpen(true); return close(); }
+    if (label === "Timeline Tab" || label === "Timeline") { setBottomTab("Timeline"); setBottomLeftOpen(true); return close(); }
     if (label === "Build Log Tab") { setBottomTab("Build Log"); setBottomLeftOpen(true); return close(); }
     if (label === "Console Tab") { setConsoleOpen(true); consoleInputRef.current?.focus(); return close(); }
     if (label === "Console Commands") { appendLog("Info", "Commands: help, spawn <name>, wireframe 0|1, shadows 0|1, time <0-24>, play, stop"); return close(); }
@@ -6540,8 +6581,25 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
             </span>
           </div>
 
-          {/* Menu Links — real dropdown actions */}
-          <nav className="hidden md:flex items-center gap-1 ml-3 text-xs text-slate-600 font-medium relative">
+          {/* Toggle Switch Button for the Menu Bar ('>' / '<') */}
+          <button
+            onClick={() => {
+              toggleTopMenuBar();
+              if (openMenu && openMenu !== "AskAI") setOpenMenu(null);
+            }}
+            title={showTopMenuBar ? "Hide Menu Options (<)" : "Show Menu Options (>)"}
+            className={`flex items-center justify-center p-1.5 rounded-lg transition cursor-pointer select-none ${
+              showTopMenuBar
+                ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                : "bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 shadow-2xs"
+            }`}
+          >
+            {showTopMenuBar ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Menu Links — conditionally rendered when toggled */}
+          {showTopMenuBar ? (
+            <nav className="hidden md:flex items-center gap-1 text-xs text-slate-600 font-medium relative">
             {[
               { id: "File", items: ["Project Browser (All Projects)", `Current Project: ${currentProject?.name || "—"}`, "New Project", "Open Folder as Project…", ...projects.map((p) => `Open Project: ${p.name}`), "Close Project"] },
               { id: "Edit", items: ["Undo", "Redo", "Duplicate Selected", "Delete Selected"] },
@@ -6549,8 +6607,8 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               { id: "Object", items: ["Spawn Random Prop", "Toggle Visibility", "Reset Transform"] },
               { id: "Game", items: ["Main Menu (AAA Title Screen)", "Play / Stop", "Reset Score"] },
               { id: "Build", items: ["Build + Export scene.json"] },
-              { id: "Tools", items: ["Screenshot PNG", "Clear Console"] },
-              { id: "Window", items: ["Project Browser", "Content Browser Tab", "Inspector Tab", "World Settings Tab", "Build Log Tab", "Console Tab"] },
+              { id: "Tools", items: [isViewportRecording ? "Stop Recording (MP4)" : "Record MP4 Video (60 FPS)", "Screenshot PNG", "Toggle Editor Overlay", "Clear Console"] },
+              { id: "Window", items: ["Project Browser", "Content Browser Tab", "Timeline Tab", "Inspector Tab", "World Settings Tab", "Build Log Tab", "Console Tab"] },
               { id: "Help", items: ["Console Commands", "About Spider Engine"] }
             ].map((menu) => (
               <div key={menu.id} className="relative">
@@ -6606,6 +6664,17 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               </button>
             </div>
           </nav>
+          ) : (
+            <div className="hidden md:flex items-center gap-1">
+              <button
+                onClick={() => setOpenMenu(openMenu === "AskAI" ? null : "AskAI")}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition text-xs font-semibold ${openMenu === "AskAI" ? "bg-indigo-600 text-white" : "bg-gradient-to-r from-indigo-600 to-violet-500 text-white hover:opacity-90 shadow-2xs"}`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Ask AI</span>
+              </button>
+            </div>
+          )}
           <input ref={importFileRef} type="file" accept=".json,.glb,.gltf,.fbx,.obj,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => { handleImportAssetFile(e.target.files?.[0]); e.target.value = ""; }} />
         </div>
 
@@ -6628,6 +6697,30 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               <>
                 <Play className="w-3 h-3 fill-white" />
                 <span>Play</span>
+              </>
+            )}
+          </button>
+
+          {/* Global Video Recorder Button — Floats outside of any game in the top bar */}
+          <button
+            onClick={toggleViewportRecording}
+            title={isViewportRecording ? "Click to Stop and Export MP4 Video" : "Record Game / Viewport (60 FPS MP4)"}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-all cursor-pointer select-none ${
+              isViewportRecording
+                ? "bg-rose-600 hover:bg-rose-500 text-white animate-pulse shadow-rose-500/40"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300"
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${isViewportRecording ? "bg-white animate-ping" : "bg-rose-500"}`} />
+            {isViewportRecording ? (
+              <>
+                <span className="font-mono text-[11px]">REC {formatRecordTime(viewportRecordSeconds)}</span>
+                <span className="text-[9px] bg-rose-700 px-1 py-0.2 rounded font-bold uppercase tracking-wider text-white">Stop</span>
+              </>
+            ) : (
+              <>
+                <Video className="w-3.5 h-3.5 text-rose-500" />
+                <span>Record</span>
               </>
             )}
           </button>
@@ -6750,7 +6843,16 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
       {/* ==================== MAIN ENGINE BODY ==================== */}
       <div className="flex-1 flex overflow-hidden p-1.5 gap-1.5">
         {/* 1. LEFT VERTICAL NAVIGATION RAIL */}
-        <aside className={`${isMobile ? "hidden" : "flex"} w-44 bg-white/95 rounded-xl border border-slate-200/80 flex-col justify-between py-2 px-1.5 shrink-0 shadow-2xs`}>
+        <aside className={`${isMobile ? "hidden" : "flex"} ${leftRailCollapsed ? "w-12 px-1" : "w-44 px-1.5"} relative bg-white/95 rounded-xl border border-slate-200/80 flex-col justify-between py-2 shrink-0 shadow-2xs transition-all duration-200 ease-in-out`}>
+          {/* Switch Button on the Right Side of the Sidebar */}
+          <button
+            onClick={toggleLeftRail}
+            title={leftRailCollapsed ? "Expand Sidebar (>)" : "Collapse Sidebar (<)"}
+            className="absolute -right-3 top-3.5 z-20 w-6 h-6 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:border-indigo-300 transition cursor-pointer select-none active:scale-95"
+          >
+            {leftRailCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+          </button>
+
           <div className="space-y-0.5 overflow-y-auto no-scrollbar">
             {LEFT_RAIL_ITEMS.map((item) => {
               const IconComponent = item.icon;
@@ -6762,14 +6864,15 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                     setActiveLeftRail(item.id);
                     handleRailAction(item.id);
                   }}
-                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                  title={leftRailCollapsed ? item.id : undefined}
+                  className={`w-full flex items-center ${leftRailCollapsed ? "justify-center px-0 py-2" : "gap-2 px-2.5 py-1.5"} rounded-lg text-[11px] font-semibold transition cursor-pointer ${
                     isActive
                       ? "bg-gradient-to-r from-indigo-600 to-violet-500 text-white shadow-xs shadow-indigo-500/30"
                       : "text-slate-600 hover:bg-slate-100"
                   }`}
                 >
                   <IconComponent className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} />
-                  <span>{item.id}</span>
+                  {!leftRailCollapsed && <span className="truncate">{item.id}</span>}
                 </button>
               );
             })}
@@ -6777,19 +6880,21 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
 
           {/* Bottom M4 SPIDER Badge */}
           <div className="pt-2 border-t border-slate-100 flex flex-col items-center justify-center text-center">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-xs mb-0.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-xs mb-0.5" title="M4 SPIDER">
               <Sparkles className="w-3.5 h-3.5" />
             </div>
-            <span className="text-[9px] font-extrabold tracking-tight text-slate-700">
-              M4 SPIDER
-            </span>
+            {!leftRailCollapsed && (
+              <span className="text-[9px] font-extrabold tracking-tight text-slate-700">
+                M4 SPIDER
+              </span>
+            )}
           </div>
         </aside>
 
         {/* 2. SCENE HIERARCHY & CENTER VIEWPORT + BOTTOM DOCK */}
         <div className="flex-1 flex flex-col gap-1.5 overflow-hidden">
           {/* UPPER SPLIT: HIERARCHY + 3D VIEWPORT */}
-          <div className="flex-[1.55] flex gap-1.5 min-h-0">
+          <div className="flex-[1.55] flex gap-1.5 min-h-0 min-w-0">
             {/* SCENE HIERARCHY & SCRIPTING EXPLORER PANEL */}
             {hierarchyOpen ? (
               <>
@@ -7240,7 +7345,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
             ) : null}
 
             {/* CENTER 3D VIEWPORT PANEL */}
-            <section ref={viewportRef} data-cursor-locked={(isPlaying && isViewportCursorLocked) ? "true" : "false"} data-is-playing={isPlaying ? "true" : "false"} className={isArtifactFullscreen ? "fixed inset-0 z-50 bg-slate-950 flex flex-col overflow-hidden" : "flex-1 bg-white/95 rounded-xl border border-slate-200/80 flex flex-col shadow-2xs overflow-hidden relative"}>
+            <section ref={viewportRef} data-cursor-locked={(isPlaying && isViewportCursorLocked) ? "true" : "false"} data-is-playing={isPlaying ? "true" : "false"} className={isArtifactFullscreen ? "fixed inset-0 z-50 bg-slate-950 flex flex-col overflow-hidden" : "flex-1 min-w-0 bg-white/95 rounded-xl border border-slate-200/80 flex flex-col shadow-2xs overflow-hidden relative"}>
               {/* Viewport Cursor Lock / Release Floating Toast */}
               {/* cursor lock toast removed */}
               {/* Viewport Top Tab Bar: Shown on both mobile and desktop (only hidden in Env Mode or Fullscreen) */}
@@ -7251,8 +7356,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                       [
                         { id: "Viewport", icon: Box },
                         { id: "Cinematic", icon: Film },
-                        { id: "Game View", icon: Gamepad2 },
-                        { id: "Title Menu", icon: Sparkles }
+                        { id: "Game View", icon: Gamepad2 }
                       ].map((tab) => {
                         const Icon = tab.icon;
                         const active = viewportTab === tab.id;
@@ -7261,7 +7365,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                             key={tab.id}
                             onClick={() => {
                               setViewportTab(tab.id);
-                              appendLog("Info", tab.id === "Title Menu" ? "Title Menu — Knowledge Park AAA Main Menu" : tab.id === "Game View" ? "Game View — chase camera locked to hero (Play to run)" : tab.id === "Cinematic" ? "Cinematic — slow auto-orbit camera" : "Viewport — free orbit camera");
+                              appendLog("Info", tab.id === "Game View" ? "Game View — chase camera locked to hero (Play to run)" : tab.id === "Cinematic" ? "Cinematic — slow auto-orbit camera" : "Viewport — free orbit camera");
                             }}
                             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer ${
                               active
@@ -7296,7 +7400,16 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                         <span>3D View</span>
                       </button>
                       <button
-                        onClick={() => setArtifactViewMode("code")}
+                        onClick={() => {
+                          if (!activeJsxCode && projectScriptFiles.length > 0) {
+                            const target = projectScriptFiles.find((f) => f.name.endsWith(".jsx") || f.name.endsWith(".js")) || projectScriptFiles[0];
+                            if (target) {
+                              setActiveJsxCode(target.content);
+                              setActiveJsxName(target.name);
+                            }
+                          }
+                          setArtifactViewMode("code");
+                        }}
                         className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${
                           artifactViewMode === "code" ? "bg-white text-indigo-600 shadow-2xs" : "text-slate-600 hover:text-slate-900"
                         }`}
@@ -7454,7 +7567,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               })()}
 
               {/* 3D Interactive Game Engine Viewport & Code Editor */}
-              <div className={`flex-1 relative overflow-hidden ${isArtifactFullscreen ? "fixed inset-0 z-50 bg-slate-950" : "bg-slate-900"}`}>
+              <div className={`flex-1 w-full h-full relative overflow-hidden ${isArtifactFullscreen ? "fixed inset-0 z-50 bg-slate-950" : "bg-slate-100"}`}>
                 {/* 1. CODE MODE (Live Editable Monospace Editor) */}
                 <div
                   className={`w-full h-full bg-[#1e293b] flex flex-col font-mono text-sm overflow-hidden select-text absolute inset-0 z-30 ${
@@ -7631,7 +7744,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
 
                 {/* 3D VIEWPORT MODE (Native 3D Viewport) */}
                 <div
-                  className={`w-full h-full absolute inset-0 z-10 ${
+                  className={`w-full h-full absolute inset-0 z-10 overflow-hidden ${
                     artifactViewMode === "code"
                       ? "invisible pointer-events-none"
                       : "visible pointer-events-auto"
@@ -7748,15 +7861,6 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                   </button>
                 )}
 
-                {viewportTab === "Title Menu" && (
-                  <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 backdrop-blur-sm text-white">
-                    <div className="text-center">
-                      <h2 className="text-xl font-bold mb-2">Title Menu Viewport</h2>
-                      <p className="text-sm text-slate-300">Click Game View or Play to test interactive scene</p>
-                    </div>
-                  </div>
-                )}
-
                 <GameViewport
                   sceneGroups={sceneGroups}
                   selectedNodeId={selectedNodeId}
@@ -7786,29 +7890,6 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                   all3dActive={selectedScriptNames.size > 1}
                   projectFiles={projectScriptFiles}
                 />
-                {/* Timeline scrub — drives solar time live (Desktop only, hidden on mobile, env mode, fullscreen or when running custom game) */}
-                {!isMobile && !isEnvMode && !isArtifactFullscreen && viewportTab !== "Game View" && !activeJsxCode && (
-                  <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-xl shadow-md border border-white/50 z-20 text-[11px] font-semibold text-slate-700">
-                    <button
-                      onClick={() => setTimelinePlaying((p) => !p)}
-                      title={timelinePlaying ? "Pause timeline" : "Play timeline"}
-                      className="p-1 rounded-md hover:bg-indigo-50 hover:text-indigo-600 transition cursor-pointer"
-                    >
-                      {timelinePlaying ? <Square className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current" />}
-                    </button>
-                    <span className="text-slate-400">Timeline</span>
-                    <input
-                      type="range"
-                      min="4"
-                      max="22"
-                      step="0.1"
-                      value={timelineT}
-                      onChange={(e) => { const t = parseFloat(e.target.value); setTimelineT(t); setTimeOfDay(t); }}
-                      className="w-44 accent-indigo-600 cursor-pointer"
-                    />
-                    <span className="font-mono w-11 text-right">{timelineT.toFixed(1)}h</span>
-                  </div>
-                )}
 
                 {/* --- MOBILE TOUCH CONTROLS & FLOATING QUICK BAR --- */}
                 {isMobile && !isEnvMode && (
@@ -8139,8 +8220,8 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                   </button>
                 )}
 
-                {/* --- DESKTOP VIEWPORT FLOATING OVERLAYS (Hidden on Mobile, Env Mode, Fullscreen or when playing custom game) --- */}
-                {!isMobile && !isEnvMode && !isArtifactFullscreen && viewportTab !== "Game View" && !activeJsxCode && (
+                {/* --- DESKTOP VIEWPORT FLOATING OVERLAYS (Hidden by default so canvas is clean; toggleable via Tools menu or bottom pill) --- */}
+                {!isMobile && !isEnvMode && !isArtifactFullscreen && viewportTab !== "Game View" && showDevOverlay && (
                   <>
                     {/* Top-Left Camera / Shading Pills */}
                     <div className="absolute top-3 left-3 flex items-center gap-1.5 z-20">
@@ -8173,30 +8254,6 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                         className="flex items-center gap-1.5 px-2.5 py-1 bg-white/90 backdrop-blur-md hover:bg-white rounded-lg text-[11px] font-semibold text-slate-800 shadow-sm border border-white/50 cursor-pointer"
                       >
                         <span>Fog</span>
-                      </button>
-
-                      {/* Right of Fog: Viewport 3D Canvas MP4 Video Recorder */}
-                      <button
-                        onClick={toggleViewportRecording}
-                        title={isViewportRecording ? "Click to Stop and Export MP4 Video" : "Record Viewport 3D Canvas to MP4 Video"}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold shadow-sm border transition cursor-pointer select-none ${
-                          isViewportRecording
-                            ? "bg-rose-600 text-white border-rose-500 shadow-rose-500/40"
-                            : "bg-white/90 backdrop-blur-md hover:bg-white text-slate-800 border-white/50"
-                        }`}
-                      >
-                        <span className={`w-2 h-2 rounded-full ${isViewportRecording ? "bg-white animate-ping" : "bg-rose-500"}`} />
-                        {isViewportRecording ? (
-                          <>
-                            <span className="font-mono text-[10.5px]">REC {formatRecordTime(viewportRecordSeconds)}</span>
-                            <span className="text-[9px] bg-rose-700 px-1 py-0.5 rounded font-bold uppercase tracking-wider text-white">Stop</span>
-                          </>
-                        ) : (
-                          <>
-                            <Video className="w-3.5 h-3.5 text-rose-500" />
-                            <span>Record MP4</span>
-                          </>
-                        )}
                       </button>
 
                       {/* Viewport Cursor Lock / Block Button */}
@@ -8351,125 +8408,21 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                     </div>
                   </>
                 )}
-                </div>
 
-                {/* --- FLOATING GAME VIEW CONTROLS & RECORDER (Visible on side of 3D Viewport only, never in Code Mode) --- */}
-                {!isEnvMode && artifactViewMode === "viewport" && (viewportTab === "Game View" || activeJsxCode || isArtifactFullscreen) && (
-                  <div
-                    className="spider-floating-controls fixed z-40 flex items-center gap-2 select-none transition-shadow"
-                    style={controlsPos ? { left: controlsPos.x, top: controlsPos.y } : { top: 12, right: 12 }}
-                  >
-                    {/* Draggable Grip Handle */}
-                    <div
-                      onPointerDown={handleControlsPointerDown}
-                      title="Click & Drag controls anywhere on screen"
-                      className="p-1.5 cursor-grab active:cursor-grabbing text-slate-400 hover:text-white bg-slate-900/85 hover:bg-slate-900 rounded-xl border border-slate-700/80 shadow-lg backdrop-blur-md transition flex items-center justify-center active:scale-95"
+                {/* Persistent Live Recording Banner — Floats outside of any game in the viewport during active recording */}
+                {isViewportRecording && (
+                  <div className="absolute top-3 right-3 z-50 flex items-center gap-2 bg-rose-600 text-white px-3 py-1.5 rounded-full shadow-2xl border border-rose-400 backdrop-blur-md animate-pulse select-none">
+                    <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+                    <span className="font-mono text-xs font-black tracking-wider">REC {formatRecordTime(viewportRecordSeconds)}</span>
+                    <button
+                      onClick={stopViewportRecording}
+                      className="px-2 py-0.5 bg-rose-900/80 hover:bg-rose-950 text-[10px] font-black uppercase rounded tracking-wider cursor-pointer"
                     >
-                      <GripVertical className="w-3.5 h-3.5" />
-                    </div>
-                    {isGameControlsCollapsed ? (
-                      /* Collapsed state: button with > / < to open back up */
-                      <button
-                        onClick={() => setIsGameControlsCollapsed(false)}
-                        title="Open Game Controls Menu"
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900/85 hover:bg-slate-900 text-slate-300 hover:text-white rounded-xl border border-slate-700/80 shadow-lg cursor-pointer transition select-none backdrop-blur-md active:scale-95"
-                      >
-                        <ChevronLeft className="w-3.5 h-3.5 text-cyan-400" />
-                        <span className="text-xs font-bold text-slate-200">Controls</span>
-                      </button>
-                    ) : (
-                      <>
-                        
-                        {/* Edit Game Code Button */}
-                        <button
-                          onClick={() => setArtifactViewMode("code")}
-                          title="Edit Game Code (Script Editor)"
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-xl border border-emerald-400/60 shadow-lg cursor-pointer transition select-none backdrop-blur-md active:scale-95 text-xs font-bold"
-                        >
-                          <Code2 className="w-3.5 h-3.5 text-emerald-200" />
-                          <span>Edit Game</span>
-                        </button>
-
-                        {/* Screen Recorder Button on side of Game View */}
-                        <button
-                          onClick={toggleViewportRecording}
-                          title={isViewportRecording ? "Click to Stop and Export MP4 Video" : "Record Game View 3D Canvas (60 FPS MP4)"}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg border transition cursor-pointer select-none backdrop-blur-md ${
-                            isViewportRecording
-                              ? "bg-rose-600/95 text-white border-rose-400 shadow-rose-600/50 animate-pulse"
-                              : "bg-slate-900/85 hover:bg-slate-900 text-white border-slate-700/80 hover:border-rose-500/50"
-                          }`}
-                        >
-                          <span className={`w-2.5 h-2.5 rounded-full ${isViewportRecording ? "bg-white animate-ping" : "bg-rose-500"}`} />
-                          {isViewportRecording ? (
-                            <>
-                              <span className="font-mono text-xs">REC {formatRecordTime(viewportRecordSeconds)}</span>
-                              <span className="text-[9px] bg-rose-800 px-1.5 py-0.5 rounded font-black tracking-wider uppercase text-white">Stop</span>
-                            </>
-                          ) : (
-                            <>
-                              <Video className="w-3.5 h-3.5 text-rose-400" />
-                              <span>Record Game</span>
-                            </>
-                          )}
-                        </button>
-
-                        {/* Snapshot Screenshot */}
-                        <button
-                          onClick={() => {
-                            const url = viewportApi.capture?.(true);
-                            if (url) appendLog("Success", "Game View snapshot screenshot saved!");
-                            else appendLog("Warning", "Game View canvas not ready.");
-                          }}
-                          title="Capture Game Screenshot"
-                          className="p-1.5 bg-slate-900/85 hover:bg-slate-900 text-white rounded-xl border border-slate-700/80 shadow-lg cursor-pointer transition flex items-center justify-center"
-                        >
-                          <Camera className="w-4 h-4 text-slate-300 hover:text-white" />
-                        </button>
-
-                        {/* Cursor Lock / Block Button */}
-                        <button
-                          onClick={toggleViewportCursorLock}
-                          title={isViewportCursorLocked ? "Cursor Blocked on Viewport (Press Alt+Win+G to release)" : "Block Viewport Cursor (Alt+Win+G)"}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg border transition cursor-pointer select-none backdrop-blur-md ${
-                            isViewportCursorLocked
-                              ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/60 shadow-cyan-500/20"
-                              : "bg-slate-900/85 hover:bg-slate-900 text-slate-300 border-slate-700/80 hover:text-white"
-                          }`}
-                        >
-                          {isViewportCursorLocked ? <Lock className="w-3.5 h-3.5 text-cyan-400" /> : <Unlock className="w-3.5 h-3.5 text-slate-400" />}
-                          <span className="hidden sm:inline">{isViewportCursorLocked ? "Cursor Blocked" : "Lock Cursor"}</span>
-                        </button>
-
-                        {/* FPS Telemetry */}
-                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900/85 backdrop-blur-md rounded-xl text-xs font-bold text-white border border-slate-700/80 shadow-lg">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                          <span>{fps} FPS</span>
-                        </div>
-
-                        {/* Fullscreen Toggle — only displayed in Fullscreen mode (no duplicate in normal mode) */}
-                        {isArtifactFullscreen && (
-                          <button
-                            onClick={toggleViewportFullscreen}
-                            title="Exit Fullscreen"
-                            className="p-1.5 bg-slate-900/85 hover:bg-slate-900 text-white rounded-xl border border-slate-700/80 shadow-lg cursor-pointer transition flex items-center justify-center"
-                          >
-                            <Minimize2 className="w-4 h-4 text-slate-300 hover:text-white" />
-                          </button>
-                        )}
-
-                        {/* Collapse Menu Button (Option >) */}
-                        <button
-                          onClick={() => setIsGameControlsCollapsed(true)}
-                          title="Collapse Menu (>)"
-                          className="p-1.5 bg-slate-900/85 hover:bg-slate-900 text-slate-300 hover:text-white rounded-xl border border-slate-700/80 shadow-lg cursor-pointer transition flex items-center justify-center backdrop-blur-md active:scale-95"
-                        >
-                          <ChevronRight className="w-4 h-4 text-slate-300 hover:text-white" />
-                        </button>
-                      </>
-                    )}
+                      Stop
+                    </button>
                   </div>
                 )}
+                </div>
 
                 {/* Fullscreen Exit Hint */}
                 {isArtifactFullscreen && (
@@ -8504,6 +8457,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                 <div className="flex items-center gap-1">
                   {[
                     { id: "Content Browser", icon: Folder },
+                    { id: "Timeline", icon: Clock },
                     { id: "Build Log", icon: FileText }
                   ].map((t) => {
                     const Icon = t.icon;
@@ -8647,7 +8601,50 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
 
                 {/* Real folder contents */}
                 <div className="flex-1 p-2.5 overflow-y-auto">
-                  {bottomTab === "Build Log" ? (
+                  {bottomTab === "Timeline" ? (
+                    <div className="h-full flex flex-col justify-center max-w-xl mx-auto px-6 py-4 space-y-4 select-none">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-indigo-600" />
+                          <span className="text-xs font-bold text-slate-800">Timeline & Solar Time Scrub</span>
+                        </div>
+                        <span className="font-mono text-xs font-black px-2.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          {timelineT.toFixed(1)}h
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-2xs">
+                        <button
+                          onClick={() => setTimelinePlaying((p) => !p)}
+                          title={timelinePlaying ? "Pause Timeline" : "Play Timeline Animation"}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer transition"
+                        >
+                          {timelinePlaying ? <Square className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                          <span>{timelinePlaying ? "Pause" : "Play"}</span>
+                        </button>
+                        <input
+                          type="range"
+                          min="4"
+                          max="22"
+                          step="0.1"
+                          value={timelineT}
+                          onChange={(e) => { const t = parseFloat(e.target.value); setTimelineT(t); setTimeOfDay(t); }}
+                          className="flex-1 accent-indigo-600 cursor-pointer h-2 bg-slate-200 rounded-lg"
+                        />
+                        <button
+                          onClick={() => { setTimeOfDay(14.5); setTimelineT(14.5); }}
+                          className="px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg cursor-pointer"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                      <div className="flex justify-between text-[11px] text-slate-400 font-mono">
+                        <span>04:00 (Dawn)</span>
+                        <span>12:00 (Noon)</span>
+                        <span>18:00 (Sunset)</span>
+                        <span>22:00 (Night)</span>
+                      </div>
+                    </div>
+                  ) : bottomTab === "Build Log" ? (
                     <div className="font-mono text-[11px] space-y-1">
                       {buildLogs.length === 0 ? (
                         <div className="text-slate-400">No builds yet — press Build (top bar) to validate + export {sceneFileName}.</div>
@@ -10316,7 +10313,10 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                 )}
                 {settingsSection === "AI & Keys" && (
                   <div className="max-w-md space-y-3 text-slate-600">
-                    <div>Ask AI router: <span className="font-semibold text-emerald-700">Auto</span> — answers, acts, asks before delete.</div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span>Ask AI router: <span className="font-semibold text-emerald-700">Auto</span> — answers, acts, asks before delete.</span>
+                      <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 rounded">Output: 128K (131,072)</span>
+                    </div>
                     <div className="rounded-xl border border-slate-200 p-3 space-y-2 bg-slate-50/60">
                       <div className="font-bold text-slate-800 text-[12px]">Meta API key — encrypted, chat with Spider AI</div>
                       {metaKeySet ? (

@@ -306,7 +306,7 @@ export const GAME_WORLD = [
         "name": "Camera",
         "type": "camera",
         "color": "#3b82f6",
-        "visible": true,
+        "visible": false,
         "pos": {
           "x": 0,
           "y": 2.2,
