@@ -10845,8 +10845,8 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                   style={{ height: "auto" }}
                 />
 
-                {/* Inner icons: Meta Imagen Studio toggle, Camera & Paperclip */}
-                <div className="flex items-center gap-1.5 ml-1 shrink-0 text-slate-400 select-none">
+                {/* Inner icons: Meta Imagen Studio toggle */}
+                <div className="flex items-center ml-1 shrink-0 text-slate-400 select-none">
                   <button
                     type="button"
                     onClick={() => setShowImageStudio((v) => !v)}
@@ -10858,22 +10858,6 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                     }`}
                   >
                     <Sparkles size={15} className={showImageStudio ? "text-purple-600" : "text-purple-500 animate-pulse"} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => aiFileRef.current?.click()}
-                    title="Attach image / camera"
-                    className="p-0.5 text-slate-400 hover:text-blue-600 transition cursor-pointer"
-                  >
-                    <Camera size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => aiFileRef.current?.click()}
-                    title="Attach file (Ctrl+V)"
-                    className="p-0.5 text-slate-400 hover:text-blue-600 transition cursor-pointer"
-                  >
-                    <Paperclip size={15} />
                   </button>
                 </div>
               </div>
