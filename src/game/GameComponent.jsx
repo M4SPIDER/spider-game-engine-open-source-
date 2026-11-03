@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { PauseOverlay, useKeyboardControls } from "./ArenaEnv.jsx";
+import { useTouch, TouchControls } from "spider-touch";
 
 // Web Audio API Procedural SFX (Zero external audio files required)
 const sfx = (f = 440, t = "sine", d = 0.12) => {
@@ -293,6 +294,8 @@ function CyberKnight({ isBoosting, isAirborne, isInvulnerable, isRunning }) {
 }
 
 export default function GameComponent() {
+  const touch = useTouch();
+  const lastJumpPress = useRef(0);
   const pRef = useRef();
   const keys = useRef({});
   const vy = useRef(0);
@@ -553,14 +556,17 @@ export default function GameComponent() {
     const speedMilestoneBonus = currentTier * 3.5;
     const baseSpeed = 16 + speedMilestoneBonus;
 
-    // PUSH FORWARD TO TURN ON BOOST (W / Up Arrow / Push Forward on Touch Screen)
+    // Controls: joystick stick steering or keyboard/touch
     const { x } = getDir();
+    const steerInput = Math.abs(touch?.move?.x || 0) > 0.05 ? touch.move.x : x;
     const boostActive = Boolean(
       keys.current["w"] ||
       keys.current["arrowup"] ||
       keys.current["shift"] ||
       keys.current["shiftleft"] ||
       keys.current["shiftright"] ||
+      (touch?.b) ||
+      (touch?.move?.y > 0.35) ||
       (typeof window !== "undefined" && window.__spiderVirtualTouch?.sprint)
     );
     if (boostActive !== isHyperBoosting) {
@@ -577,12 +583,18 @@ export default function GameComponent() {
     if (Math.floor(dist.current) % 5 === 0) setDistance(Math.floor(dist.current));
 
     // Smooth horizontal lane steering
-    p.position.x = Math.max(-3.4, Math.min(3.4, p.position.x + x * (boostActive ? 14 : 11) * dt));
+    p.position.x = Math.max(-3.4, Math.min(3.4, p.position.x + steerInput * (boostActive ? 14 : 11) * dt));
 
-    // MULTI-JUMP / AIR JUMP (Spacebar or Screen Tap - up to 2 jumps in air!)
+    // MULTI-JUMP / AIR JUMP (Spacebar, Screen Tap, or TouchControls Jump button)
+    let touchJump = false;
+    if (touch && touch.presses.a !== lastJumpPress.current) {
+      lastJumpPress.current = touch.presses.a;
+      touchJump = true;
+    }
     const jumpPressed = Boolean(
       keys.current[" "] ||
       keys.current["Space"] ||
+      touchJump ||
       (typeof window !== "undefined" && window.__spiderVirtualTouch?.jump)
     );
     if (jumpPressed && jumpCount.current < 2 && p.position.y <= 2.2) {
@@ -931,6 +943,11 @@ export default function GameComponent() {
             )}
           </div>
         </Html>
+      )}
+
+      {/* Cyber Knight Runner's OWN touch controls with joystick & Jump/Boost buttons */}
+      {state === "playing" && (
+        <TouchControls touch={touch} buttons={["Jump", "Boost"]} />
       )}
     </group>
   );

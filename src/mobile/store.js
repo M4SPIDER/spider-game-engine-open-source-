@@ -135,10 +135,11 @@ export function buildTemplate(tpl, fallbackGroups) {
 
 export function makeProject(name, tpl = "normal", fallbackGroups) {
   const t = buildTemplate(tpl, fallbackGroups);
-  const files = [{ name: "GameComponent.jsx", content: t.code || STARTER_CODE }];
+  const isBlank = tpl === "blank";
+  const files = isBlank ? [] : [{ name: "GameComponent.jsx", content: t.code || (tpl === "code" ? STARTER_CODE : "") }];
   return {
     id: `project-${Date.now().toString(36)}${Math.floor(Math.random() * 1e3)}`,
-    name: (name || "").trim() || (tpl === "code" ? "3D Ball Runner" : "My first game"),
+    name: (name || "").trim() || (tpl === "code" ? "Cyber Knight Runner" : isBlank ? "Blank level" : "My first game"),
     template: tpl,
     groups: t.groups,
     select: t.select,
@@ -152,6 +153,16 @@ export function loadProjects() {
   const list = read(K.projects, null);
   if (Array.isArray(list) && list.length) {
     const listSanitized = list.map((p) => {
+      if (p.template === "blank") {
+        return {
+          ...p,
+          template: "blank",
+          groups: (p.groups || []).map((g) => ({ ...g, expanded: false, children: [] })),
+          select: null,
+          files: [],
+          mountedFile: null,
+        };
+      }
       const hasTerrain = (p.groups || []).some((g) => (g.children || []).some((c) => c.id === "terrain"));
       const hasSpawnGround = (p.groups || []).some((g) => (g.children || []).some((c) => c.id === "spawn-ground"));
       // Restore open world only if no custom JSX code is mounted and terrain is missing

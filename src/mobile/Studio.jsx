@@ -196,22 +196,6 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
 
   const left = coins.filter((c) => !c.taken).length;
   const customGame = Boolean(activeJsx);
-  const isRunnerGame = Boolean(
-    activeJsx &&
-      (activeJsx.toLowerCase().includes("lanes =") ||
-        activeJsx.toLowerCase().includes("lane =") ||
-        activeJsx.toLowerCase().includes("cyber knight runner") ||
-        activeJsxName?.toLowerCase().includes("runner"))
-  );
-  const hasEmbeddedStick = Boolean(
-    activeJsx &&
-      (activeJsx.includes("joyUI") ||
-        activeJsx.includes("VirtualJoystick") ||
-        activeJsx.includes("nipplejs") ||
-        activeJsx.includes("floating-stick") ||
-        activeJsx.includes("stick.current") ||
-        activeJsx.toLowerCase().includes("virtualjoystick"))
-  );
 
   const [sprintOn, setSprintOn] = useState(false);
   const toggleSprint = useCallback(() => {
@@ -258,7 +242,7 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
           keysPressed={keys}
           timeOfDay={timeOfDay}
           rtxEnabled={settings.rtx}
-          showGrid={settings.grid}
+          showGrid={settings.grid || s.project?.template === "blank" || empty}
           viewMode={settings.viewMode}
           activeGizmo={gizmo}
           cameraZoom={settings.zoom}
@@ -419,36 +403,6 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
                       🦘<span>JUMP</span>
                     </button>
                   </div>
-                </div>
-              </>
-            )}
-
-            {/* Custom Game Controls: Always provide Virtual Joystick except for runner games or games with their own stick */}
-            {customGame && !isRunnerGame && !hasEmbeddedStick && (
-              <>
-                <Joystick onChange={(v) => setKeys((k) => ({ ...k, ...v }))} />
-                <div className="sp-combat-pad" style={{ pointerEvents: "auto" }}>
-                  <button
-                    type="button"
-                    className="sp-btn-combat is-jump"
-                    onPointerDown={(e) => {
-                      e.preventDefault();
-                      jump();
-                      triggerKey("Space", " ");
-                      if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
-                        window.__spiderVirtualTouch.jump = true;
-                      }
-                    }}
-                    onPointerUp={() => {
-                      if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
-                        window.__spiderVirtualTouch.jump = false;
-                      }
-                    }}
-                    aria-label="Jump / Leap"
-                    title="Jump (Space)"
-                  >
-                    🦘<span>JUMP</span>
-                  </button>
                 </div>
               </>
             )}

@@ -58,6 +58,11 @@ const errorLogPlugin = () => ({
 export default defineConfig({
   plugins: [react(), tailwindcss(), errorLogPlugin()],
   base: './',
+  resolve: {
+    alias: {
+      'spider-touch': resolve(import.meta.dirname, 'src/engine/touchControls.jsx'),
+    },
+  },
   server: {
     host: true,
     watch: {

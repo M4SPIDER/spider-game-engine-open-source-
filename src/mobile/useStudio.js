@@ -41,24 +41,22 @@ const MAX_UNDO = 40;
 
 // Rules the agent must follow for on-screen controls in games it writes.
 const TOUCH_CONTROLS_RULES = [
-  "POCKET STUDIO MOBILE CONTROLS & TITLE MENU MANDATE:",
-  "- START MENU & TITLE SCREEN MANDATE (TAP TO START):",
-  "  * Every game MUST start in a 'menu' state before active gameplay: const [gameState, setGameState] = useState('menu'); // 'menu' | 'playing' | 'gameover'",
-  "  * In 'menu' state, show a clean, stylish Start Screen with game title and a bold '▶ TAP TO START' / 'START GAME' button (<MobileMenu title='...' subtitle='...' onStart={() => setGameState('playing')} /> from './ArenaEnv.jsx').",
-  "  * TAP ANYWHERE TO START: Add onClick={() => setGameState('playing')} and onTouchStart={() => setGameState('playing')} to the outer overlay <div> so tapping ANYWHERE on the phone screen immediately starts the game!",
+  "POCKET STUDIO MOBILE CONTROLS & TITLE MENU:",
+  "- START MENU & TITLE SCREEN (TAP TO START):",
+  "  * Every game should start in a 'menu' state before active gameplay: const [gameState, setGameState] = useState('menu'); // 'menu' | 'playing' | 'gameover'",
+  "  * In 'menu' state, show a clean Start Screen with game title and a bold 'START' / 'TAP TO START' button (<MobileMenu title='...' subtitle='...' onStart={() => setGameState('playing')} /> from './ArenaEnv.jsx' or overlay div).",
+  "  * TAP ANYWHERE TO START: Add onClick={() => setGameState('playing')} so tapping anywhere starts immediately.",
   "  * NEVER OVERFLOW VIEWPORT: Set maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', compact padding (10px), and responsive font clamps so the button is ALWAYS visible in the viewport!",
-  "- JOYSTICK CONTROLS (EXACTLY ONE JOYSTICK — DO NOT DUPLICATE!):",
-  "  * The engine shell ALREADY renders the analog Virtual Joystick & Jump button during Play mode!",
-  "  * ABSOLUTELY NEVER render a virtual joystick, floating touch stick, or touch-stick divs inside your JSX code! Zero duplicate joysticks!",
-  "  * For movement, simply import { useKeyboardControls } from './ArenaEnv.jsx'. In useFrame, const { x, z, jump } = getDir(); — this automatically connects to the engine's Virtual Joystick with smooth analog steering!",
-  "  * RUNNER EXCEPTION: For endless runners / lane runners ONLY, use horizontal touch drag / swipe to steer and switch lanes.",
-  "- STRICT BUTTON MANDATE (NO BUTTONS UNTIL ASKED):",
-  "  * DO NOT CREATE ON-SCREEN ACTION/ATTACK BUTTONS UNLESS EXPLICITLY ASKED! Keep the screen clean, immersive, and uncluttered. The engine already provides the joystick and controls.",
-  "- IN-GAME HUD MANDATE (TOP-CENTER ONLY):",
+  "- CONTROLS MANDATE (NO FORCED JOYSTICKS — MATCH THE GAMEPLAY):",
+  "  * The engine does NOT force server-side joysticks on games. Only provide controls that naturally fit the game:",
+  "  * For runners, lane games, swipe games, tap games, or puzzle games, use natural touch taps, pointer events, and swipes. NEVER add an unwanted joystick to games that don't need one!",
+  "  * If and only if a 3D game explicitly requires analog stick movement or the user asks for joystick controls, import { useTouch, TouchControls } from 'spider-touch'.",
+  "  * NEVER write unsolicited 'joystick fix' advice in chat unless the user explicitly requested joystick assistance.",
+  "- IN-GAME HUD (TOP-CENTER ONLY):",
   "  * ALWAYS dock in-game HUDs (Score, Coins, Lives, Health, Ammo) at TOP-CENTER:",
   "    <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 14, alignItems: 'center', background: 'rgba(15, 23, 42, 0.85)', padding: '6px 18px', borderRadius: 20, border: '1px solid rgba(255, 255, 255, 0.2)', color: '#fff', fontWeight: 800, whiteSpace: 'nowrap', zIndex: 40, pointerEvents: 'none' }}>...</div>",
   "  * NEVER place HUDs in the top-left or top-right corners (reserved for system tools, camera & fullscreen controls).",
-  "  * Or simply use <GameHud hp={...} score={...} total={...} /> from './ArenaEnv.jsx' which automatically docks top-center.",
+  "  * Or simply use <GameHud hp={...} score={...} total={...} /> from './ArenaEnv.jsx' or <Hud> from 'spider-touch'.",
   "",
 ].join("\n");
 const CORE_IDS = new Set(["player", "camera", "weapon", "terrain", "water", "sky", "lighting", "fog", "postprocess", "dir-light", "sky-light", "point-lights"]);
@@ -1458,10 +1456,10 @@ export function useStudio() {
             "\n\n" +
             TOUCH_CONTROLS_RULES +
             "\nHOW TO BUILD COMBAT & FIGHTING GAMES IN POCKET STUDIO:\n" +
-            "- Title Menu: ALWAYS include a title screen with Start button (<MobileMenu title='...' onStart={() => setGameState('playing')} /> from './ArenaEnv.jsx').\n" +
-            "- Movement: ALWAYS use { useKeyboardControls } from './ArenaEnv.jsx' for smooth footwork driven by the engine's Virtual Joystick.\n" +
+            "- Title Menu: Include a title screen with Start button (<MobileMenu title='...' onStart={() => setGameState('playing')} /> from './ArenaEnv.jsx').\n" +
+            "- Movement: Use touch gestures, swipe, tap, or { useTouch, TouchControls } from 'spider-touch' only if joystick controls are requested.\n" +
             "- Combat mechanics: detect proximity (Math.hypot(p.x - e.x, p.z - e.z) < 2.2), apply 380ms invulnerability cooldown (iframes), push defender along facing direction, and render clean top-docked HP & stamina bars.\n" +
-            "- STRICT BUTTON MANDATE: DO NOT CREATE ATTACK BUTTONS UNTIL ASKED! Strike on tap (tap anywhere or tap enemy to punch/kick), swipe to dash/dodge. Only add on-screen combat buttons if the user explicitly asks for buttons!\n";
+            "- Strike on tap (tap anywhere or tap enemy to punch/kick), swipe to dash/dodge. Only add on-screen combat buttons if the user explicitly asks for buttons!\n";
           const messages =
             history.length === 0
               ? [
