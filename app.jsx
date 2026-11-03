@@ -6653,13 +6653,13 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               // User steering mapping: standard (a = a, d = d) vs inverted (a = d, d = a)
               const swapAD = Boolean(reverseControls || (typeof window !== "undefined" && window.__spiderReverseControls));
               if (swapAD) {
-                // Inverted steering (a = d, d = a)
-                if (keys["d"] || keys["arrowright"]) ix -= 1;
-                if (keys["a"] || keys["arrowleft"]) ix += 1;
-              } else {
-                // Standard steering (a = a, d = d)
+                // Inverted steering (when reverse controls setting is toggled on)
                 if (keys["d"] || keys["arrowright"]) ix += 1;
                 if (keys["a"] || keys["arrowleft"]) ix -= 1;
+              } else {
+                // Standard steering (default, reverse controls is off): D moves Right, A moves Left
+                if (keys["d"] || keys["arrowright"]) ix -= 1;
+                if (keys["a"] || keys["arrowleft"]) ix += 1;
               }
               if (keys["w"] || keys["arrowup"]) iz += 1;
               if (keys["s"] || keys["arrowdown"]) iz -= 1;
@@ -8732,28 +8732,28 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                         <button
                           onTouchStart={(e) => {
                             e.preventDefault();
-                            setKeysPressed((p) => ({ ...p, d: true, arrowright: true }));
+                            setKeysPressed((p) => ({ ...p, a: true, arrowleft: true }));
                             if (typeof window !== "undefined") {
                               window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
-                              window.__spiderVirtualTouch.x = -1;
+                              window.__spiderVirtualTouch.x = 1;
                             }
                           }}
                           onTouchEnd={(e) => {
                             e.preventDefault();
-                            setKeysPressed((p) => ({ ...p, d: false, arrowright: false }));
+                            setKeysPressed((p) => ({ ...p, a: false, arrowleft: false }));
                             if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
                               window.__spiderVirtualTouch.x = 0;
                             }
                           }}
                           onMouseDown={() => {
-                            setKeysPressed((p) => ({ ...p, d: true, arrowright: true }));
+                            setKeysPressed((p) => ({ ...p, a: true, arrowleft: true }));
                             if (typeof window !== "undefined") {
                               window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
-                              window.__spiderVirtualTouch.x = -1;
+                              window.__spiderVirtualTouch.x = 1;
                             }
                           }}
                           onMouseUp={() => {
-                            setKeysPressed((p) => ({ ...p, d: false, arrowright: false }));
+                            setKeysPressed((p) => ({ ...p, a: false, arrowleft: false }));
                             if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
                               window.__spiderVirtualTouch.x = 0;
                             }
@@ -8769,7 +8769,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                             setKeysPressed((p) => ({ ...p, s: true, arrowdown: true }));
                             if (typeof window !== "undefined") {
                               window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
-                              window.__spiderVirtualTouch.z = 1;
+                              window.__spiderVirtualTouch.z = -1;
                             }
                           }}
                           onTouchEnd={(e) => {
@@ -8783,7 +8783,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                             setKeysPressed((p) => ({ ...p, s: true, arrowdown: true }));
                             if (typeof window !== "undefined") {
                               window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
-                              window.__spiderVirtualTouch.z = 1;
+                              window.__spiderVirtualTouch.z = -1;
                             }
                           }}
                           onMouseUp={() => {
@@ -8800,28 +8800,28 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                         <button
                           onTouchStart={(e) => {
                             e.preventDefault();
-                            setKeysPressed((p) => ({ ...p, a: true, arrowleft: true }));
+                            setKeysPressed((p) => ({ ...p, d: true, arrowright: true }));
                             if (typeof window !== "undefined") {
                               window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
-                              window.__spiderVirtualTouch.x = 1;
+                              window.__spiderVirtualTouch.x = -1;
                             }
                           }}
                           onTouchEnd={(e) => {
                             e.preventDefault();
-                            setKeysPressed((p) => ({ ...p, a: false, arrowleft: false }));
+                            setKeysPressed((p) => ({ ...p, d: false, arrowright: false }));
                             if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
                               window.__spiderVirtualTouch.x = 0;
                             }
                           }}
                           onMouseDown={() => {
-                            setKeysPressed((p) => ({ ...p, a: true, arrowleft: true }));
+                            setKeysPressed((p) => ({ ...p, d: true, arrowright: true }));
                             if (typeof window !== "undefined") {
                               window.__spiderVirtualTouch = window.__spiderVirtualTouch || {};
-                              window.__spiderVirtualTouch.x = 1;
+                              window.__spiderVirtualTouch.x = -1;
                             }
                           }}
                           onMouseUp={() => {
-                            setKeysPressed((p) => ({ ...p, a: false, arrowleft: false }));
+                            setKeysPressed((p) => ({ ...p, d: false, arrowright: false }));
                             if (typeof window !== "undefined" && window.__spiderVirtualTouch) {
                               window.__spiderVirtualTouch.x = 0;
                             }
