@@ -527,6 +527,7 @@ export default function GameComponent() {
   const oR = useRef([]);
   const cR = useRef([]);
   const sR = useRef([]);
+  const shake = useRef(0);
 
   const touchState = useRef({
     startX: 0,
@@ -817,10 +818,11 @@ export default function GameComponent() {
       m.position.z = ((m.position.z + speed * dt + 6) % 36) - 30;
     });
 
-    // Obstacle Logic & Collision
+    // Obstacle Logic & Swept Collision (No skipping / tunneling at any speed)
     obs.current.forEach((o, i) => {
       const m = oR.current[i];
       if (!m) return;
+      const prevZ = o.z;
       o.z += speed * dt;
       if (o.z > 9) {
         o.z -= 238;
@@ -828,17 +830,29 @@ export default function GameComponent() {
       }
       m.position.set(o.x, o.h / 2, o.z);
       m.rotation.y = st.clock.elapsedTime * 0.4 + i;
+
+      // Swept interval check: guarantees obstacle crossing z=0 never tunnels through
+      const inZRange =
+        (prevZ <= 0.95 && o.z >= -0.95) ||
+        Math.abs(o.z) <= Math.max(1.15, speed * dt * 0.65 + 0.55);
+
       if (
-        Math.abs(o.z) < 0.95 &&
-        Math.abs(o.x - p.position.x) < 1.05 &&
-        p.position.y < 0.65 + o.h &&
+        inZRange &&
+        Math.abs(o.x - p.position.x) < 1.25 &&
+        p.position.y < 0.65 + o.h - 0.05 &&
         inv.current <= 0
       ) {
         inv.current = 1.6;
         hp.current--;
         setLives(hp.current);
-        if (!muted) sfx(85, "sawtooth", 0.22);
-        o.z -= 18;
+        shake.current = 0.65; // Screen shake impact vibration
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          try {
+            navigator.vibrate([80, 45, 120]); // Physical device haptic vibration
+          } catch {}
+        }
+        if (!muted) sfx(85, "sawtooth", 0.25);
+        o.z -= 20;
         if (hp.current <= 0) setState("gameover");
       }
     });
@@ -880,10 +894,15 @@ export default function GameComponent() {
       p.children[1].material.emissiveIntensity = boostActive ? 2.6 : 1.2;
     }
 
-    // Third-Person Chase Cam (Pulls back on OP Boost)
+    // Third-Person Chase Cam (Pulls back on OP Boost + screen shake impact vibration)
     const targetCamZ = boostActive ? 10.5 : 8.2;
     const targetCamY = boostActive ? 4.9 : 4.4;
     st.camera.position.lerp({ x: p.position.x * 0.55, y: targetCamY, z: targetCamZ }, 0.1);
+    if (shake.current > 0.001) {
+      st.camera.position.x += (Math.random() - 0.5) * shake.current;
+      st.camera.position.y += (Math.random() - 0.5) * shake.current;
+      shake.current = Math.max(0, shake.current - dt * 3.2);
+    }
     st.camera.lookAt(p.position.x, 1, -6);
   });
 

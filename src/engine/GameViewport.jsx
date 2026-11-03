@@ -1255,11 +1255,21 @@ function Boat({ node, wire, selected }) {
   );
 }
 
-function Guards({ node, wire, selected }) {
+function Guards({ node, wire, selected, isPlaying }) {
   const g1 = useRef(null);
   const g2 = useRef(null);
   useFrame(({ clock }) => {
-    if (transforming || node.animPaused) return;
+    if (!isPlaying || transforming || node.animPaused) {
+      if (g1.current) {
+        g1.current.position.set(0, 0, 0);
+        g1.current.rotation.y = 0;
+      }
+      if (g2.current) {
+        g2.current.position.set(0, 0, 1.5);
+        g2.current.rotation.y = 0;
+      }
+      return;
+    }
     const t = clock.elapsedTime * 0.5;
     if (g1.current) {
       g1.current.position.x += (Math.sin(t) * 2 - g1.current.position.x) * 0.1;
@@ -1765,7 +1775,7 @@ export default function GameViewport({
         {/* Guards on patrol (disabled during custom games / board games) */}
         {!isolateCustomGame && npcs && npcs.visible !== false && (
           <LiveGroup node={npcs} selected={selId === "npcs"} onSelect={onSelectNode} register={register}>
-            <Guards node={npcs} wire={wire} selected={selId === "npcs"} />
+            <Guards node={npcs} wire={wire} selected={selId === "npcs"} isPlaying={isPlaying} />
           </LiveGroup>
         )}
 

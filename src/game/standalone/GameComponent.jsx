@@ -308,6 +308,7 @@ export default function GameComponent() {
   const oR = useRef([]);
   const cR = useRef([]);
   const sR = useRef([]);
+  const shake = useRef(0);
 
   const touchState = useRef({
     startX: 0,
@@ -629,10 +630,11 @@ export default function GameComponent() {
       m.position.z = ((m.position.z + speed * dt + 6) % 36) - 30;
     });
 
-    // Obstacle Logic & Collision
+    // Obstacle Logic & Swept Collision (No skipping / tunneling at any speed)
     obs.current.forEach((o, i) => {
       const m = oR.current[i];
       if (!m) return;
+      const prevZ = o.z;
       o.z += speed * dt;
       if (o.z > 9) {
         o.z -= 238;
@@ -655,6 +657,10 @@ export default function GameComponent() {
         sc.current += 150;
         setScore(Math.floor(sc.current));
         setSpeedNotification("🥋 KICK SMASH! +150 PTS");
+        shake.current = 0.35;
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          try { navigator.vibrate(60); } catch {}
+        }
         if (!muted) {
           sfx(440, "triangle", 0.18);
           setTimeout(() => sfx(220, "sawtooth", 0.22), 50);
@@ -663,16 +669,28 @@ export default function GameComponent() {
         return;
       }
 
+      // Swept collision interval check
+      const inZRange =
+        (prevZ <= 0.95 && o.z >= -0.95) ||
+        Math.abs(o.z) <= Math.max(1.15, speed * dt * 0.65 + 0.55);
+
       if (
-        Math.abs(o.z) < 0.95 &&
-        Math.abs(o.x - p.position.x) < 1.05 &&
+        inZRange &&
+        Math.abs(o.x - p.position.x) < 1.25 &&
         p.position.y < o.h &&
         inv.current <= 0
       ) {
         inv.current = 1.6;
         hp.current--;
         setLives(hp.current);
+        shake.current = 0.65; // Screen shake impact vibration
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          try {
+            navigator.vibrate([80, 45, 120]); // Physical device haptic vibration
+          } catch {}
+        }
         if (!muted) sfx(180, "sawtooth", 0.25);
+        o.z -= 18;
         if (hp.current <= 0) {
           setState("gameover");
           if (!muted) {
@@ -709,10 +727,15 @@ export default function GameComponent() {
       }
     });
 
-    // Third-Person Chase Cam behind Knight
+    // Third-Person Chase Cam behind Knight (+ screen shake impact vibration)
     const targetCamZ = boostActive ? 9.8 : 7.6;
     const targetCamY = boostActive ? 4.2 : 3.8;
     st.camera.position.lerp({ x: p.position.x * 0.55, y: targetCamY, z: targetCamZ }, 0.1);
+    if (shake.current > 0.001) {
+      st.camera.position.x += (Math.random() - 0.5) * shake.current;
+      st.camera.position.y += (Math.random() - 0.5) * shake.current;
+      shake.current = Math.max(0, shake.current - dt * 3.2);
+    }
     st.camera.lookAt(p.position.x * 0.4, 1.3, -8);
   });
 
