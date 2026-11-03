@@ -25,7 +25,12 @@ async function buildExe() {
   console.log('1. Compiling dedicated WebGPU Game Bundle (dist-game)...');
 
   try {
-    execSync('npx vite build --config vite.game.config.js', { cwd: rootDir, stdio: 'inherit' });
+    const viteBin = path.join(rootDir, 'node_modules', 'vite', 'bin', 'vite.js');
+    execSync(`"${process.execPath}" "${viteBin}" build --config vite.game.config.mjs`, {
+      cwd: rootDir,
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+      stdio: 'inherit'
+    });
     const gameSrc = path.join(rootDir, 'dist-game', 'game.html');
     const gameDest = path.join(rootDir, 'dist-game', 'index.html');
     if (fs.existsSync(gameSrc)) fs.copyFileSync(gameSrc, gameDest);
@@ -33,29 +38,14 @@ async function buildExe() {
     console.warn('Vite game build warning:', err.message);
   }
 
-  // Check if Cargo and Tauri CLI are available to compile native Tauri binary
-  const userCargoBin = path.join(process.env.USERPROFILE || '', '.cargo', 'bin');
-  const envWithCargo = {
-    ...process.env,
-    PATH: `${userCargoBin};${process.env.PATH || ''}`
-  };
-  try {
-    const cargoExe = path.join(userCargoBin, 'cargo.exe');
-    const hasCargo = fs.existsSync(cargoExe);
-    if (hasCargo) {
-      console.log('2. Rust/Cargo detected! Invoking native Tauri v2 compiler...');
-      execSync('npx tauri build --no-bundle', { cwd: rootDir, env: envWithCargo, stdio: 'inherit' });
-      const tauriExe = path.join(rootDir, 'src-tauri', 'target', 'release', 'spider-chess.exe');
-      if (fs.existsSync(tauriExe)) {
-        fs.mkdirSync(outDir, { recursive: true });
-        const targetExe = path.join(outDir, 'SpiderChess.exe');
-        fs.copyFileSync(tauriExe, targetExe);
-        console.log('SUCCESS: Native Tauri + WebGPU binary created at:', targetExe);
-        return { ok: true, exePath: targetExe, outDir, engine: 'Tauri + WebGPU (Native Rust)' };
-      }
-    }
-  } catch (e) {
-    console.log('Tauri compile step message:', e.message);
+  // Check if pre-compiled native Tauri executable exists
+  const tauriExe = path.join(rootDir, 'src-tauri', 'target', 'release', 'spider-chess.exe');
+  if (fs.existsSync(tauriExe)) {
+    fs.mkdirSync(outDir, { recursive: true });
+    const targetExe = path.join(outDir, 'SpiderChess.exe');
+    fs.copyFileSync(tauriExe, targetExe);
+    console.log('SUCCESS: Native Tauri binary deployed to:', targetExe);
+    // Continue to package standalone runtime assets alongside it
   }
 
   // Standalone WebGPU Runtime Packager

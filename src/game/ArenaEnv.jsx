@@ -86,8 +86,16 @@ export function useKeyboardControls() {
     getDir: () => {
       const k = keys.current;
       let x = 0, z = 0;
-      if (k.arrowleft || k.a) x += 1;
-      if (k.arrowright || k.d) x -= 1;
+      const swapAD = Boolean(typeof window !== "undefined" && window.__spiderReverseControls);
+      if (swapAD) {
+        // Inverted: a = d, d = a
+        if (k.arrowleft || k.a) x += 1;
+        if (k.arrowright || k.d) x -= 1;
+      } else {
+        // Standard: a = a, d = d (A goes Left, D goes Right)
+        if (k.arrowleft || k.a) x -= 1;
+        if (k.arrowright || k.d) x += 1;
+      }
       if (k.arrowup || k.w) z -= 1;
       if (k.arrowdown || k.s) z += 1;
 

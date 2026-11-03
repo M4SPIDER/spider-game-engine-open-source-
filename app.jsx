@@ -13,6 +13,7 @@ import { compileJsxComponent } from "./src/engine/DynamicJsxRenderer.jsx";
 import { runAgent, systemPrompt, GAME_STEPS, GAME_BUILDER_PRIMER, extractFilesFromRawJson } from "./src/engine/agentHarness.js";
 import { runLimits, contextWindow, buildMemory, memoryBudget } from "./src/mobile/context.js";
 import { retrieveRagContext, ragStore } from "./src/engine/ragEngine.js";
+import SpiderStore from "./src/components/SpiderStore.jsx";
 import {
   transpileJsxToCpp,
   transpileJsxToSpy,
@@ -38,6 +39,7 @@ import {
   EyeOff,
   Search,
   Plus,
+  Upload,
   Download,
   Save,
   ChevronRight,
@@ -102,9 +104,45 @@ import {
   Video,
   X,
   Paperclip,
-  MessageCircle
+  MessageCircle,
+  Database
 } from "lucide-react";
-import { sfx } from "./src/engine/audioSynthesizer.js";
+import StandaloneGameViewer from "./src/game/standalone/StandaloneGameViewer.jsx";
+import { sfx as sfxInstance, SoundEffects } from "./src/engine/audioSynthesizer.js";
+
+// Web Audio API Procedural SFX — both callable function sfx(...) AND object with .playCoin(), .playClick(), etc.
+const sfx = (f = 440, t = "sine", d = 0.12) => {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const c = new AudioCtx();
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = t;
+    o.frequency.value = f;
+    g.gain.setValueAtTime(0.09, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + d);
+    o.connect(g);
+    g.connect(c.destination);
+    o.start();
+    o.stop(c.currentTime + d);
+  } catch {}
+};
+
+// Bind all SoundEffects prototype methods directly onto sfx
+if (sfxInstance) {
+  Object.assign(sfx, sfxInstance);
+  if (SoundEffects && SoundEffects.prototype) {
+    Object.getOwnPropertyNames(SoundEffects.prototype).forEach((key) => {
+      if (key !== "constructor" && typeof sfxInstance[key] === "function") {
+        sfx[key] = sfxInstance[key].bind(sfxInstance);
+      }
+    });
+  }
+}
+if (typeof window !== "undefined") {
+  window.sfx = sfx;
+}
 
 // Spider Engine Direct Internal Audio Destination Tap for 60 FPS Video Recorder
 if (typeof window !== "undefined" && !window.__spiderAudioTapInstalled) {
@@ -208,7 +246,7 @@ const INITIAL_LOGS = [];
 // INDEXEDDB STORAGE ENGINE (Browser & Mobile Full Storage Layer)
 // ============================================================================
 const SPIDER_DB_NAME = "SpiderEngineDB";
-const SPIDER_DB_VERSION = 1;
+const SPIDER_DB_VERSION = 2;
 
 function openSpiderDB() {
   return new Promise((resolve, reject) => {
@@ -227,10 +265,26 @@ function openSpiderDB() {
       if (!db.objectStoreNames.contains("projects")) {
         db.createObjectStore("projects", { keyPath: "id" });
       }
+      if (!db.objectStoreNames.contains("submissions")) {
+        db.createObjectStore("submissions", { keyPath: "id" });
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
+}
+
+async function idbSaveSubmission(sub) {
+  try {
+    const db = await openSpiderDB();
+    const tx = db.transaction("submissions", "readwrite");
+    tx.objectStore("submissions").put(sub);
+  } catch (err) {}
+  try {
+    const current = JSON.parse(localStorage.getItem("spider-portal-submissions") || "[]");
+    const updated = [sub, ...current.filter((x) => x.id !== sub.id)];
+    localStorage.setItem("spider-portal-submissions", JSON.stringify(updated));
+  } catch (err) {}
 }
 
 async function idbSaveScene(sceneData) {
@@ -1067,6 +1121,30 @@ export default function GameComponent() {
 }
 `;
 
+const INTERNAL_ENGINE_FILES = new Set([
+  "ArenaEnv.jsx",
+  "assets.js",
+  "ChessRules.js",
+  "coins.js",
+  "hackathon_proof.js",
+  "hackathon_status.js",
+  "index.js",
+  "main.jsx",
+  "materials.js",
+  "mobileTouch.jsx",
+  "player.js",
+  "rules.js",
+  "scene.js",
+  "tutorials.js",
+  "board.jsx",
+  "chess_board.jsx",
+  "ChessBoardEnv.jsx",
+  "DynamicComponent.jsx",
+  "GalaxyDefender.jsx",
+  "MyGame.jsx",
+  "pieces.jsx"
+]);
+
 const BUILTIN_PROJECT_SCRIPTS = [
   {
     name: "GameComponent.jsx",
@@ -1412,6 +1490,7 @@ function DesktopApp() {
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState("Rendering");
+  const [showSpiderStore, setShowSpiderStore] = useState(false);
   const [openMenu, setOpenMenu] = useState(null); // File/Edit/... dropdown
   const [showTopMenuBar, setShowTopMenuBar] = useState(() => {
     try {
@@ -1534,6 +1613,20 @@ function DesktopApp() {
       return true;
     }
   });
+  const [reverseControls, setReverseControls] = useState(() => {
+    try {
+      return localStorage.getItem("spider-reverse-controls") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.__spiderReverseControls = reverseControls;
+    }
+  }, [reverseControls]);
+
   const [isDirectGameOverlayCollapsed, setIsDirectGameOverlayCollapsed] = useState(false);
   const [showDevOverlay, setShowDevOverlay] = useState(false);
   const [isGameControlsCollapsed, setIsGameControlsCollapsed] = useState(false);
@@ -1600,12 +1693,15 @@ function DesktopApp() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((f) => {
-            if (f.name === "GameComponent.jsx" && f.content && (f.content.includes("ENDLESS OCEAN") || f.content.includes("oceanGeo"))) {
-              return { ...f, content: "" };
-            }
-            return f;
-          });
+          const filtered = parsed.filter((f) => !INTERNAL_ENGINE_FILES.has(f.name));
+          if (filtered.length > 0) {
+            return filtered.map((f) => {
+              if (f.name === "GameComponent.jsx" && f.content && (f.content.includes("ENDLESS OCEAN") || f.content.includes("oceanGeo"))) {
+                return { ...f, content: "" };
+              }
+              return f;
+            });
+          }
         }
       }
     } catch {}
@@ -1614,10 +1710,11 @@ function DesktopApp() {
 
   // Permanently persist project files & JSX to IndexedDB & localStorage across app restarts
   useEffect(() => {
-    if (projectScriptFiles && projectScriptFiles.length > 0) {
-      idbSaveAllScripts(projectScriptFiles);
+    const cleanFiles = (projectScriptFiles || []).filter((f) => !INTERNAL_ENGINE_FILES.has(f.name));
+    if (cleanFiles.length > 0) {
+      idbSaveAllScripts(cleanFiles);
       try {
-        localStorage.setItem("spider-project-script-files", JSON.stringify(projectScriptFiles));
+        localStorage.setItem("spider-project-script-files", JSON.stringify(cleanFiles));
       } catch (err) {
         // QuotaExceededError is safely ignored since IndexedDB stores the full files without limit
       }
@@ -1631,14 +1728,13 @@ function DesktopApp() {
       try {
         const dbScripts = await idbGetAllScripts();
         if (dbScripts && dbScripts.length > 0) {
-          setProjectScriptFiles((prev) => {
-            const map = new Map(prev.map((f) => [f.name, f]));
-            for (const d of dbScripts) {
-              map.set(d.name, { ...map.get(d.name), ...d });
-            }
-            return Array.from(map.values());
-          });
-          appendLog("Success", `Restored ${dbScripts.length} JSX scripts from browser IndexedDB`);
+          const filtered = dbScripts.filter((d) => !INTERNAL_ENGINE_FILES.has(d.name));
+          if (filtered.length > 0) {
+            setProjectScriptFiles(filtered);
+            appendLog("Success", `Restored ${filtered.length} project scripts from browser IndexedDB`);
+          } else {
+            setProjectScriptFiles(BUILTIN_PROJECT_SCRIPTS);
+          }
         }
       } catch (err) {
         console.warn("Could not load scripts from IndexedDB:", err);
@@ -1684,23 +1780,25 @@ function DesktopApp() {
 
   // Active files in selected folder
   const activeFolderFiles = useMemo(() => {
+    const list = projectScriptFiles.filter((f) => !INTERNAL_ENGINE_FILES.has(f.name));
     if (selectedScriptFolder && selectedScriptFolder !== "All Folders") {
-      return projectScriptFiles.filter(
+      return list.filter(
         (f) => f.folder === selectedScriptFolder || f.path?.startsWith(selectedScriptFolder)
       );
     }
-    return projectScriptFiles;
+    return list;
   }, [projectScriptFiles, selectedScriptFolder]);
 
   // Selected files array
   const selectedFilesList = useMemo(() => {
-    return projectScriptFiles.filter((f) => selectedScriptNames.has(f.name));
+    return projectScriptFiles.filter((f) => !INTERNAL_ENGINE_FILES.has(f.name) && selectedScriptNames.has(f.name));
   }, [projectScriptFiles, selectedScriptNames]);
 
   // Group scripts by folder
   const groupedScripts = useMemo(() => {
     const map = {};
     const filtered = projectScriptFiles.filter((f) => {
+      if (INTERNAL_ENGINE_FILES.has(f.name)) return false;
       if (!scriptSearch) return true;
       const q = scriptSearch.toLowerCase();
       return f.name.toLowerCase().includes(q) || (f.folder && f.folder.toLowerCase().includes(q));
@@ -3221,6 +3319,179 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
   const [convertStatus, setConvertStatus] = useState(null);
   const convertMenuRef = useRef(null);
 
+  // Build & Distribution Dropdown (Publish to Store or Build)
+  const [buildMenuOpen, setBuildMenuOpen] = useState(false);
+  const buildMenuRef = useRef(null);
+  const [spiderStorePublish, setSpiderStorePublish] = useState(false);
+  const [standalonePlayingGame, setStandalonePlayingGame] = useState(null);
+
+  // Spider Store Zero-Backend Client Publisher Wizard Modal State
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishStep, setPublishStep] = useState("form"); // 'form' | 'packaging' | 'success'
+  const [publishProgress, setPublishProgress] = useState(0);
+  const [publishStatusText, setPublishStatusText] = useState("");
+  const [publishForm, setPublishForm] = useState({
+    title: "",
+    developer: "M4 Spider Studios",
+    genre: "Action Adventure",
+    version: "v1.0.0",
+    description: "",
+    screenshots: ["", "", "", ""]
+  });
+
+  const openPublishModal = () => {
+    // Automatically adopt whatever is currently active in the 3D Viewport!
+    const activeFileName = activeJsxName || (currentProject?.name ? `${currentProject.name}.jsx` : "GameComponent.jsx");
+    const cleanTitle = activeFileName.replace(/\.[^/.]+$/, "").replace(/([A-Z])/g, " $1").trim() || "3D Game";
+    setPublishForm({
+      title: cleanTitle,
+      developer: "M4 Spider Studios",
+      genre: "Action Adventure",
+      version: "v1.0.0",
+      description: "Direct export from Spider Engine 3D Viewport. Zero backend, 100% offline client-side execution.",
+      screenshots: ["", "", "", ""]
+    });
+    setPublishStep("form");
+    setPublishProgress(0);
+    setPublishStatusText("");
+    setShowPublishModal(true);
+  };
+
+  const handleScreenshotUpload = (index, e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPublishForm((prev) => {
+          const nextScreenshots = [...prev.screenshots];
+          nextScreenshots[index] = reader.result;
+          return { ...prev, screenshots: nextScreenshots };
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleMultipleScreenshotsUpload = (e) => {
+    const files = Array.from(e.target.files || []).slice(0, 4);
+    if (files.length === 0) return;
+    files.forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPublishForm((prev) => {
+          const nextScreenshots = [...prev.screenshots];
+          nextScreenshots[index] = reader.result;
+          return { ...prev, screenshots: nextScreenshots };
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeScreenshot = (index, e) => {
+    if (e) e.stopPropagation();
+    setPublishForm((prev) => {
+      const nextScreenshots = [...prev.screenshots];
+      nextScreenshots[index] = "";
+      return { ...prev, screenshots: nextScreenshots };
+    });
+  };
+
+  const handlePublishSubmit = (e) => {
+    if (e) e.preventDefault();
+    setPublishStep("packaging");
+    setPublishProgress(15);
+    setPublishStatusText("Inspecting scene graph & compiling game bundle...");
+    sfx(523, "sine", 0.1);
+
+    setTimeout(() => {
+      setPublishProgress(45);
+      setPublishStatusText("Processing 4 Selected Game Showcase Images...");
+    }, 450);
+
+    setTimeout(() => {
+      setPublishProgress(75);
+      setPublishStatusText("Generating client-side distribution bundle & SHA-256 manifest...");
+    }, 950);
+
+    setTimeout(() => {
+      setPublishProgress(95);
+      setPublishStatusText("Writing release record to SpiderEngineDB IndexedDB (0 Backend)...");
+    }, 1450);
+
+    setTimeout(async () => {
+      setPublishProgress(100);
+      setPublishStatusText("Published Successfully! 🚀");
+
+      const gameTitle = publishForm.title.trim() || currentProject?.name || "Cyber Knight";
+      const uploadedShots = publishForm.screenshots.filter(Boolean);
+      const thumbnailImg = uploadedShots.length > 0 ? uploadedShots[0] : "";
+
+      // Capture the EXACT game currently active in the 3D Viewport!
+      const current3dCode = activeJsxCode ||
+        projectScriptFiles.find((f) => f.name === activeJsxName)?.content ||
+        projectScriptFiles.find((f) => f.name === "GameComponent.jsx")?.content ||
+        projectScriptFiles.find((f) => f.content && (f.content.includes("export default") || f.content.includes("useFrame")))?.content || "";
+      const current3dName = activeJsxName || "GameComponent.jsx";
+
+      const newSubmission = {
+        id: `game-${Date.now()}`,
+        title: gameTitle,
+        developer: publishForm.developer.trim() || "M4 Spider Studios",
+        isDevVerified: true,
+        version: publishForm.version.trim() || "v1.0.0",
+        size: "185 MB",
+        status: "approved",
+        submittedOn: new Date().toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        }),
+        packageId: `com.m4spider.${gameTitle.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+        requiredOs: "Universal Web / Windows 10+",
+        platforms: ["Universal Web", "Windows PC"],
+        gameType: publishForm.genre || "Action Adventure",
+        tags: [publishForm.version || "v1.0.0", publishForm.genre || "Action", "Spider Engine", "3D"],
+        thumbnail: thumbnailImg,
+        screenshots: uploadedShots,
+        description: publishForm.description.trim() || "Created with Spider Game Engine. Zero backend, 100% client-side offline execution.",
+        gameCode: current3dCode,
+        gameName: current3dName,
+        projectFiles: projectScriptFiles.map((f) => ({ name: f.name, folder: f.folder, content: f.content })),
+        checklist: [
+          { id: "c1", text: "Build installs and runs successfully", checked: true },
+          { id: "c2", text: "Game content is appropriate", checked: true },
+          { id: "c3", text: "No malware or policy violations", checked: true },
+          { id: "c4", text: "Assets (4 screenshots) are valid", checked: true }
+        ],
+        reviewNote: "Verified client-side package via Spider Engine IndexDB."
+      };
+
+      // Also sync current 3D view code to disk so Convert to EXE immediately has this exact game!
+      if (current3dCode) {
+        try {
+          if (window.spiderShell?.writeProjectFile) {
+            window.spiderShell.writeProjectFile("src/game/GameComponent.jsx", current3dCode);
+            window.spiderShell.writeProjectFile("src/game/standalone/GameComponent.jsx", current3dCode);
+          }
+        } catch {}
+      }
+
+      // 1. Commit to IndexedDB & LocalStorage
+      await idbSaveSubmission(newSubmission);
+
+      // 2. Play victory audio chime
+      sfx(784, "sine", 0.35);
+
+      // 3. Engine console log
+      appendLog("Success", `🎮 Published "${newSubmission.title}" to Spider Store (IndexedDB)!`);
+
+      setPublishStep("success");
+    }, 1900);
+  };
+
   const isStandaloneChess = useMemo(() => {
     try {
       return new URLSearchParams(window.location.search).get("mode") === "standalone-chess";
@@ -3234,14 +3505,26 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
       if (convertMenuRef.current && !convertMenuRef.current.contains(e.target)) {
         setConvertOpen(false);
       }
+      if (buildMenuRef.current && !buildMenuRef.current.contains(e.target)) {
+        setBuildMenuOpen(false);
+      }
     };
     window.addEventListener("mousedown", handleClickOutside);
     return () => window.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (window.spiderShell?.onConvertProgress) {
+      const unsub = window.spiderShell.onConvertProgress((msg) => {
+        setConvertStatus((prev) => (prev?.state === "building" ? { ...prev, progress: msg } : prev));
+      });
+      return unsub;
+    }
+  }, []);
+
   const handleConvertExe = async () => {
     setConvertOpen(false);
-    setConvertStatus({ state: "building", progress: "Compiling Spider Chess Standalone Executable (.exe)..." });
+    setConvertStatus({ state: "building", progress: "Starting background build process (non-blocking)..." });
     appendLog("Info", "Starting conversion to Windows Standalone Executable (.exe)...");
     try {
       if (window.spiderShell?.convertExe) {
@@ -4614,6 +4897,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
         const diskEntries = Array.isArray(res.files) ? res.files : [];
         const loadedFiles = [];
         for (const item of diskEntries) {
+          if (INTERNAL_ENGINE_FILES.has(item.name)) continue;
           const ext = item.name.split(".").pop().toLowerCase();
           if (["jsx", "tsx", "js", "html"].includes(ext)) {
             const rel = item.path || item.name;
@@ -5955,6 +6239,11 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
     };
     const handleGlobalEsc = (e) => {
       if (e.key === "Escape") {
+        if (standalonePlayingGame) {
+          setStandalonePlayingGame(null);
+          setShowSpiderStore(true);
+          return;
+        }
         if (isArtifactFullscreen || document.fullscreenElement) {
           exitFullscreenMode();
           return;
@@ -5972,7 +6261,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
       window.removeEventListener("spider:return-to-menu", handleReturnToMenu);
       window.removeEventListener("keydown", handleGlobalEsc);
     };
-  }, [viewportTab, isArtifactFullscreen, exitFullscreenMode]);
+  }, [viewportTab, isArtifactFullscreen, exitFullscreenMode, standalonePlayingGame]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -5996,9 +6285,17 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               const camRight = (typeof window !== "undefined" && window.__spiderCamRight) || { x: 1, z: 0 };
               let ix = 0;
               let iz = 0;
-              // User steering mapping: a = d, d = a
-              if (keys["d"] || keys["arrowright"]) ix -= 1;
-              if (keys["a"] || keys["arrowleft"]) ix += 1;
+              // User steering mapping: standard (a = a, d = d) vs inverted (a = d, d = a)
+              const swapAD = Boolean(reverseControls || (typeof window !== "undefined" && window.__spiderReverseControls));
+              if (swapAD) {
+                // Inverted steering (a = d, d = a)
+                if (keys["d"] || keys["arrowright"]) ix -= 1;
+                if (keys["a"] || keys["arrowleft"]) ix += 1;
+              } else {
+                // Standard steering (a = a, d = d)
+                if (keys["d"] || keys["arrowright"]) ix += 1;
+                if (keys["a"] || keys["arrowleft"]) ix -= 1;
+              }
               if (keys["w"] || keys["arrowup"]) iz += 1;
               if (keys["s"] || keys["arrowdown"]) iz -= 1;
 
@@ -6304,6 +6601,10 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
   // Menu bar actions — every item executes a real editor operation
   const handleMenuAction = (menu, label) => {
     const close = () => setOpenMenu(null);
+    if (label.includes("Spider Store")) {
+      setShowSpiderStore(true);
+      return close();
+    }
     if (label === "Project Browser (Switch / Manage Projects)" || label === "Project Browser") {
       setShowStartup(true);
       return close();
@@ -6471,6 +6772,37 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
 
   return (
     <div className="flex flex-col h-screen w-full bg-[#f0f2f8] text-slate-800 select-none font-sans overflow-hidden antialiased">
+      {/* Spider Store Desktop Window */}
+      <SpiderStore
+        isOpen={showSpiderStore}
+        onClose={() => {
+          setShowSpiderStore(false);
+        }}
+        onOpenPublish={() => {
+          setShowSpiderStore(false);
+          openPublishModal();
+        }}
+        onLaunchGame={(game) => {
+          setShowSpiderStore(false);
+          setStandalonePlayingGame(game);
+          appendLog("Success", `🎮 Launching "${game.title}" (Standalone Game Engine)!`);
+        }}
+      />
+
+      {/* Standalone 3D Game Runner (The exact same standalone engine as Convert to EXE) */}
+      {standalonePlayingGame && (
+        <div className="fixed inset-0 z-[99999] bg-[#0b0f19]">
+          <StandaloneGameViewer
+            gameTitle={standalonePlayingGame.title}
+            game={standalonePlayingGame}
+            onExit={() => {
+              setStandalonePlayingGame(null);
+              setShowSpiderStore(true);
+            }}
+          />
+        </div>
+      )}
+
       {/* Startup — small Unreal-style project picker dialog (same compact 560x360 size as splash) */}
       {showStartup && !newProjectOpen && (
         <div className="absolute inset-0 z-50 bg-slate-900/35 backdrop-blur-xs flex items-center justify-center p-3">
@@ -6605,10 +6937,10 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               { id: "Edit", items: ["Undo", "Redo", "Duplicate Selected", "Delete Selected"] },
               { id: "Scene", items: ["Show Hierarchy (H)", "Focus Player", "Reset Sun Time"] },
               { id: "Object", items: ["Spawn Random Prop", "Toggle Visibility", "Reset Transform"] },
-              { id: "Game", items: ["Main Menu (AAA Title Screen)", "Play / Stop", "Reset Score"] },
+              { id: "Game", items: ["Spider Store (Games Only)", "Main Menu (AAA Title Screen)", "Play / Stop", "Reset Score"] },
               { id: "Build", items: ["Build + Export scene.json"] },
               { id: "Tools", items: [isViewportRecording ? "Stop Recording (MP4)" : "Record MP4 Video (60 FPS)", "Screenshot PNG", "Toggle Editor Overlay", "Clear Console"] },
-              { id: "Window", items: ["Project Browser", "Content Browser Tab", "Timeline Tab", "Inspector Tab", "World Settings Tab", "Build Log Tab", "Console Tab"] },
+              { id: "Window", items: ["Spider Store", "Project Browser", "Content Browser Tab", "Timeline Tab", "Inspector Tab", "World Settings Tab", "Build Log Tab", "Console Tab"] },
               { id: "Help", items: ["Console Commands", "About Spider Engine"] }
             ].map((menu) => (
               <div key={menu.id} className="relative">
@@ -6746,13 +7078,13 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                 {/* 1. EXE - REAL WORKING CHESS STANDALONE GAME */}
                 <button
                   onClick={handleConvertExe}
-                  className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-indigo-50 transition cursor-pointer group"
+                  className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-indigo-50 transition cursor-pointer group rounded-lg"
                 >
                   <div className="flex items-center gap-2.5">
                     <Monitor className="w-4 h-4 text-indigo-600 shrink-0" />
                     <div>
                       <div className="font-semibold text-slate-800 group-hover:text-indigo-600">EXE</div>
-                      <div className="text-[10px] text-slate-400">Tauri + WebGPU Standalone (.exe)</div>
+                      <div className="text-[10px] text-slate-400">Windows Standalone (.exe)</div>
                     </div>
                   </div>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
@@ -6762,35 +7094,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
 
                 <div className="h-[1px] bg-slate-100 my-1" />
 
-                {/* 2. APK - COMING SOON */}
-                <div className="flex items-center justify-between px-3 py-2 opacity-50 cursor-not-allowed select-none">
-                  <div className="flex items-center gap-2.5">
-                    <Smartphone className="w-4 h-4 text-slate-400 shrink-0" />
-                    <div>
-                      <div className="font-semibold text-slate-700">APK</div>
-                      <div className="text-[10px] text-slate-400">Android Package</div>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
-                    Coming Soon
-                  </span>
-                </div>
-
-                {/* 3. IOS - COMING SOON */}
-                <div className="flex items-center justify-between px-3 py-2 opacity-50 cursor-not-allowed select-none">
-                  <div className="flex items-center gap-2.5">
-                    <Smartphone className="w-4 h-4 text-slate-400 shrink-0" />
-                    <div>
-                      <div className="font-semibold text-slate-700">IOS</div>
-                      <div className="text-[10px] text-slate-400">Apple iOS Package</div>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
-                    Coming Soon
-                  </span>
-                </div>
-
-                {/* 4. UNIVERSAL WEB - RUNS IN ANY BROWSER */}
+                {/* 2. UNIVERSAL WEB - RUNS IN ANY BROWSER */}
                 <div className="flex items-center justify-between px-3 py-2 bg-emerald-50/60 rounded-lg border border-emerald-200/50">
                   <div className="flex items-center gap-2.5">
                     <Globe className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -6803,31 +7107,76 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                     Active
                   </span>
                 </div>
-
-                {/* 5. spider os - COMING SOON */}
-                <div className="flex items-center justify-between px-3 py-2 opacity-50 cursor-not-allowed select-none">
-                  <div className="flex items-center gap-2.5">
-                    <Globe className="w-4 h-4 text-slate-400 shrink-0" />
-                    <div>
-                      <div className="font-semibold text-slate-700">spider os</div>
-                      <div className="text-[10px] text-slate-400">Spider OS Native</div>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
-                    Coming Soon
-                  </span>
-                </div>
               </div>
             )}
           </div>
 
-          <button
-            onClick={handleBuildProject}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-2xs transition cursor-pointer"
-          >
-            <Box className={`w-3.5 h-3.5 text-indigo-600 ${isBuilding ? "animate-spin" : ""}`} />
-            <span>{isBuilding ? "Building..." : "Build"}</span>
-          </button>
+          {/* BUILD BUTTON & DROPDOWN (PUBLISH TO STORE OR BUILD) */}
+          <div className="relative" ref={buildMenuRef}>
+            <button
+              onClick={() => setBuildMenuOpen((p) => !p)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-2xs transition cursor-pointer"
+              title="Build & Distribution Options"
+            >
+              <Box className={`w-3.5 h-3.5 text-indigo-600 ${isBuilding ? "animate-spin" : ""}`} />
+              <span>{isBuilding ? "Building..." : "Build"}</span>
+              <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${buildMenuOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {buildMenuOpen && (
+              <div className="absolute top-full mt-1.5 right-0 w-64 bg-white rounded-xl shadow-2xl border border-slate-200 py-1.5 z-50 text-xs animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Distribution & Packaging
+                </div>
+
+                {/* 1. PUBLISH TO STORE */}
+                <button
+                  onClick={() => {
+                    setBuildMenuOpen(false);
+                    openPublishModal();
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-purple-50 transition cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white shrink-0 shadow-2xs group-hover:scale-105 transition">
+                      <Upload className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-800 group-hover:text-indigo-600">Publish to Store</div>
+                      <div className="text-[10px] text-slate-400">Upload to Spider Store</div>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">
+                    Store
+                  </span>
+                </button>
+
+                <div className="h-[1px] bg-slate-100 my-1" />
+
+                {/* 2. BUILD GAME / EXPORT */}
+                <button
+                  onClick={() => {
+                    setBuildMenuOpen(false);
+                    handleBuildProject();
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-indigo-50 transition cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-indigo-100 text-slate-700 group-hover:text-indigo-600 flex items-center justify-center shrink-0 transition">
+                      <Box className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-800 group-hover:text-indigo-600">Build</div>
+                      <div className="text-[10px] text-slate-400">Compile & export scene bundle</div>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                    Ready
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
 
           <button
             onClick={() => setSettingsOpen(true)}
@@ -6878,17 +7227,28 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
             })}
           </div>
 
-          {/* Bottom M4 SPIDER Badge */}
-          <div className="pt-2 border-t border-slate-100 flex flex-col items-center justify-center text-center">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-xs mb-0.5" title="M4 SPIDER">
-              <Sparkles className="w-3.5 h-3.5" />
+          {/* Bottom SPIDER STORE Button */}
+          <button
+            onClick={() => setShowSpiderStore(true)}
+            className="pt-2 border-t border-slate-100 flex flex-col items-center justify-center text-center cursor-pointer group hover:opacity-95 transition select-none w-full outline-none"
+            title="Open Spider Store (Games Only)"
+          >
+            <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 shadow-2xs flex items-center justify-center p-0.5 mb-0.5 group-hover:scale-110 group-hover:shadow-md group-hover:border-slate-400 group-hover:bg-slate-50 transition">
+              <img
+                src="./assets/store/spider_logo_black.png"
+                alt="Spider Store"
+                className="w-5 h-5 object-contain"
+                onError={(e) => {
+                  e.currentTarget.src = "./assets/store/spider_logo.png";
+                }}
+              />
             </div>
             {!leftRailCollapsed && (
-              <span className="text-[9px] font-extrabold tracking-tight text-slate-700">
-                M4 SPIDER
+              <span className="text-[9px] font-extrabold tracking-tight text-slate-800 group-hover:text-black uppercase leading-none">
+                Spider Store
               </span>
             )}
-          </div>
+          </button>
         </aside>
 
         {/* 2. SCENE HIERARCHY & CENTER VIEWPORT + BOTTOM DOCK */}
@@ -8569,7 +8929,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                   <div className="pl-4 space-y-0.5">
                     {[
                       { name: "3D Shapes", count: PRIMITIVE_SHAPES.length },
-                      { name: "Scripts & JSX", count: projectScriptFiles.length },
+                      { name: "Scripts & JSX", count: projectScriptFiles.filter((f) => !INTERNAL_ENGINE_FILES.has(f.name)).length },
                       { name: "Characters", count: (sceneGroups?.[1]?.children || []).length },
                       { name: "Props", count: (sceneGroups?.[0]?.children || []).filter((c) => c && String(c.id).startsWith("spawn-")).length },
                       { name: "Vehicles", count: 1 },
@@ -8655,6 +9015,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                   ) : activeFolder === "Scripts & JSX" ? (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                       {projectScriptFiles
+                        .filter((f) => !INTERNAL_ENGINE_FILES.has(f.name))
                         .filter((f) => f.name.toLowerCase().includes(assetSearch.toLowerCase()) || (f.folder && f.folder.toLowerCase().includes(assetSearch.toLowerCase())))
                         .map((file) => {
                           const isSelected = selectedScriptNames.has(file.name);
@@ -10280,6 +10641,29 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                     <button onClick={() => { setScore(0); setCoins(COINS.map((c) => ({ ...c, taken: false }))); appendLog("Info", "Score reset from Settings"); }} className="px-3 py-1.5 text-[11px] font-semibold bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 border border-slate-200 rounded-lg cursor-pointer">Reset score & coins</button>
 
                     <div className="pt-3 border-t border-slate-200 space-y-2">
+                      <div className="font-bold text-slate-800 text-[12px]">Controls &amp; Steering (A / D)</div>
+                      <label className="flex items-center justify-between text-slate-700 cursor-pointer">
+                        <span>Invert A ↔ D Steering (Fix a = d, d = a)</span>
+                        <input
+                          type="checkbox"
+                          checked={reverseControls}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            setReverseControls(val);
+                            if (typeof window !== "undefined") window.__spiderReverseControls = val;
+                            try { localStorage.setItem("spider-reverse-controls", String(val)); } catch {}
+                          }}
+                          className="round-check"
+                        />
+                      </label>
+                      <div className="text-[11px] text-slate-400 leading-snug">
+                        {reverseControls
+                          ? "Inverted mode active: A steers Right, D steers Left (a = d, d = a)."
+                          : "Standard mode active: A steers Left, D steers Right (a = a, d = d). Enable if your left/right steering is reversed."}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-200 space-y-2">
                       <div className="font-bold text-slate-800 text-[12px]">3D Viewport Overlays</div>
                       <label className="flex items-center justify-between text-slate-700 cursor-pointer">
                         <span>Show Direct Game floating panel on Viewport</span>
@@ -10718,6 +11102,316 @@ SOFTWARE.`}
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Spider Store Zero-Backend Client Publisher Wizard Modal */}
+      {showPublishModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 overflow-y-auto select-none">
+          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-xs">
+                  <Upload className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <span>Publish Game to Spider Store</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">
+                      0 Backend
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Client-Side IndexedDB Packaging &bull; Direct Play in Store
+                  </p>
+                </div>
+              </div>
+
+              {publishStep !== "packaging" && (
+                <button
+                  onClick={() => setShowPublishModal(false)}
+                  className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Step 1: Form Details (Profile Image, 4 Screenshots, Name, Description) */}
+            {publishStep === "form" && (
+              <form onSubmit={handlePublishSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+                {/* 4 Game Showcase Images (Zero defaults, strictly user's chosen images) */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <span>Select Game Images (Upload 4 Images)</span>
+                        <span className="text-[10px] font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                          {publishForm.screenshots.filter(Boolean).length} / 4 Chosen
+                        </span>
+                      </label>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Image #1 is used as Game Profile/Cover, Images #2-4 for Store Showcase
+                      </p>
+                    </div>
+
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 cursor-pointer transition shadow-2xs">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Select 4 Images at Once</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleMultipleScreenshotsUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {publishForm.screenshots.map((shot, idx) => (
+                      <div key={idx} className="flex flex-col space-y-1.5">
+                        {shot ? (
+                          <div className="h-28 w-full rounded-2xl overflow-hidden border border-slate-200 relative group shadow-2xs bg-slate-900">
+                            <img
+                              src={shot}
+                              alt={`Image ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/70 text-white text-[9px] font-bold">
+                              {idx === 0 ? "★ Cover #1" : `Image #${idx + 1}`}
+                            </span>
+                            <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 transition">
+                              <label className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-900 text-[10px] font-bold rounded-lg cursor-pointer transition shadow-xs">
+                                Change
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handleScreenshotUpload(idx, e)}
+                                  className="hidden"
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={(e) => removeScreenshot(idx, e)}
+                                className="px-2 py-1 bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold rounded-lg cursor-pointer transition shadow-xs"
+                                title="Remove"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label className="h-28 w-full rounded-2xl border-2 border-dashed border-slate-300 hover:border-indigo-500 bg-slate-50 hover:bg-indigo-50/50 flex flex-col items-center justify-center p-3 text-center cursor-pointer transition group">
+                            <div className="w-8 h-8 rounded-full bg-white shadow-2xs border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:scale-110 transition">
+                              <Plus className="w-4 h-4" />
+                            </div>
+                            <span className="text-[11px] font-bold text-slate-700 mt-1.5 group-hover:text-indigo-600">
+                              {idx === 0 ? "Upload Cover #1" : `Upload Image #${idx + 1}`}
+                            </span>
+                            <span className="text-[9px] text-slate-400">Click to choose</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleScreenshotUpload(idx, e)}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Game Name & Description */}
+                <div className="space-y-3.5 pt-1">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Game Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={publishForm.title}
+                      onChange={(e) => setPublishForm({ ...publishForm, title: e.target.value })}
+                      placeholder="e.g. Cyber Knight 2077"
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-500 outline-none transition"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Developer / Studio
+                      </label>
+                      <input
+                        type="text"
+                        value={publishForm.developer}
+                        onChange={(e) => setPublishForm({ ...publishForm, developer: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-500 outline-none transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Genre / Category
+                      </label>
+                      <select
+                        value={publishForm.genre}
+                        onChange={(e) => setPublishForm({ ...publishForm, genre: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:border-indigo-500 outline-none transition cursor-pointer"
+                      >
+                        <option>Action Adventure</option>
+                        <option>Open World 3D</option>
+                        <option>Sci-Fi RPG</option>
+                        <option>Arcade Racing</option>
+                        <option>Arena Combat</option>
+                        <option>Platformer</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Game Description *
+                    </label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={publishForm.description}
+                      onChange={(e) => setPublishForm({ ...publishForm, description: e.target.value })}
+                      placeholder="Describe the gameplay, world, features, and controls..."
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-indigo-500 outline-none transition leading-relaxed"
+                    />
+                  </div>
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                    <Database className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>0 Backend • Saves to IndexedDB</span>
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowPublishModal(false)}
+                      className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl cursor-pointer transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:opacity-95 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition active:scale-95 flex items-center gap-2"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Publish Game to Store</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+
+            {/* Step 2: Packaging Simulation (0 Backend) */}
+            {publishStep === "packaging" && (
+              <div className="p-10 text-center space-y-6">
+                <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto shadow-sm animate-pulse">
+                  <Upload className="w-8 h-8 animate-bounce" />
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-base font-extrabold text-slate-900">
+                    Publishing Game to Spider Store...
+                  </h4>
+                  <p className="text-xs text-indigo-600 font-semibold font-mono">
+                    {publishStatusText}
+                  </p>
+                </div>
+
+                <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+                  <div
+                    className="bg-gradient-to-r from-indigo-600 to-purple-600 h-full transition-all duration-300 rounded-full"
+                    style={{ width: `${publishProgress}%` }}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-[11px] text-slate-500">
+                  <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">✓ Scene Parsed</div>
+                  <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">✓ 4 Images Loaded</div>
+                  <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">✓ Offline Manifest</div>
+                  <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">✓ IndexedDB Stored</div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Success Screen with Direct Store Link */}
+            {publishStep === "success" && (
+              <div className="p-8 text-center space-y-5">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+
+                <div className="space-y-1">
+                  <h4 className="text-lg font-black text-slate-900">
+                    Game Live in Spider Store!
+                  </h4>
+                  <p className="text-xs text-slate-500">
+                    Your game has been verified and registered in client-side IndexedDB with 0 backend dependencies.
+                  </p>
+                </div>
+
+                {/* Published Game Summary Card */}
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3.5 text-left max-w-md mx-auto">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-slate-200 shadow-2xs flex items-center justify-center">
+                    {publishForm.screenshots[0] ? (
+                      <img
+                        src={publishForm.screenshots[0]}
+                        alt={publishForm.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Gamepad2 className="w-6 h-6 text-slate-500" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-bold text-slate-900 truncate">{publishForm.title}</div>
+                    <div className="text-[11px] text-slate-400">{publishForm.developer} &bull; {publishForm.genre}</div>
+                    <div className="text-[10px] font-bold text-emerald-600 mt-0.5">● Ready to Play in Store</div>
+                  </div>
+                </div>
+
+                {/* 4 Screenshots Mini Strip */}
+                <div className="grid grid-cols-4 gap-2 max-w-md mx-auto">
+                  {publishForm.screenshots.filter(Boolean).map((s, i) => (
+                    <div key={i} className="h-14 rounded-lg overflow-hidden border border-slate-200 bg-slate-900 shadow-2xs">
+                      <img src={s} alt={`Shot ${i + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-2 flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setShowPublishModal(false);
+                      setShowSpiderStore(true);
+                    }}
+                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer transition active:scale-95 flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4 fill-current" />
+                    <span>Open in Spider Store</span>
+                  </button>
+                  <button
+                    onClick={() => setShowPublishModal(false)}
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer transition"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

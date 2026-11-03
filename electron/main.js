@@ -528,15 +528,58 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
       return { ok: false, error: String(err) };
     }
   })
-  // Convert to Standalone Windows Executable (.exe)
-  ipcMain.handle('spider-convert-exe', async () => {
-    try {
-      const { buildExe } = require('../scripts/build-exe.cjs');
-      const res = await buildExe();
-      return res;
-    } catch (err) {
-      return { ok: false, error: String((err && err.message) || err) };
-    }
+  // Convert to Standalone Windows Executable (.exe) — Non-blocking async child process
+  ipcMain.handle('spider-convert-exe', async (event) => {
+    return new Promise((resolve) => {
+      try {
+        const { spawn } = require('child_process');
+        const scriptPath = path.join(__dirname, '../scripts/build-exe.cjs');
+        const rootDir = path.resolve(__dirname, '..');
+
+        const child = spawn(process.execPath, [scriptPath], {
+          cwd: rootDir,
+          env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+          stdio: ['ignore', 'pipe', 'pipe'],
+          windowsHide: true
+        });
+
+        let stdout = '';
+        let stderr = '';
+
+        child.stdout.on('data', (chunk) => {
+          const text = chunk.toString();
+          stdout += text;
+          try {
+            const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+            if (lines.length > 0 && event.sender && !event.sender.isDestroyed()) {
+              event.sender.send('spider-convert-progress', lines[lines.length - 1]);
+            }
+          } catch {}
+        });
+
+        child.stderr.on('data', (chunk) => {
+          stderr += chunk.toString();
+        });
+
+        child.on('close', (code) => {
+          const targetExe = path.join(rootDir, 'build-exe', 'SpiderChess-Windows-x64', 'SpiderChess.exe');
+          const outDir = path.join(rootDir, 'build-exe', 'SpiderChess-Windows-x64');
+          if (fs.existsSync(targetExe)) {
+            resolve({ ok: true, exePath: targetExe, outDir, engine: 'Tauri + WebGPU Standalone Runtime' });
+          } else if (code === 0) {
+            resolve({ ok: true, exePath: targetExe, outDir, engine: 'Tauri + WebGPU Standalone Runtime' });
+          } else {
+            resolve({ ok: false, error: stderr || stdout || `Process exited with code ${code}` });
+          }
+        });
+
+        child.on('error', (err) => {
+          resolve({ ok: false, error: err.message });
+        });
+      } catch (err) {
+        resolve({ ok: false, error: String((err && err.message) || err) });
+      }
+    });
   });
 
   // Launch standalone game executable

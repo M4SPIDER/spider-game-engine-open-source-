@@ -16,8 +16,8 @@ import { transform } from "sucrase";
 import { Chess } from "chess.js";
 import { sfx, SoundEffects } from "./audioSynthesizer.js";
 import * as ArenaModule from "../game/ArenaEnv.jsx";
-import * as ChessBoardEnvModule from "../game/ChessBoardEnv.jsx";
-import * as PiecesModule from "../game/pieces.jsx";
+const ChessBoardEnvModule = { ChessBoardEnv: () => null };
+const PiecesModule = { PieceModel: () => null };
 import * as ChessRulesModule from "../game/ChessRules.js";
 import * as MobileTouchModule from "../game/mobileTouch.jsx";
 
