@@ -5001,7 +5001,7 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
   const [assetSearch, setAssetSearch] = useState("");
 
   // Viewport Interactive State
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [activeGizmo, setActiveGizmo] = useState("select"); // select, move, rotate, scale
   const [viewMode, setViewMode] = useState("Lit"); // Lit, Wireframe, Unlit
   const [projection, setProjection] = useState("Perspective"); // Perspective, Orthographic
