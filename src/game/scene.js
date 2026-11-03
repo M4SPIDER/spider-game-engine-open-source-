@@ -83,9 +83,9 @@ export const GAME_WORLD = [
         "color": "#4f46e5",
         "visible": true,
         "pos": {
-          "x": -24,
+          "x": -38,
           "y": 2,
-          "z": 20
+          "z": 32
         },
         "rot": {
           "x": 0,
@@ -114,9 +114,9 @@ export const GAME_WORLD = [
         "color": "#a855f7",
         "visible": true,
         "pos": {
-          "x": -16,
+          "x": -32,
           "y": 0,
-          "z": 16
+          "z": 28
         },
         "rot": {
           "x": 4,

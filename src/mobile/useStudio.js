@@ -670,14 +670,53 @@ export function useStudio() {
         const IGNORE_BLOCKERS = new Set(["player", "terrain", "water", "sky", "lighting", "fog", "postprocess", "ground", "spawn-ground"]);
         const blockers = flatten(p.groups)
           .filter((c) => c.visible !== false && (c.collision === "BlockAll" || c.id === "rocks" || c.id === "trees" || c.id === "npcs" || c.id === "buildings" || c.id === "vehicles") && !IGNORE_BLOCKERS.has(c.id) && !c.id.includes("ground"))
-          .map((c) => {
-            let r = Math.max(c.scale?.x || 1, c.scale?.z || 1) * 3.5 + 2.0;
-            if (c.id === "buildings") r = 24.0;
-            else if (c.id === "npcs") r = 3.5;
-            else if (c.id === "rocks") r = 8.0;
-            else if (c.id === "trees") r = 7.0;
-            else if (c.id === "vehicles") r = 8.0;
-            return { x: c.pos?.x || 0, z: c.pos?.z || 0, r };
+          .flatMap((c) => {
+            const cx = c.pos?.x || 0;
+            const cz = c.pos?.z || 0;
+            const sx = c.scale?.x || 1;
+            const sz = c.scale?.z || 1;
+
+            if (c.id === "buildings") {
+              return [
+                { type: "box", x: cx, z: cz, hx: 49.0, hz: 49.0 },
+                { type: "box", x: cx - 66.7, z: cz, hx: 27.0, hz: 9.0 }
+              ];
+            }
+            if (c.id === "rocks") {
+              return [
+                { type: "box", x: cx, z: cz + 6.0, hx: 18.0, hz: 15.0 },
+                { type: "circle", x: cx, z: cz + 7.5, r: 10.0 },
+                { type: "circle", x: cx + 8.5, z: cz + 5.5, r: 9.0 },
+                { type: "circle", x: cx - 7.5, z: cz + 6.0, r: 9.0 },
+                { type: "circle", x: cx, z: cz, r: 12.0 }
+              ];
+            }
+            if (c.id === "trees") {
+              return [
+                { type: "box", x: cx, z: cz + 5.0, hx: 20.0, hz: 16.0 },
+                { type: "circle", x: cx, z: cz, r: 10.0 },
+                { type: "circle", x: cx + 12.0, z: cz + 7.0, r: 10.0 },
+                { type: "circle", x: cx - 11.0, z: cz + 8.0, r: 10.0 }
+              ];
+            }
+            if (c.id === "npcs") {
+              return [
+                { type: "circle", x: cx - 10.0, z: cz, r: 6.0 },
+                { type: "circle", x: cx + 10.0, z: cz, r: 6.0 },
+                { type: "box", x: cx, z: cz, hx: 15.0, hz: 6.0 }
+              ];
+            }
+            if (c.id === "vehicles") {
+              return [
+                { type: "box", x: cx, z: cz, hx: 10.0, hz: 16.0 }
+              ];
+            }
+
+            const isBox = (c.mesh && (c.mesh.includes("Box") || c.mesh.includes("Cube") || c.mesh.includes("Wall"))) || c.tag === "Architecture";
+            if (isBox) {
+              return [{ type: "box", x: cx, z: cz, hx: Math.max(1, sx) * 5.0 + 2.5, hz: Math.max(1, sz) * 5.0 + 2.5 }];
+            }
+            return [{ type: "circle", x: cx, z: cz, r: Math.max(sx, sz) * 5.0 + 2.5 }];
           });
         let changed = false;
         const groupsNext = mapNodes(p.groups, (node) => {
@@ -745,19 +784,39 @@ export function useStudio() {
             let nx = Number(Math.max(PLAYER.bounds.minX, Math.min(PLAYER.bounds.maxX, node.pos.x + dx)).toFixed(2));
             let nz = Number(Math.max(PLAYER.bounds.minZ, Math.min(PLAYER.bounds.maxZ, node.pos.z + dz)).toFixed(2));
 
-            // Smooth collision slide & continuous push-out along obstacles
-            for (const b of blockers) {
-              const ox = nx - b.x;
-              const oz = nz - b.z;
-              const d = Math.hypot(ox, oz);
-              if (d < b.r) {
-                if (d > 1e-4) {
-                  nx = Number((b.x + (ox / d) * b.r).toFixed(2));
-                  nz = Number((b.z + (oz / d) * b.r).toFixed(2));
+            // Multi-pass iterative collision solver (prevents corner-clipping & multi-blocker tunneling)
+            for (let iter = 0; iter < 3; iter++) {
+              let pushed = false;
+              for (const b of blockers) {
+                if (b.type === "box") {
+                  const ox = nx - b.x;
+                  const oz = nz - b.z;
+                  if (Math.abs(ox) < b.hx && Math.abs(oz) < b.hz) {
+                    pushed = true;
+                    const overlapX = b.hx - Math.abs(ox);
+                    const overlapZ = b.hz - Math.abs(oz);
+                    if (overlapX < overlapZ) {
+                      nx = Number((b.x + (ox >= 0 ? b.hx : -b.hx)).toFixed(2));
+                    } else {
+                      nz = Number((b.z + (oz >= 0 ? b.hz : -b.hz)).toFixed(2));
+                    }
+                  }
                 } else {
-                  nx = Number((b.x + b.r).toFixed(2));
+                  const ox = nx - b.x;
+                  const oz = nz - b.z;
+                  const d = Math.hypot(ox, oz);
+                  if (d < b.r) {
+                    pushed = true;
+                    if (d > 1e-4) {
+                      nx = Number((b.x + (ox / d) * b.r).toFixed(2));
+                      nz = Number((b.z + (oz / d) * b.r).toFixed(2));
+                    } else {
+                      nx = Number((b.x + b.r).toFixed(2));
+                    }
+                  }
                 }
               }
+              if (!pushed) break;
             }
 
             if (nx === node.pos.x && nz === node.pos.z && ny === node.pos.y) return node;

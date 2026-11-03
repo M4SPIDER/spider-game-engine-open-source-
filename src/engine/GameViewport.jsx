@@ -206,7 +206,9 @@ function LiveGroup({ node, selected, onSelect, register, children }) {
     if (!ref.current || transforming) return;
     const isChess = String(node.id).startsWith("spawn-chess-");
     const mult = isChess ? 1.0 : WORLD;
-    target.position.set(node.pos.x * mult, node.pos.y * (isChess ? 1.0 : WORLD), node.pos.z * mult);
+    // Citadel and grounded architecture firmly grounded on terrain at y=0 regardless of any legacy cached pos.y
+    const nodePosY = node.id === "buildings" ? 0 : node.pos.y;
+    target.position.set(node.pos.x * mult, nodePosY * (isChess ? 1.0 : WORLD), node.pos.z * mult);
     target.rotation.set(node.rot.x * DEG, node.rot.y * DEG, node.rot.z * DEG);
     target.scale.set(node.scale.x, node.scale.y, node.scale.z);
     ref.current.position.lerp(target.position, 0.25);
@@ -1479,6 +1481,11 @@ function Castle({ node, wire, selected }) {
       <mesh position={[0, 3, 0]} receiveShadow castShadow>
         <boxGeometry args={[11, 6, 11]} />
         <Std color="#78716c" wire={wire} emissive={e} flatShading />
+      </mesh>
+      {/* Deep sub-surface bedrock foundation - prevents light gaps beneath the cliff from any angle */}
+      <mesh position={[0, -5, 0]} receiveShadow>
+        <boxGeometry args={[11.2, 10, 11.2]} />
+        <Std color="#57534e" wire={wire} emissive={e} flatShading />
       </mesh>
       {/* Waterfalls */}
       <mesh position={[-2.5, 3.25, 5.55]}>

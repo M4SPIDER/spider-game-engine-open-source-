@@ -6697,21 +6697,71 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // Circle colliders for BlockAll actors — computed from the LATEST scene each tick
+      // Precision Blockers list: produces exact AABB boxes and precision circle colliders
       let blockers = [];
       setSceneGroups((prevGroups) => {
         const IGNORE_BLOCKERS = new Set(["player", "terrain", "water", "sky", "lighting", "fog", "postprocess", "ground", "spawn-ground"]);
         blockers = (prevGroups || [])
           .flatMap((g) => g?.children || [])
           .filter((c) => c && c.visible !== false && (c.collision === "BlockAll" || c.id === "rocks" || c.id === "trees" || c.id === "npcs" || c.id === "buildings" || c.id === "vehicles") && !IGNORE_BLOCKERS.has(c.id) && !c.id.includes("ground"))
-          .map((c) => {
-            let r = Math.max(c.scale?.x || 1, c.scale?.z || 1) * 3.5 + 2.0;
-            if (c.id === "buildings") r = 24.0;
-            else if (c.id === "npcs") r = 3.5;
-            else if (c.id === "rocks") r = 8.0;
-            else if (c.id === "trees") r = 7.0;
-            else if (c.id === "vehicles") r = 8.0;
-            return { x: c.pos?.x || 0, z: c.pos?.z || 0, r };
+          .flatMap((c) => {
+            const cx = c.pos?.x || 0;
+            const cz = c.pos?.z || 0;
+            const sx = c.scale?.x || 1;
+            const sz = c.scale?.z || 1;
+
+            if (c.id === "buildings") {
+              return [
+                // Main Citadel Cliff island: 11m x 11m (half-extent 45.8 + 3.2 player radius = 49)
+                { type: "box", x: cx, z: cz, hx: 49.0, hz: 49.0 },
+                // Citadel Bridge: 6m x 1.6m extending west
+                { type: "box", x: cx - 66.7, z: cz, hx: 27.0, hz: 9.0 }
+              ];
+            }
+            if (c.id === "rocks") {
+              return [
+                // Rock cluster encompassing box (spans x-18 to x+18, z-7 to z+19)
+                { type: "box", x: cx, z: cz + 6.0, hx: 18.0, hz: 15.0 },
+                // Individual boulder colliders
+                { type: "circle", x: cx, z: cz + 7.5, r: 10.0 },
+                { type: "circle", x: cx + 8.5, z: cz + 5.5, r: 9.0 },
+                { type: "circle", x: cx - 7.5, z: cz + 6.0, r: 9.0 },
+                { type: "circle", x: cx, z: cz, r: 12.0 }
+              ];
+            }
+            if (c.id === "trees") {
+              return [
+                // Tree grove encompassing box
+                { type: "box", x: cx, z: cz + 5.0, hx: 20.0, hz: 16.0 },
+                // Individual tree trunk & canopy colliders
+                { type: "circle", x: cx, z: cz, r: 10.0 },
+                { type: "circle", x: cx + 12.0, z: cz + 7.0, r: 10.0 },
+                { type: "circle", x: cx - 11.0, z: cz + 8.0, r: 10.0 }
+              ];
+            }
+            if (c.id === "npcs") {
+              return [
+                // Left guard
+                { type: "circle", x: cx - 10.0, z: cz, r: 6.0 },
+                // Right guard
+                { type: "circle", x: cx + 10.0, z: cz, r: 6.0 },
+                // Gate boundary between guards
+                { type: "box", x: cx, z: cz, hx: 15.0, hz: 6.0 }
+              ];
+            }
+            if (c.id === "vehicles") {
+              // Boat: 1.6m x 3.0m box
+              return [
+                { type: "box", x: cx, z: cz, hx: 10.0, hz: 16.0 }
+              ];
+            }
+
+            // Custom spawned shapes & actors
+            const isBox = (c.mesh && (c.mesh.includes("Box") || c.mesh.includes("Cube") || c.mesh.includes("Wall"))) || c.tag === "Architecture";
+            if (isBox) {
+              return [{ type: "box", x: cx, z: cz, hx: Math.max(1, sx) * 5.0 + 2.5, hz: Math.max(1, sz) * 5.0 + 2.5 }];
+            }
+            return [{ type: "circle", x: cx, z: cz, r: Math.max(sx, sz) * 5.0 + 2.5 }];
           });
         return (prevGroups || []).map((group) => ({
           ...group,
@@ -6773,19 +6823,39 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               let nx = Number(Math.max(PLAYER.bounds.minX, Math.min(PLAYER.bounds.maxX, (node.pos?.x ?? 0) + dx)).toFixed(2));
               let nz = Number(Math.max(PLAYER.bounds.minZ, Math.min(PLAYER.bounds.maxZ, (node.pos?.z ?? 0) + dz)).toFixed(2));
 
-              // Real BlockAll collision — slide and continuously push out of every blocker circle
-              for (const b of blockers) {
-                const ox = nx - b.x;
-                const oz = nz - b.z;
-                const d = Math.hypot(ox, oz);
-                if (d < b.r) {
-                  if (d > 1e-4) {
-                    nx = Number((b.x + (ox / d) * b.r).toFixed(2));
-                    nz = Number((b.z + (oz / d) * b.r).toFixed(2));
+              // Multi-pass iterative collision solver (prevents corner-clipping & multi-blocker tunneling)
+              for (let iter = 0; iter < 3; iter++) {
+                let pushed = false;
+                for (const b of blockers) {
+                  if (b.type === "box") {
+                    const ox = nx - b.x;
+                    const oz = nz - b.z;
+                    if (Math.abs(ox) < b.hx && Math.abs(oz) < b.hz) {
+                      pushed = true;
+                      const overlapX = b.hx - Math.abs(ox);
+                      const overlapZ = b.hz - Math.abs(oz);
+                      if (overlapX < overlapZ) {
+                        nx = Number((b.x + (ox >= 0 ? b.hx : -b.hx)).toFixed(2));
+                      } else {
+                        nz = Number((b.z + (oz >= 0 ? b.hz : -b.hz)).toFixed(2));
+                      }
+                    }
                   } else {
-                    nx = Number((b.x + b.r).toFixed(2));
+                    const ox = nx - b.x;
+                    const oz = nz - b.z;
+                    const d = Math.hypot(ox, oz);
+                    if (d < b.r) {
+                      pushed = true;
+                      if (d > 1e-4) {
+                        nx = Number((b.x + (ox / d) * b.r).toFixed(2));
+                        nz = Number((b.z + (oz / d) * b.r).toFixed(2));
+                      } else {
+                        nx = Number((b.x + b.r).toFixed(2));
+                      }
+                    }
                   }
                 }
+                if (!pushed) break;
               }
 
               if (nx === node.pos.x && nz === node.pos.z && ny === node.pos.y) return node;
