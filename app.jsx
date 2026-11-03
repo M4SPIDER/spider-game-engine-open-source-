@@ -111,6 +111,8 @@ import StandaloneGameViewer from "./src/game/standalone/StandaloneGameViewer.jsx
 import { sfx as sfxInstance, SoundEffects } from "./src/engine/audioSynthesizer.js";
 
 // Web Audio API Procedural SFX — both callable function sfx(...) AND object with .playCoin(), .playClick(), etc.
+const SPIDER_STORE_LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAoCAYAAACSN4jeAAACi0lEQVR4nO1Xz0tWQRQ91qK/IYrik0RRvjBqExS0cRGKgihKYliLgihqmdCmCAqCUBREcZUouFFcCNLKlraNsiCRokBw0yKCVi9u3CuXcX699+aVQQcu37xv7j1z3p2ZO/OA/6gW53AAkbGV5ehAQlxg0ueJXq6WSNceYWtJnnHm+VhWUBOA84mmkdCZgouC5wE8SigMiquZf3eRA7c5aFAR5SLwQPgmATzl9um8wSdUezqRsO/GDFhn41CA5Lhqv0okjJaHDWdDwrZV+7pqb6XRhUXV1mVjIBQoqX0C4GvChd/GC16P0aHaWejIEaeLRhDZOwDtjjiNWxafRgALBt8SgLUYYVOG02uLuIxNBN7hZ6p5R1VGlrmtd7Zpw6oCkPW4hLnSOusgngew4xnYZ7ZxKRG/0aAW4REAm/j7aNC7knbiYRxgNAN4U3BqspJ2I4/QUwDGKhIyahTwKIz8wUx9AXDGJ6YeIFgB0AfgZwkR/QA+e/q/2YRteFJO6EqUoQnme+zo/2AKazUcNGxFEpFCeh0niMZL48TZB5sw22Btnj7T6KUuOfpcV6F9mIwQRjiZQxh9yAhcwlwztYcm5dDN/71X/z3jTVJncTHCNNqNvkbOvjxTaXJCnKjQggufJqsp3xcBUebl8r7qu8sFXS4BGSfGiQnleAxASyDVmcfkc48yLEef5mkxbjBBiKNcd33C3kZMo2TCt74uxwhbZ+dVfu5RBJ2eFwktYunT1/fobLkC5JlunDbMRAwi/df4WRb+UB5ho8aCDG7pAPRGEfwoykdBVy3E9YJcZtV/yBugNDK2xRKxlWCu4AADVQurFRxAYu6hQlzhQW7miKk0Wxqfcgz0wDgF/m38AkoG4VGyiBWYAAAAAElFTkSuQmCC";
+
 const sfx = (f = 440, t = "sine", d = 0.12) => {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -7235,12 +7237,9 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
           >
             <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 shadow-2xs flex items-center justify-center p-0.5 mb-0.5 group-hover:scale-110 group-hover:shadow-md group-hover:border-slate-400 group-hover:bg-slate-50 transition">
               <img
-                src="./assets/store/spider_logo_black.png"
+                src={SPIDER_STORE_LOGO_BASE64}
                 alt="Spider Store"
                 className="w-5 h-5 object-contain"
-                onError={(e) => {
-                  e.currentTarget.src = "./assets/store/spider_logo.png";
-                }}
               />
             </div>
             {!leftRailCollapsed && (
