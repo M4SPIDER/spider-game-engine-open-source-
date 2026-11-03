@@ -31,9 +31,9 @@ export const GAME_WORLD = [
           "z": 0
         },
         "scale": {
-          "x": 100,
+          "x": 2000,
           "y": 1,
-          "z": 100
+          "z": 2000
         },
         "tag": "Terrain",
         "layer": "Default",

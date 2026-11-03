@@ -11,11 +11,11 @@
 // The Play-mode loop in app.jsx + Hero animation in GameViewport.jsx read this.
 export const PLAYER = {
   id: "player",
-  moveStep: 1.15, // swift athletic open-world speed
+  moveStep: 1.25, // swift athletic open-world speed
   jumpImpulse: 9.0, // snappy responsive jump reaching ~2.2m apex
   gravity: 1.35, // crisp standard gravity (~0.6s total jump airtime)
   groundY: 0,
-  bounds: { minX: -125, maxX: 125, minZ: -125, maxZ: 125 } // Full 250x250 open-world freedom to explore everywhere!
+  bounds: { minX: -1950, maxX: 1950, minZ: -1950, maxZ: 1950 } // Full 3900x3900 massive open-world freedom to explore everywhere!
 };
 
 /* [LINEAGE-AUTHORS]: m4spider */
