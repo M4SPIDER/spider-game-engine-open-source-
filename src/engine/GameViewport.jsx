@@ -1589,7 +1589,9 @@ export default function GameViewport({
   const gizmoMode =
     activeGizmo === "rotate" ? "rotate" : activeGizmo === "scale" ? "scale" : "translate";
   const showTransform = activeGizmo !== "select" && selectedObj && selectedObj.parent && !isPlaying;
-  const heroMoving = Boolean((keysPressed && Object.values(keysPressed).some(Boolean)) || (typeof window !== "undefined" && window.__spiderHeroMoving));
+  const movementKeys = ["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", "keyw", "keya", "keys", "keyd"];
+  const isAnyMoveKeyPressed = Boolean(keysPressed && Object.entries(keysPressed).some(([k, v]) => v && movementKeys.includes(k.toLowerCase())));
+  const heroMoving = Boolean(isPlaying && (isAnyMoveKeyPressed || (typeof window !== "undefined" && window.__spiderHeroMoving)));
 
   return (
     <div
