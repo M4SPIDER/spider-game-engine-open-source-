@@ -34,6 +34,7 @@ import {
 } from "./store.js";
 import { buildMemory, contextWindow, memoryBudget, runLimits } from "./context.js";
 import { retrieveRagContext, ragStore } from "../engine/ragEngine.js";
+import { cutOut, generateImage, hasMetaKey, planGame } from "./meta.js";
 import { PROVIDERS, baseUrlFor, chat, fetchModels, friendlyModel, loadConfig, loadKey, providerById, saveConfig, saveKey } from "./ai.js";
 
 const MAX_UNDO = 40;
@@ -86,6 +87,21 @@ function parseStreaming(raw) {
   const c = raw.match(/"(?:code|content)"\s*:\s*"((?:[^"\\]|\\.)*)/);
   if (c) out.code = unq(c[1]);
   return out;
+}
+
+/** A small copy of a picture for the chat history (the full picture lives on the scene object). */
+async function thumbOf(url, max = 320) {
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const k = Math.min(1, max / Math.max(img.width, img.height));
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(img.width * k));
+    c.height = Math.max(1, Math.round(img.height * k));
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL("image/webp", 0.8);
+  } catch {
+    return url;
+  }
 }
 
 export function useStudio() {
@@ -1337,6 +1353,30 @@ export function useStudio() {
           if (jsxRef.current.name === name) mountCode(name, next);
           return `edited ${name}`;
         }
+        case "generate_image": {
+          const prompt = String(args.prompt || "").trim();
+          if (!prompt) throw new Error("prompt required");
+          if (!hasMetaKey()) throw new Error("Muse Image needs a Meta key. Open More, Settings, AI and save one.");
+          const asSprite = !/tex|box/i.test(String(args.as || ""));
+          let url = await generateImage(prompt, { transparent: asSprite });
+          let cut = false;
+          if (asSprite) {
+            // SAM 3.1 cuts the painted object out of its background so it can stand in 3D
+            try {
+              const blob = await (await fetch(url)).blob();
+              const what = prompt.split(",")[0].replace(/^(a|an|the)\s+/i, "").trim().split(/\s+/).slice(-3).join(" ");
+              const r = await cutOut(new File([blob], "generated.png", { type: blob.type || "image/png" }), what);
+              if (r.matched) { url = r.url; cut = true; }
+            } catch {}
+          }
+          const label = String(args.name || prompt.split(",")[0]).replace(/^(a|an|the)\s+/i, "").slice(0, 24) || "Picture";
+          const x = Number(((Math.random() - 0.5) * 8).toFixed(1));
+          const z = Number((8 + Math.random() * 6).toFixed(1));
+          const node = spawn({ name: label, mesh: label, category: "Imported" }, { textureUrl: url, sprite: asSprite, pos: { x, y: 0, z } });
+          pushMessage({ role: "assistant", ok: true, text: `Muse Image painted "${prompt}"${cut ? " and SAM 3.1 cut it out of the background" : ""}.`, images: [await thumbOf(url)] });
+          const mounted = Boolean(jsxRef.current.code);
+          return `Created ${asSprite ? "a standing sprite" : "a textured box"} "${node?.name || label}" with Muse Image${cut ? " + SAM 3.1 cutout" : ""} at (${x}, 0, ${z}).${mounted ? " NOTE: a game is mounted in the viewport, so scene objects are hidden until it is unmounted (Code tab). Tell the user." : ""}`;
+        }
         case "deleteFile": {
           const name = String(args.name || "");
           await askPermission("deleteFile", name);
@@ -1363,7 +1403,7 @@ export function useStudio() {
           throw new Error(`unknown tool: ${tool}`);
       }
     },
-    [askPermission, deleteFile, findActor, log, mountCode, projects, removeNode, saveFile, spawn, togglePlay, unmountCode, updateNode]
+    [askPermission, deleteFile, findActor, log, mountCode, projects, pushMessage, removeNode, saveFile, spawn, togglePlay, unmountCode, updateNode]
   );
 
   const send = useCallback(
@@ -1463,7 +1503,22 @@ export function useStudio() {
           return { raw: out };
         };
 
-        const final = await runAgent(goal, {
+        // Muse Wonder reasons first and writes a short plan; Muse Spark then builds from it.
+        let agentGoal = goal;
+        if (settingsRef.current.wonderPlan && hasMetaKey() && goal.length > 30 && !/^(hi|hello|thanks|thank you)\b/i.test(goal.trim()) && !(/\b(image|picture|sprite|texture|photo|cutout|art)\b/i.test(goal) && !/\b(game|level|shooter|runner|racing|puzzle)\b/i.test(goal))) {
+          setStream({ thought: "Muse Wonder is planning…", text: "", steps: [] });
+          try {
+            const plan = await planGame(goal, { signal: ctrlRef.current.signal });
+            if (plan) {
+              agentGoal = `${goal}\n\nPLAN FROM MUSE WONDER (follow it unless the scene needs something different):\n${plan}`;
+              log("Info", "Muse Wonder plan added");
+              pushMessage({ role: "assistant", ok: true, text: `Plan from Muse Wonder:\n${plan}` });
+            }
+          } catch (e) {
+            log("Warning", `Muse Wonder plan skipped: ${String(e?.message || e).slice(0, 120)}`);
+          }
+        }
+        const final = await runAgent(agentGoal, {
           ctx: { runTool, isAborted: () => abortRef.current },
           callModel,
           maxSteps: GAME_STEPS,

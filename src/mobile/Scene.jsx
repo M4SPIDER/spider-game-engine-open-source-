@@ -4,9 +4,10 @@
  * Author: M4SPIDER (support@m4spider.com)
  */
 import React, { useMemo, useRef, useState } from "react";
-import { Boxes, ChevronDown, Upload, ChevronRight, Copy, Eye, EyeOff, MoreHorizontal, Plus, Search, Trash2, Pencil, Crosshair } from "lucide-react";
+import { Boxes, ChevronDown, Upload, ChevronRight, Copy, Eye, EyeOff, MoreHorizontal, Plus, Search, Trash2, Pencil, Crosshair, Sparkles } from "lucide-react";
 import { PRIMITIVE_SHAPES } from "../game/index.js";
 import { Empty, Segmented, Sheet, cx } from "./ui.jsx";
+import MetaCreate from "./MetaCreate.jsx";
 
 const GLYPH = {
   box: "▣", sphere: "●", cylinder: "▮", cone: "▲", torus: "◎", ramp: "◢", platform: "▬",
@@ -39,6 +40,7 @@ export default function Scene({ s, onOpenInspector, onShowInStudio, notify }) {
   const [cat, setCat] = useState("Primitive");
   const [menu, setMenu] = useState(null);
   const fileRef = useRef(null);
+  const [metaOpen, setMetaOpen] = useState(false);
 
   const query = q.trim().toLowerCase();
   const groups = useMemo(
@@ -154,6 +156,15 @@ export default function Scene({ s, onOpenInspector, onShowInStudio, notify }) {
                 <small>3D models (.glb .gltf .fbx .obj), images, or a .json project</small>
               </span>
             </button>
+            <button type="button" className="sp-import" onClick={() => setMetaOpen(true)}>
+              <span className="sp-import-ico">
+                <Sparkles size={20} />
+              </span>
+              <span className="sp-import-text">
+                <b>Create with Meta AI</b>
+                <small>Muse Image from a sentence, or SAM 3.1 cutout from a photo</small>
+              </span>
+            </button>
             <input ref={fileRef} type="file" multiple hidden accept=".glb,.gltf,.fbx,.obj,.png,.jpg,.jpeg,.webp,.json,model/gltf-binary,image/*,application/json" onChange={onPick} />
             {cat === "Imported" && !imported.length && <p className="sp-muted">Nothing imported yet.</p>}
             <ul className="sp-assets">
@@ -202,6 +213,7 @@ export default function Scene({ s, onOpenInspector, onShowInStudio, notify }) {
           </div>
         )}
       </Sheet>
+      <MetaCreate s={s} open={metaOpen} onClose={() => setMetaOpen(false)} notify={notify} />
     </section>
   );
 }

@@ -14,8 +14,8 @@
  *   More    projects, console, settings, licenses
  * ============================================================================
  */
-import React, { Suspense, useCallback, useEffect, useState } from "react";
-import { Boxes, Code2, Layers, MoreHorizontal, Play, MessageSquare, Square } from "lucide-react";
+import React, { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Boxes, Code2, Layers, MoreHorizontal, Play, MessageSquare, Square, Store as StoreIcon } from "lucide-react";
 import { useStudio } from "./useStudio.js";
 import { InspectorSheet, ViewSheet } from "./Sheets.jsx";
 import { cx, useToast } from "./ui.jsx";
@@ -24,6 +24,8 @@ import Scene from "./Scene.jsx";
 import Chat from "./Chat.jsx";
 import Code from "./Code.jsx";
 import More from "./More.jsx";
+import { StoreTab } from "./Store.jsx";
+import { fetchPackage } from "./storeApi.js";
 import TourSheet from "./Tour.jsx";
 import { tourSeen, markTourSeen } from "../onboarding.js";
 
@@ -36,6 +38,7 @@ const TABS = [
   { id: "studio", label: "Studio", icon: Layers },
   { id: "scene", label: "Scene", icon: Boxes },
   { id: "ai", label: "AI", icon: MessageSquare },
+  { id: "store", label: "Store", icon: StoreIcon },
   { id: "code", label: "Code", icon: Code2 },
   { id: "more", label: "More", icon: MoreHorizontal },
 ];
@@ -108,6 +111,31 @@ export default function MobileApp() {
       }, 50);
     }
   }, []);
+
+  // Play Now from the Store: fetch the build, import it as "<Game> (Store vN)" (once per version), open Studio and start it.
+  const sRef = useRef(s);
+  sRef.current = s;
+  const playStoreGame = useCallback(async (game) => {
+    const text = await fetchPackage(game);
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error("This game's build is damaged."); }
+    const label = `${game.name} (Store v${game.versions[0].version})`;
+    const existing = sRef.current.projects.find((p) => p.name === label);
+    let mount = null;
+    if (existing) {
+      sRef.current.openProject(existing.id);
+    } else {
+      const p = await sRef.current.importProject(new File([text], `${game.slug}.spider.json`));
+      sRef.current.renameProject(p.id, label);
+      const files = Array.isArray(data.files) ? data.files : [];
+      mount = files.find((f) => f.name === data.mountedFile) || files.find((f) => /\.jsx?$/.test(f.name)) || null;
+    }
+    go("studio");
+    setTimeout(() => {
+      if (mount) sRef.current.mountCode(mount.name, mount.content);
+      setTimeout(() => { if (!sRef.current.isPlaying) sRef.current.togglePlay(); }, 400);
+    }, 500);
+  }, [go]);
 
   const eff = tab;
   const onStudio = eff === "studio";
@@ -190,12 +218,17 @@ export default function MobileApp() {
     <>
       {tab === "scene" && (
         <div className="sp-pane">
-          <Scene s={s} notify={notify} onOpenInspector={openInspector} onShowStudio={() => go("studio")} />
+          <Scene s={s} notify={notify} onOpenInspector={openInspector} onShowInStudio={() => go("studio")} />
         </div>
       )}
       {eff === "ai" && (
         <div className="sp-pane">
           <Chat s={s} notify={notify} onOpenSettings={() => go("more", "settings")} onShowStudio={() => go("studio")} />
+        </div>
+      )}
+      {eff === "store" && (
+        <div className="sp-pane">
+          <StoreTab notify={notify} onPlay={playStoreGame} />
         </div>
       )}
       {eff === "code" && (
@@ -205,7 +238,7 @@ export default function MobileApp() {
       )}
       {eff === "more" && (
         <div className="sp-pane">
-          <More s={s} notify={notify} onTour={() => setTour(true)} initialPage={morePage} onPageChange={setMorePage} onOpened={() => go("studio")} />
+          <More s={s} notify={notify} onTour={() => setTour(true)} initialPage={morePage} onPageChange={setMorePage} onPlayGame={playStoreGame} onOpened={() => go("studio")} />
         </div>
       )}
     </>

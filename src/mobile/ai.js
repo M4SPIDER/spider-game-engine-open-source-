@@ -9,7 +9,7 @@
 import { read, write } from "./store.js";
 
 export const PROVIDERS = [
-  { id: "meta", name: "Meta", kind: "openai", baseUrl: "https://api.meta.ai/v1", keyHint: "Key from dev.meta.ai", models: ["muse-spark-1.3", "muse-spark-1.3-contributor", "muse-spark-1.2", "muse-wonder"] },
+  { id: "meta", name: "Meta", kind: "openai", baseUrl: "https://api.meta.ai/v1", keyHint: "Key from dev.meta.ai", models: ["muse-spark-1.3", "muse-spark-1.3-contributor", "muse-spark-1.2", "muse-wonder-1.0"] },
   { id: "openai", name: "OpenAI", kind: "openai", baseUrl: "https://api.openai.com/v1", keyHint: "sk-…", models: ["gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini"] },
   { id: "anthropic", name: "Anthropic", kind: "anthropic", baseUrl: "https://api.anthropic.com/v1", keyHint: "sk-ant-…", models: ["claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5"] },
   { id: "google", name: "Google Gemini", kind: "openai", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", keyHint: "AIza…", models: ["gemini-2.5-pro", "gemini-2.5-flash"] },
@@ -28,9 +28,16 @@ const keyName = (id) => (id === "meta" ? "spider-meta-key-raw" : `spider-ai-key-
 
 export const sanitizeKey = (s) => String(s || "").replace(/[\s​-‍﻿ ]+/g, "").trim();
 
+// "muse-wonder" is not a model id (the API answers 404); the real one is "muse-wonder-1.0". Fix ids saved by older builds.
+const fixWonder = (m) => (m === "muse-wonder" ? "muse-wonder-1.0" : m);
+
 export function loadConfig() {
   const c = read(CFG, {});
-  return { provider: c.provider || "meta", models: c.models || {}, model: c.model || {}, baseUrls: c.baseUrls || {} };
+  const model = { ...(c.model || {}) };
+  for (const k of Object.keys(model)) model[k] = fixWonder(model[k]);
+  const models = { ...(c.models || {}) };
+  for (const k of Object.keys(models)) if (Array.isArray(models[k])) models[k] = models[k].map(fixWonder);
+  return { provider: c.provider || "meta", models, model, baseUrls: c.baseUrls || {} };
 }
 export const saveConfig = (c) => write(CFG, c);
 

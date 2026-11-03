@@ -161,14 +161,14 @@ html.sp-mobile body:has(.is-full) {
 @keyframes sp-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 .sp-tabbar {
-  flex: none; display: grid; grid-template-columns: repeat(5, 1fr);
-  padding: 6px calc(8px + env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) calc(8px + env(safe-area-inset-left, 0px));
+  flex: none; display: grid; grid-template-columns: repeat(6, 1fr);
+  padding: 6px calc(4px + env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) calc(4px + env(safe-area-inset-left, 0px));
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   backdrop-filter: blur(18px) saturate(1.4);
   border-top: 1px solid var(--line);
 }
 .sp-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 52px; padding-top: 4px; font-size: 11px; font-weight: 700; color: var(--text-3); letter-spacing: 0.01em; }
-.sp-tab-ico { display: grid; place-items: center; width: 52px; height: 30px; border-radius: 999px; transition: background-color 220ms var(--ease), color 220ms var(--ease); }
+.sp-tab-ico { display: grid; place-items: center; width: min(52px, 100%); height: 30px; border-radius: 999px; transition: background-color 220ms var(--ease), color 220ms var(--ease); }
 .sp-tab.is-on { color: var(--text); }
 .sp-tab.is-on .sp-tab-ico { background: var(--accent-soft); color: var(--accent); }
 .sp-tab.is-busy .sp-tab-ico::after { content: ""; position: absolute; width: 8px; height: 8px; margin: -16px -30px 0 0; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px var(--surface); animation: sp-pulse 1.2s ease-in-out infinite; }
@@ -796,3 +796,11 @@ html.sp-mobile body:has(.is-full) {
 .sp-editing span { flex: 1; min-width: 0; }
 .sp-editing .sp-icon-btn { width: 36px; height: 36px; color: var(--accent); }
 .sp-msg.is-user { display: flex; flex-direction: column; }
+
+/* a game that brings its own touch controls (the spider-touch kit) replaces the built-in stick and Action button */
+.sp-viewport:has([data-spider-touch]) .sp-stick,
+.sp-viewport:has([data-spider-touch]) .sp-jump,
+.sp-viewport:has([data-spider-touch]) .sp-combat-pad { display: none; }
+/* a game that draws its own HUD keeps its top bar clear: the quick actions drop below it and shrink */
+.sp-viewport:has([data-spider-hud]) .sp-float-tr { top: 76px; gap: 6px; opacity: 0.85; }
+.sp-viewport:has([data-spider-hud]) .sp-float-tr .sp-fab { width: 38px; height: 38px; }

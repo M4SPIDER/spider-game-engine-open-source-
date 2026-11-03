@@ -3,6 +3,7 @@
  * Fingerprint: [M4-SPIDER-GENESIS-FINGERPRINT-0x535049444552]
  * Author: M4SPIDER (support@m4spider.com)
  */
+import { addShot } from "./storeApi.js";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box, Camera, ChevronUp, Film, Gamepad2, Video, Copy, Maximize2, Minimize2, Square, Eye, EyeOff, MousePointer2, Move, Redo2, Rotate3d, Scale3d,
@@ -232,11 +233,16 @@ export default function Studio({ s, onOpenInspector, onOpenView, notify, onGoAI,
   const shot = useCallback(() => {
     try {
       const url = viewportApi.capture?.(true, 1280);
-      notify(url ? "Screenshot saved" : "Viewport not ready yet", url ? "ok" : "warn");
+      if (url) {
+        // Also keep it for the Store: publishing needs real in-game screenshots.
+        addShot(s.project.id, url).then((n) => notify(`Screenshot saved (${n} ready for the Store)`, "ok")).catch(() => notify("Screenshot saved", "ok"));
+      } else {
+        notify("Viewport not ready yet", "warn");
+      }
     } catch {
       notify("Screenshot failed", "warn");
     }
-  }, [notify]);
+  }, [notify, s.project.id]);
 
   const empty = !activeJsx && groups.every((g) => !(g.children || []).length);
 

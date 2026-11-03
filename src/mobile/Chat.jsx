@@ -5,6 +5,8 @@
  */
 import React, { useEffect, useRef, useState } from "react";
 import { startVoice, voiceLang, voiceSupported } from "./voice.js";
+import { hasMetaKey, museVoiceSupported, startMuseVoice } from "./meta.js";
+import { ATTACH_ACCEPT, MAX_ATTACH, buildGoal, prepareAttachment } from "./attach.js";
 import Markdown from "./Markdown.jsx";
 import {
   ArrowUp, Mic, Check, RotateCcw, MoreHorizontal, Pencil, Copy, ChevronDown, FileCode2, History, KeyRound, Loader2, Plus, Shield, Square, Trash2, Undo2, X, Zap, AlertTriangle, Bot, Crown, Dices, Coins, Rocket,
@@ -56,6 +58,11 @@ function Message({ m, last, onUndo, onRetry, busy, onMenu }) {
       <div className="sp-msg-text">
         <Markdown source={m.text} />
       </div>
+      {!!m.images?.length && (
+        <div className="sp-msg-images">
+          {m.images.map((u, i) => <img key={i} src={u} alt="Created with Muse Image" />)}
+        </div>
+      )}
       {m.interrupted && last && (
         <button type="button" className="sp-btn is-primary" disabled={busy} onClick={() => onRetry(m.retryText)}>
           <RotateCcw size={15} /> Retry
@@ -79,7 +86,11 @@ export default function Chat({ s, onOpenSettings, notify, onShowStudio }) {
   const input = useRef(null);
   const [listening, setListening] = useState(false);
   const voice = useRef(null);
-  const canVoice = voiceSupported();
+  const [files, setFiles] = useState([]);
+  const [reading, setReading] = useState(false);
+  const picker = useRef(null);
+  const useMuse = settings.voiceEngine === "muse" || (settings.voiceEngine !== "browser" && hasMetaKey());
+  const canVoice = (useMuse && museVoiceSupported()) || voiceSupported();
 
   const toggleVoice = () => {
     if (voice.current) {
@@ -88,8 +99,9 @@ export default function Chat({ s, onOpenSettings, notify, onShowStudio }) {
     }
     const base = text.trim() ? `${text.trim()} ` : "";
     setListening(true);
-    voice.current = startVoice({
+    const handlers = {
       lang: voiceLang(settings.voiceLang),
+      language: settings.voiceLang === "auto" ? undefined : settings.voiceLang,
       onText: (t) => {
         setText(base + t);
         requestAnimationFrame(() => grow(input.current));
@@ -99,7 +111,19 @@ export default function Chat({ s, onOpenSettings, notify, onShowStudio }) {
         setListening(false);
       },
       onError: (m) => notify(m, "warn"),
-    });
+    };
+    if (useMuse && museVoiceSupported()) {
+      // Muse Voice: the recording goes to Meta (muse-voice-transcribe-1.0); the handle arrives after the mic permission
+      let handle = null;
+      let stopAsked = false;
+      voice.current = { stop: () => { stopAsked = true; handle?.stop(); } };
+      startMuseVoice(handlers).then((h) => {
+        handle = h;
+        if (stopAsked) h.stop();
+      });
+    } else {
+      voice.current = startVoice(handlers);
+    }
   };
   useEffect(() => () => voice.current?.stop(), []);
 
@@ -135,14 +159,40 @@ export default function Chat({ s, onOpenSettings, notify, onShowStudio }) {
     });
   };
 
-  const submit = () => {
+  const pickFiles = async (list) => {
+    const room = MAX_ATTACH - files.length;
+    for (const f of [...list].slice(0, Math.max(0, room))) {
+      try {
+        const a = await prepareAttachment(f);
+        setFiles((cur) => [...cur, a]);
+      } catch (e) {
+        notify(e.message, "warn");
+      }
+    }
+    if (list.length > room) notify(`Up to ${MAX_ATTACH} attachments`, "warn");
+  };
+
+  const submit = async () => {
     const t = text.trim();
-    if (!t) return;
+    if ((!t && !files.length) || reading) return;
+    let goal = t || "Use the attached files.";
+    if (files.length) {
+      setReading(true);
+      try {
+        goal = await buildGoal(goal, files);
+      } catch (e) {
+        notify(e.message || "Could not read the attachment.", "warn");
+        setReading(false);
+        return;
+      }
+      setReading(false);
+    }
     if (editing) {
-      s.editAndSend(editing.id, t);
+      s.editAndSend(editing.id, goal);
       setEditing(null);
-    } else s.send(t);
+    } else s.send(goal);
     setText("");
+    setFiles([]);
     requestAnimationFrame(() => grow(input.current));
   };
 
@@ -282,7 +332,23 @@ export default function Chat({ s, onOpenSettings, notify, onShowStudio }) {
           </div>
         )}
         {!!queued.length && <div className="sp-queued">{queued.length} message{queued.length > 1 ? "s" : ""} queued</div>}
+        {(files.length > 0 || reading) && (
+          <div className="sp-attached">
+            {files.map((a) => (
+              <span key={a.id} className="sp-att">
+                {a.kind === "image" ? <img src={a.dataUrl} alt="" /> : <FileCode2 size={15} />}
+                <i>{a.name}</i>
+                <button type="button" aria-label={`Remove ${a.name}`} onClick={() => setFiles((c) => c.filter((x) => x.id !== a.id))}><X size={13} /></button>
+              </span>
+            ))}
+            {reading && <span className="sp-att is-busy"><Loader2 size={15} className="sp-spin" /> <i>Reading with Muse Spark…</i></span>}
+          </div>
+        )}
         <div className="sp-composer-row">
+          <button type="button" className="sp-attach" onClick={() => picker.current?.click()} disabled={files.length >= MAX_ATTACH || reading} aria-label="Attach images or files" title="Attach images or files">
+            <Plus size={20} />
+          </button>
+          <input ref={picker} type="file" multiple hidden accept={ATTACH_ACCEPT} onChange={(e) => { const l = e.target.files; if (l?.length) pickFiles(l); e.target.value = ""; }} />
           <textarea
             ref={input}
             rows={1}
@@ -311,7 +377,7 @@ export default function Chat({ s, onOpenSettings, notify, onShowStudio }) {
               <Square size={16} fill="currentColor" />
             </button>
           ) : (
-            <button type="button" className="sp-send" onClick={submit} disabled={!text.trim()} aria-label="Send">
+            <button type="button" className="sp-send" onClick={submit} disabled={(!text.trim() && !files.length) || reading} aria-label="Send">
               <ArrowUp size={20} strokeWidth={2.4} />
             </button>
           )}

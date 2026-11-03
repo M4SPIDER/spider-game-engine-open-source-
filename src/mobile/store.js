@@ -200,6 +200,8 @@ export const DEFAULT_SETTINGS = {
   wrapCode: true,
   voiceLang: "auto",
   contextWindow: "auto",
+  wonderPlan: true,
+  voiceEngine: "auto",
 };
 
 export const loadSettings = () => {
