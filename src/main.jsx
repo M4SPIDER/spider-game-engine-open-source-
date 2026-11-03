@@ -25,7 +25,6 @@ import ReactDOM from 'react-dom/client'
 import * as THREE from 'three'
 import { Chess } from 'chess.js'
 import App from '../app.jsx'
-import StandaloneGameViewer from './game/standalone/StandaloneGameViewer.jsx'
 import './index.css'
 
 // Expose on window for sandboxed ArtifactPreview fallback
@@ -97,23 +96,9 @@ try {
   if (!rootEl) {
     console.error("src/main.jsx: #root element NOT FOUND!");
   } else {
-    // Check if user requested Editor mode or if running inside Electron shell
-    const params = new URLSearchParams(window.location.search);
-    const hash = window.location.hash.toLowerCase();
-    const pathname = window.location.pathname.toLowerCase();
-    const isEditorRequested = params.get('mode') === 'editor' || params.get('editor') === '1' || params.get('editor') === 'true' || hash.includes('editor');
-    const isGameRequested = params.get('mode') === 'game' || params.get('game') === '1' || hash.includes('game') || pathname.endsWith('game.html') || pathname.endsWith('/game') || pathname.includes('/game/');
-    const isElectron = Boolean(window.spiderShell);
-
-    // Mount Standalone 3D Ball Runner if /game, /game.html, or ?mode=game requested!
-    // Mount Spider Engine / Start Screen with Knight in default editor mode
-    const shouldMountGame = isGameRequested && !isEditorRequested;
-
-    console.log(`src/main.jsx: Mounting ${shouldMountGame ? "Standalone 3D Game (<StandaloneGameViewer />)" : "Spider Engine Editor (<App />)"}`);
-
     ReactDOM.createRoot(rootEl).render(
       <RootErrorBoundary>
-        {shouldMountGame ? <StandaloneGameViewer /> : <App />}
+        <App />
       </RootErrorBoundary>
     );
     console.log("src/main.jsx: root.render called successfully!");
