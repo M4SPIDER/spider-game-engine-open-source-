@@ -6655,8 +6655,12 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
         const IGNORE_BLOCKERS = new Set(["player", "terrain", "water", "sky", "lighting", "fog", "postprocess", "ground", "spawn-ground"]);
         blockers = (prevGroups || [])
           .flatMap((g) => g?.children || [])
-          .filter((c) => c && c.visible !== false && c.collision === "BlockAll" && !IGNORE_BLOCKERS.has(c.id) && !c.id.includes("ground"))
-          .map((c) => ({ x: c.pos?.x || 0, z: c.pos?.z || 0, r: Math.max(c.scale?.x || 1, c.scale?.z || 1) * 0.8 + 0.5 }));
+          .filter((c) => c && c.visible !== false && (c.collision === "BlockAll" || c.id === "rocks" || c.id === "trees") && !IGNORE_BLOCKERS.has(c.id) && !c.id.includes("ground"))
+          .map((c) => ({
+            x: c.pos?.x || 0,
+            z: c.pos?.z || 0,
+            r: c.id === "rocks" ? 4.5 : (c.id === "trees" ? 4.2 : Math.max(c.scale?.x || 1, c.scale?.z || 1) * 2.2 + 0.8)
+          }));
         return (prevGroups || []).map((group) => ({
           ...group,
           children: (group?.children || []).map((node) => {

@@ -83,9 +83,9 @@ export const GAME_WORLD = [
         "color": "#4f46e5",
         "visible": true,
         "pos": {
-          "x": -18,
+          "x": -24,
           "y": 2,
-          "z": 22
+          "z": 20
         },
         "rot": {
           "x": 0,
@@ -105,7 +105,7 @@ export const GAME_WORLD = [
         "anim": "ABP_WindSway",
         "physics": false,
         "mass": 500,
-        "collision": "Foliage"
+        "collision": "BlockAll"
       },
       {
         "id": "rocks",
@@ -114,9 +114,9 @@ export const GAME_WORLD = [
         "color": "#a855f7",
         "visible": true,
         "pos": {
-          "x": -5.4,
+          "x": -16,
           "y": 0,
-          "z": 8.2
+          "z": 16
         },
         "rot": {
           "x": 4,

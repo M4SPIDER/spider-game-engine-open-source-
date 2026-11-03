@@ -669,8 +669,12 @@ export function useStudio() {
       patchProject((p) => {
         const IGNORE_BLOCKERS = new Set(["player", "terrain", "water", "sky", "lighting", "fog", "postprocess", "ground", "spawn-ground"]);
         const blockers = flatten(p.groups)
-          .filter((c) => c.visible !== false && c.collision === "BlockAll" && !IGNORE_BLOCKERS.has(c.id) && !c.id.includes("ground"))
-          .map((c) => ({ x: c.pos?.x || 0, z: c.pos?.z || 0, r: Math.max(c.scale?.x || 1, c.scale?.z || 1) * 0.75 + 0.35 }));
+          .filter((c) => c.visible !== false && (c.collision === "BlockAll" || c.id === "rocks" || c.id === "trees") && !IGNORE_BLOCKERS.has(c.id) && !c.id.includes("ground"))
+          .map((c) => ({
+            x: c.pos?.x || 0,
+            z: c.pos?.z || 0,
+            r: c.id === "rocks" ? 4.5 : (c.id === "trees" ? 4.2 : Math.max(c.scale?.x || 1, c.scale?.z || 1) * 2.2 + 0.8)
+          }));
         let changed = false;
         const groupsNext = mapNodes(p.groups, (node) => {
           if (node.id === PLAYER.id) {

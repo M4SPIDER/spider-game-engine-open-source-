@@ -1451,16 +1451,16 @@ function SwayingTrees({ node, wire, selected }) {
     <group ref={ref}>
       {[
         [0, 0],
-        [2.2, 1.2],
-        [-2, 1.6]
+        [1.2, 0.7],
+        [-1.1, 0.8]
       ].map(([dx, dz], i) => (
         <group key={i} position={[dx, 0, dz]}>
-          <mesh position={[0, 2.2, 0]} castShadow>
-            <coneGeometry args={[1.3, 3, 8]} />
+          <mesh position={[0, 1.8, 0]} castShadow>
+            <coneGeometry args={[1.0, 2.4, 8]} />
             <Std color={leaf} wire={wire} emissive={e} />
           </mesh>
-          <mesh position={[0, 0.7, 0]} castShadow>
-            <cylinderGeometry args={[0.2, 0.28, 1.4, 8]} />
+          <mesh position={[0, 0.55, 0]} castShadow>
+            <cylinderGeometry args={[0.18, 0.24, 1.1, 8]} />
             <Std color={node.tint2 || "#451a03"} wire={wire} emissive={e} />
           </mesh>
         </group>
@@ -1746,12 +1746,12 @@ export default function GameViewport({
         {!isolateCustomGame && rocks && rocks.visible !== false && (
           <LiveGroup node={rocks} selected={selId === "rocks"} onSelect={onSelectNode} register={register}>
             {[
-              [0, 0, 1],
-              [1.8, 0.8, 0.7],
-              [-1.5, 1, 1.3]
+              [0, 0, 0.75],
+              [0.85, 0.4, 0.55],
+              [-0.75, 0.5, 0.6]
             ].map(([dx, dz, s], i) => (
-              <mesh key={i} position={[dx, 0.4 * s, dz]} scale={s} castShadow>
-                <dodecahedronGeometry args={[1, 0]} />
+              <mesh key={i} position={[dx, 0.35 * s, dz]} scale={s} castShadow>
+                <dodecahedronGeometry args={[0.9, 0]} />
                 <Std color={rocks.tint || "#78716c"} wire={wire} flatShading emissive={selId === "rocks" ? "#6366f1" : undefined} />
               </mesh>
             ))}
