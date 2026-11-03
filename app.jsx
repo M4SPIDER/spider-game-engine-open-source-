@@ -1610,9 +1610,9 @@ function DesktopApp() {
   const [showDirectGameOverlay, setShowDirectGameOverlay] = useState(() => {
     try {
       const saved = localStorage.getItem("spider-show-direct-game-overlay");
-      return saved !== null ? saved === "true" : true;
+      return saved !== null ? saved === "true" : false;
     } catch {
-      return true;
+      return false;
     }
   });
   const [reverseControls, setReverseControls] = useState(() => {
@@ -7238,9 +7238,9 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
             title="Open Spider Store (Games Only)"
           >
             <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 shadow-2xs flex items-center justify-center p-0.5 mb-0.5 group-hover:scale-110 group-hover:shadow-md group-hover:border-slate-400 group-hover:bg-slate-50 transition">
-              <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 fill-slate-900 group-hover:fill-black" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C11.4 2 11 2.4 11 3V5.1C9.6 5.5 8.4 6.3 7.6 7.5L5.4 6.2C5 6 4.4 6.1 4.2 6.6C4 7 4.1 7.6 4.6 7.8L6.8 9.1C6.3 10 6 11 6 12C6 13 6.3 14 6.8 14.9L4.6 16.2C4.1 16.4 4 17 4.2 17.4C4.4 17.9 5 18 5.4 17.8L7.6 16.5C8.4 17.7 9.6 18.5 11 18.9V21C11 21.6 11.4 22 12 22C12.6 22 13 21.6 13 21V18.9C14.4 18.5 15.6 17.7 16.4 16.5L18.6 17.8C19 18 19.6 17.9 19.8 17.4C20 17 19.9 16.4 19.4 16.2L17.2 14.9C17.7 14 18 13 18 12C18 11 17.7 10 17.2 9.1L19.4 7.8C19.9 7.6 20 7 19.8 6.6C19.6 6.1 19 6 18.6 6.2L16.4 7.5C15.6 6.3 14.4 5.5 13 5.1V3C13 2.4 12.6 2 12 2ZM10 10C10.6 10 11 10.4 11 11C11 11.6 10.6 12 10 12C9.4 12 9 11.6 9 11C9 10.4 9.4 10 10 10ZM14 10C14.6 10 15 10.4 15 11C15 11.6 14.6 12 14 12C13.4 12 13 11.6 13 11C13 10.4 13.4 10 14 10ZM12 7C14.2 7 16 8.8 16 11C16 12.1 15.6 13.1 14.9 13.8C14.6 14.1 14.3 14.4 13.9 14.6C13.4 14.9 12.7 15 12 15C11.3 15 10.6 14.9 10.1 14.6C9.7 14.4 9.4 14.1 9.1 13.8C8.4 13.1 8 12.1 8 11C8 8.8 9.8 7 12 7Z" />
-              </svg>
+              <span className="text-[16px] leading-none select-none flex items-center justify-center">
+                🕷️
+              </span>
             </div>
             {!leftRailCollapsed && (
               <span className="text-[9px] font-extrabold tracking-tight text-slate-800 group-hover:text-black uppercase leading-none">
