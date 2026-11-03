@@ -10851,14 +10851,13 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
                     type="button"
                     onClick={() => setShowImageStudio((v) => !v)}
                     title="Create an Image (Meta Imagen Gen 1) / Remove BG (Meta SAM)"
-                    className={`p-1 rounded-xl transition cursor-pointer flex items-center gap-1 select-none ${
+                    className={`p-0.5 rounded-lg transition cursor-pointer select-none ${
                       showImageStudio
-                        ? "bg-purple-100 text-purple-700 font-semibold shadow-xs"
+                        ? "text-purple-600 bg-purple-100"
                         : "text-slate-400 hover:text-purple-600 hover:bg-purple-50"
                     }`}
                   >
                     <Sparkles size={15} className={showImageStudio ? "text-purple-600" : "text-purple-500 animate-pulse"} />
-                    <span className="text-[11px] font-bold text-purple-700 hidden sm:inline">Image</span>
                   </button>
                   <button
                     type="button"
