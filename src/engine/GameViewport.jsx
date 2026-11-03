@@ -1471,20 +1471,21 @@ function SwayingTrees({ node, wire, selected }) {
 
 function Castle({ node, wire, selected }) {
   const e = selected ? "#f59e0b" : undefined;
-  const baseY = 3 + node.pos.y * 0.02;
-  const wall = node.tint || "#d6d3d1";  return (
+  const baseY = 6;
+  const wall = node.tint || "#d6d3d1";
+  return (
     <group>
-      {/* Cliff island */}
-      <mesh position={[0, 0, 0]} receiveShadow castShadow>
+      {/* Cliff island - firmly grounded on terrain at y=0 */}
+      <mesh position={[0, 3, 0]} receiveShadow castShadow>
         <boxGeometry args={[11, 6, 11]} />
         <Std color="#78716c" wire={wire} emissive={e} flatShading />
       </mesh>
       {/* Waterfalls */}
-      <mesh position={[-2.5, 0.4, 5.55]}>
+      <mesh position={[-2.5, 3.25, 5.55]}>
         <boxGeometry args={[0.9, 6.5, 0.25]} />
         <meshStandardMaterial color="#bae6fd" transparent opacity={0.85} wireframe={wire} />
       </mesh>
-      <mesh position={[2.5, 0.4, 5.55]}>
+      <mesh position={[2.5, 3.25, 5.55]}>
         <boxGeometry args={[1.3, 6.5, 0.25]} />
         <meshStandardMaterial color="#e0f2fe" transparent opacity={0.85} wireframe={wire} />
       </mesh>
@@ -1511,7 +1512,7 @@ function Castle({ node, wire, selected }) {
         </group>
       ))}
       {/* Bridge */}
-      <mesh position={[-8, 2.2, 0]} castShadow>
+      <mesh position={[-8, 5.8, 0]} castShadow>
         <boxGeometry args={[6, 0.4, 1.6]} />
         <Std color="#a8a29e" wire={wire} emissive={e} />
       </mesh>

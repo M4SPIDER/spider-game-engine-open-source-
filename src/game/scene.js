@@ -379,7 +379,7 @@ export const GAME_WORLD = [
         "visible": true,
         "pos": {
           "x": 140,
-          "y": 42,
+          "y": 0,
           "z": 280
         },
         "rot": {
@@ -431,7 +431,7 @@ export const GAME_WORLD = [
         "anim": "ABP_BoatBuoyancy",
         "physics": true,
         "mass": 350,
-        "collision": "Vehicle"
+        "collision": "BlockAll"
       },
       {
         "id": "npcs",
@@ -441,7 +441,7 @@ export const GAME_WORLD = [
         "visible": true,
         "pos": {
           "x": 115,
-          "y": 38,
+          "y": 0,
           "z": 240
         },
         "rot": {
@@ -462,7 +462,7 @@ export const GAME_WORLD = [
         "anim": "ABP_GuardPatrol",
         "physics": true,
         "mass": 80,
-        "collision": "Character"
+        "collision": "BlockAll"
       }
     ]
   },

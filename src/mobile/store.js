@@ -67,6 +67,15 @@ export function sanitizeGroups(groups) {
         if (node.id === "trees") {
           return { ...node, pos: { x: -38, y: 2, z: 32 }, collision: "BlockAll" };
         }
+        if (node.id === "buildings") {
+          return { ...node, pos: { x: 140, y: 0, z: 280 }, collision: "BlockAll" };
+        }
+        if (node.id === "npcs") {
+          return { ...node, pos: { x: 115, y: 0, z: 240 }, collision: "BlockAll" };
+        }
+        if (node.id === "vehicles") {
+          return { ...node, collision: "BlockAll" };
+        }
         if (node.id === "player") {
           const px = node.pos?.x ?? 0;
           const pz = node.pos?.z ?? 0;

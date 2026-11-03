@@ -5391,6 +5391,26 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
               collision: "BlockAll"
             };
           }
+          if (node.id === "buildings") {
+            return {
+              ...node,
+              pos: { x: 140, y: 0, z: 280 },
+              collision: "BlockAll"
+            };
+          }
+          if (node.id === "npcs") {
+            return {
+              ...node,
+              pos: { x: 115, y: 0, z: 240 },
+              collision: "BlockAll"
+            };
+          }
+          if (node.id === "vehicles") {
+            return {
+              ...node,
+              collision: "BlockAll"
+            };
+          }
           if (node.id === "player") {
             const px = node.pos?.x ?? 0;
             const pz = node.pos?.z ?? 0;
@@ -6683,12 +6703,16 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
         const IGNORE_BLOCKERS = new Set(["player", "terrain", "water", "sky", "lighting", "fog", "postprocess", "ground", "spawn-ground"]);
         blockers = (prevGroups || [])
           .flatMap((g) => g?.children || [])
-          .filter((c) => c && c.visible !== false && (c.collision === "BlockAll" || c.id === "rocks" || c.id === "trees") && !IGNORE_BLOCKERS.has(c.id) && !c.id.includes("ground"))
-          .map((c) => ({
-            x: c.pos?.x || 0,
-            z: c.pos?.z || 0,
-            r: c.id === "rocks" ? 12.0 : (c.id === "trees" ? 10.0 : Math.max(c.scale?.x || 1, c.scale?.z || 1) * 3.5 + 2.0)
-          }));
+          .filter((c) => c && c.visible !== false && (c.collision === "BlockAll" || c.id === "rocks" || c.id === "trees" || c.id === "npcs" || c.id === "buildings" || c.id === "vehicles") && !IGNORE_BLOCKERS.has(c.id) && !c.id.includes("ground"))
+          .map((c) => {
+            let r = Math.max(c.scale?.x || 1, c.scale?.z || 1) * 3.5 + 2.0;
+            if (c.id === "buildings") r = 24.0;
+            else if (c.id === "npcs") r = 3.5;
+            else if (c.id === "rocks") r = 8.0;
+            else if (c.id === "trees") r = 7.0;
+            else if (c.id === "vehicles") r = 8.0;
+            return { x: c.pos?.x || 0, z: c.pos?.z || 0, r };
+          });
         return (prevGroups || []).map((group) => ({
           ...group,
           children: (group?.children || []).map((node) => {
