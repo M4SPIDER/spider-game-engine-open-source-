@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "identifier": "com.spiderengine.chess",
   "build": {
-    "beforeDevCommand": "npm run build:game",
-    "beforeBuildCommand": "npm run build:game",
-    "frontendDist": "../dist-game"
+    "beforeDevCommand": "npm run build",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
   },
   "app": {
     "windows": [

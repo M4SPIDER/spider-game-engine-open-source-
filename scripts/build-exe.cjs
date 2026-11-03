@@ -21,21 +21,18 @@ async function buildExe() {
     execSync('taskkill.exe /F /IM spider-chess.exe /IM SpiderChess.exe /T', { stdio: 'ignore' });
   } catch {}
 
-  console.log('--- Spider Chess 3D Standalone Game Builder ---');
-  console.log('1. Compiling dedicated WebGPU Game Bundle (dist-game)...');
+  console.log('--- Spider Engine Standalone Game Builder ---');
+  console.log('1. Compiling engine bundle (dist)...');
 
   try {
     const viteBin = path.join(rootDir, 'node_modules', 'vite', 'bin', 'vite.js');
-    execSync(`"${process.execPath}" "${viteBin}" build --config vite.game.config.mjs`, {
+    execSync(`"${process.execPath}" "${viteBin}" build`, {
       cwd: rootDir,
       env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
       stdio: 'inherit'
     });
-    const gameSrc = path.join(rootDir, 'dist-game', 'game.html');
-    const gameDest = path.join(rootDir, 'dist-game', 'index.html');
-    if (fs.existsSync(gameSrc)) fs.copyFileSync(gameSrc, gameDest);
   } catch (err) {
-    console.warn('Vite game build warning:', err.message);
+    console.warn('Vite build warning:', err.message);
   }
 
   // Check if pre-compiled native Tauri executable exists
@@ -91,12 +88,8 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
   const appDir = path.join(outDir, 'resources', 'app');
   fs.mkdirSync(appDir, { recursive: true });
 
-  // Copy dist-game into app/dist
-  if (fs.existsSync(path.join(rootDir, 'dist-game'))) {
-    fs.cpSync(path.join(rootDir, 'dist-game'), path.join(appDir, 'dist'), { recursive: true });
-  } else {
-    fs.cpSync(path.join(rootDir, 'dist'), path.join(appDir, 'dist'), { recursive: true });
-  }
+  // Copy dist into app/dist
+  fs.cpSync(path.join(rootDir, 'dist'), path.join(appDir, 'dist'), { recursive: true });
 
   // Copy electron loader
   fs.cpSync(path.join(rootDir, 'electron'), path.join(appDir, 'electron'), { recursive: true });
