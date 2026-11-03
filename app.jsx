@@ -1248,6 +1248,9 @@ async function removeBackgroundMetaSAM(imageSource) {
     img.src = imageSource;
   });
 }
+if (typeof window !== "undefined") {
+  window.removeBackgroundMetaSAM = removeBackgroundMetaSAM;
+}
 
 // Interactive Image Artifact Card with Meta Imagen Gen 1 & Meta SAM Actions
 function ImageArtifactCard({ item, onRemoveBg, onApplyTexture, onDownload }) {
