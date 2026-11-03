@@ -121,14 +121,13 @@ export default function MobileApp() {
     try { data = JSON.parse(text); } catch { throw new Error("This game's build is damaged."); }
     const label = `${game.name} (Store v${game.versions[0].version})`;
     const existing = sRef.current.projects.find((p) => p.name === label);
-    let mount = null;
+    const files = Array.isArray(data.files) ? data.files : (existing && Array.isArray(existing.files) ? existing.files : []);
+    const mount = files.find((f) => f.name === data.mountedFile) || files.find((f) => /\.jsx?$/.test(f.name)) || null;
     if (existing) {
       sRef.current.openProject(existing.id);
     } else {
       const p = await sRef.current.importProject(new File([text], `${game.slug}.spider.json`));
       sRef.current.renameProject(p.id, label);
-      const files = Array.isArray(data.files) ? data.files : [];
-      mount = files.find((f) => f.name === data.mountedFile) || files.find((f) => /\.jsx?$/.test(f.name)) || null;
     }
     go("studio");
     setTimeout(() => {

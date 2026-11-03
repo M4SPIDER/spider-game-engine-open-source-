@@ -246,4 +246,41 @@ export function TouchControls({ touch, buttons = ["Jump"], always = false }) {
   return null;
 }
 
-export default { useTouch, TouchControls };
+/**
+ * On-screen text for score, timer, messages and menus. Children are plain DOM (divs, buttons) drawn
+ * over the canvas, so they work on every device. Give panels that must be tapped pointerEvents:"auto".
+ */
+export function Hud({ children }) {
+  const gl = useThree((st) => st.gl);
+  const mount = useRef(null);
+  const latest = useRef(children);
+  latest.current = children;
+
+  useEffect(() => {
+    const host = gl?.domElement?.parentElement || document.body;
+    const el = document.createElement("div");
+    el.setAttribute("data-spider-hud", "");
+    el.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:35;overflow:hidden;";
+    host.appendChild(el);
+    const root = createRoot(el);
+    mount.current = root;
+    root.render(<>{latest.current}</>);
+    return () => {
+      mount.current = null;
+      setTimeout(() => {
+        try {
+          root.unmount();
+        } catch {}
+        el.remove();
+      }, 0);
+    };
+  }, [gl]);
+
+  useEffect(() => {
+    mount.current?.render(<>{children}</>);
+  });
+
+  return null;
+}
+
+export default { useTouch, TouchControls, Hud };

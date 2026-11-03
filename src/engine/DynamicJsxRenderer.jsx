@@ -20,6 +20,7 @@ const ChessBoardEnvModule = { ChessBoardEnv: () => null };
 const PiecesModule = { PieceModel: () => null };
 import * as ChessRulesModule from "../game/ChessRules.js";
 import * as MobileTouchModule from "../game/mobileTouch.jsx";
+import * as TouchKit from "./touchControls.jsx";
 
 // Bulletproof R3F HTML tag extension shims: prevents "R3F: Span is not part of the THREE namespace" crashes
 try {
@@ -275,6 +276,12 @@ export function compileJsxComponent(rawCode, customScope = EMPTY_SCOPE, onError 
       "mobileTouch": MobileTouchModule,
       "touch": MobileTouchModule,
       "./touch": MobileTouchModule,
+      // The spider-touch kit (useTouch, TouchControls, Hud) that the mobile agent writes games against
+      "spider-touch": TouchKit,
+      "./spider-touch": TouchKit,
+      "touchControls": TouchKit,
+      "./touchControls": TouchKit,
+      "./touchControls.jsx": TouchKit,
       "nipplejs": MobileTouchModule.nipplejs,
       "react-joystick-component": { Joystick: MobileTouchModule.Joystick, default: { Joystick: MobileTouchModule.Joystick } },
       "@use-gesture/react": MobileTouchModule.useGestureShim,
@@ -336,7 +343,10 @@ export function compileJsxComponent(rawCode, customScope = EMPTY_SCOPE, onError 
               "Chess",
               "sfx",
               "SoundEffects",
-              "spiderAudio"
+              "spiderAudio",
+              "useTouch",
+              "TouchControls",
+              "Hud"
             ];
             const subValues = [
               customRequire,
@@ -369,7 +379,10 @@ export function compileJsxComponent(rawCode, customScope = EMPTY_SCOPE, onError 
               Chess,
               sfx,
               SoundEffects,
-              sfx
+              sfx,
+              TouchKit.useTouch,
+              TouchKit.TouchControls,
+              TouchKit.Hud
             ];
             const { safeKeys: safeSubKeys, safeValues: safeSubValues } = filterCollidingScope(subKeys, subValues, subTransformed);
             const subFn = new Function(...safeSubKeys, subTransformed);
@@ -451,7 +464,10 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
       "TouchButton",
       "MobileControls",
       "MobileMenu",
-      "nipplejs"
+      "nipplejs",
+      "useTouch",
+      "TouchControls",
+      "Hud"
     ];
 
     const scopeValues = [
@@ -508,7 +524,10 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
       MobileTouchModule.TouchButton,
       MobileTouchModule.MobileControls,
       MobileTouchModule.MobileMenu,
-      MobileTouchModule.nipplejs
+      MobileTouchModule.nipplejs,
+      TouchKit.useTouch,
+      TouchKit.TouchControls,
+      TouchKit.Hud
     ];
 
     const { safeKeys, safeValues } = filterCollidingScope(scopeKeys, scopeValues, transformed);

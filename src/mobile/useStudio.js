@@ -459,6 +459,7 @@ export function useStudio() {
           ...makeProject(data.name || file.name.replace(/\.[^.]+$/, ""), "custom", groupsIn),
           groups: sanitizeGroups(groupsIn),
           files: Array.isArray(data.files) && data.files.length ? data.files : [{ name: "GameComponent.jsx", content: STARTER_CODE }],
+          mountedFile: data.mountedFile || (Array.isArray(data.files) && data.files[0]?.name) || null,
         };
         setProjects((list) => [...list, p]);
         resetRuntime();
