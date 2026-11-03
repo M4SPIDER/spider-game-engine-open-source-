@@ -5372,7 +5372,35 @@ export default function ${componentName.replace(/[^a-zA-Z0-9]/g, "")}() {
     const base = totalActors > 0 ? list : GAME_WORLD;
     return base.filter(Boolean).map((g) => ({
       ...g,
-      children: (Array.isArray(g?.children) ? g.children : []).filter((c) => c && !String(c.id).startsWith("spawn-chess-"))
+      children: (Array.isArray(g?.children) ? g.children : [])
+        .filter((c) => c && !String(c.id).startsWith("spawn-chess-"))
+        .map((node) => {
+          if (node.id === "rocks") {
+            return {
+              ...node,
+              pos: { x: -32, y: 0, z: 28 },
+              scale: { x: 1.2, y: 1.2, z: 1.2 },
+              collision: "BlockAll"
+            };
+          }
+          if (node.id === "trees") {
+            return {
+              ...node,
+              pos: { x: -38, y: 2, z: 32 },
+              scale: { x: 1.2, y: 1.2, z: 1.2 },
+              collision: "BlockAll"
+            };
+          }
+          if (node.id === "player") {
+            const px = node.pos?.x ?? 0;
+            const pz = node.pos?.z ?? 0;
+            // If player was saved inside old rocks/trees area, reset to safe start path (0, 0, 0)
+            if (px < -3 && pz > 3) {
+              return { ...node, pos: { x: 0, y: 0, z: 0 } };
+            }
+          }
+          return node;
+        })
     }));
   };
 
@@ -6659,7 +6687,7 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
           .map((c) => ({
             x: c.pos?.x || 0,
             z: c.pos?.z || 0,
-            r: c.id === "rocks" ? 4.5 : (c.id === "trees" ? 4.2 : Math.max(c.scale?.x || 1, c.scale?.z || 1) * 2.2 + 0.8)
+            r: c.id === "rocks" ? 12.0 : (c.id === "trees" ? 10.0 : Math.max(c.scale?.x || 1, c.scale?.z || 1) * 3.5 + 2.0)
           }));
         return (prevGroups || []).map((group) => ({
           ...group,
@@ -6716,23 +6744,27 @@ if (typeof global !== "undefined") { global.__M4_LINEAGE__ = __M4_ENGINE_LINEAGE
               }
               velY.current = nv;
 
-              if (dx === 0 && dz === 0 && ny === node.pos.y) return node;
               if (dx !== 0 || dz !== 0) tutorialStats.current.moved = true;
               tutorialStats.current.maxY = Math.max(tutorialStats.current.maxY, ny);
               let nx = Number(Math.max(PLAYER.bounds.minX, Math.min(PLAYER.bounds.maxX, (node.pos?.x ?? 0) + dx)).toFixed(2));
               let nz = Number(Math.max(PLAYER.bounds.minZ, Math.min(PLAYER.bounds.maxZ, (node.pos?.z ?? 0) + dz)).toFixed(2));
-              // Real BlockAll collision — slide out of every blocker circle
+
+              // Real BlockAll collision — slide and continuously push out of every blocker circle
               for (const b of blockers) {
                 const ox = nx - b.x;
                 const oz = nz - b.z;
                 const d = Math.hypot(ox, oz);
-                if (d < b.r && d > 1e-4) {
-                  nx = Number((b.x + (ox / d) * b.r).toFixed(2));
-                  nz = Number((b.z + (oz / d) * b.r).toFixed(2));
-                } else if (d <= 1e-4) {
-                  nx = Number((b.x + b.r).toFixed(2));
+                if (d < b.r) {
+                  if (d > 1e-4) {
+                    nx = Number((b.x + (ox / d) * b.r).toFixed(2));
+                    nz = Number((b.z + (oz / d) * b.r).toFixed(2));
+                  } else {
+                    nx = Number((b.x + b.r).toFixed(2));
+                  }
                 }
               }
+
+              if (nx === node.pos.x && nz === node.pos.z && ny === node.pos.y) return node;
 
               // Smooth body rotation to face running direction
               let nextRotY = node.rot?.y || 0;

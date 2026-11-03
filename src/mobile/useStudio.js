@@ -673,7 +673,7 @@ export function useStudio() {
           .map((c) => ({
             x: c.pos?.x || 0,
             z: c.pos?.z || 0,
-            r: c.id === "rocks" ? 4.5 : (c.id === "trees" ? 4.2 : Math.max(c.scale?.x || 1, c.scale?.z || 1) * 2.2 + 0.8)
+            r: c.id === "rocks" ? 12.0 : (c.id === "trees" ? 10.0 : Math.max(c.scale?.x || 1, c.scale?.z || 1) * 3.5 + 2.0)
           }));
         let changed = false;
         const groupsNext = mapNodes(p.groups, (node) => {
@@ -738,21 +738,25 @@ export function useStudio() {
             }
             velY.current = nv;
 
-            if (dx === 0 && dz === 0 && ny === node.pos.y) return node;
-
             let nx = Number(Math.max(PLAYER.bounds.minX, Math.min(PLAYER.bounds.maxX, node.pos.x + dx)).toFixed(2));
             let nz = Number(Math.max(PLAYER.bounds.minZ, Math.min(PLAYER.bounds.maxZ, node.pos.z + dz)).toFixed(2));
 
-            // Smooth collision slide along tangent of obstacles
+            // Smooth collision slide & continuous push-out along obstacles
             for (const b of blockers) {
               const ox = nx - b.x;
               const oz = nz - b.z;
               const d = Math.hypot(ox, oz);
-              if (d < b.r && d > 1e-4) {
-                nx = Number((b.x + (ox / d) * b.r).toFixed(2));
-                nz = Number((b.z + (oz / d) * b.r).toFixed(2));
-              } else if (d <= 1e-4) nx = Number((b.x + b.r).toFixed(2));
+              if (d < b.r) {
+                if (d > 1e-4) {
+                  nx = Number((b.x + (ox / d) * b.r).toFixed(2));
+                  nz = Number((b.z + (oz / d) * b.r).toFixed(2));
+                } else {
+                  nx = Number((b.x + b.r).toFixed(2));
+                }
+              }
             }
+
+            if (nx === node.pos.x && nz === node.pos.z && ny === node.pos.y) return node;
 
             // Smooth body rotation to face running direction
             let nextRotY = node.rot?.y || 0;

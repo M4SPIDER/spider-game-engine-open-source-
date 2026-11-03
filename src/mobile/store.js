@@ -60,7 +60,22 @@ export function sanitizeGroups(groups) {
       id: g.id || `group-${i}`,
       name: g.name || `Group ${i + 1}`,
       expanded: g.expanded !== false,
-      children: Array.isArray(g.children) ? g.children.filter(Boolean) : [],
+      children: (Array.isArray(g.children) ? g.children.filter(Boolean) : []).map((node) => {
+        if (node.id === "rocks") {
+          return { ...node, pos: { x: -32, y: 0, z: 28 }, collision: "BlockAll" };
+        }
+        if (node.id === "trees") {
+          return { ...node, pos: { x: -38, y: 2, z: 32 }, collision: "BlockAll" };
+        }
+        if (node.id === "player") {
+          const px = node.pos?.x ?? 0;
+          const pz = node.pos?.z ?? 0;
+          if (px < -3 && pz > 3) {
+            return { ...node, pos: { x: 0, y: 0, z: 0 } };
+          }
+        }
+        return node;
+      }),
     }));
 }
 
