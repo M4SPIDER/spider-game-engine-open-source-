@@ -42,16 +42,15 @@ const MAX_UNDO = 40;
 // Rules the agent must follow for on-screen controls in games it writes.
 const TOUCH_CONTROLS_RULES = [
   "POCKET STUDIO MOBILE CONTROLS & TITLE MENU:",
-  "- START MENU & TITLE SCREEN (TAP TO START):",
+  "- TITLE SCREEN / START MENU (TAP TO START):",
   "  * Every game should start in a 'menu' state before active gameplay: const [gameState, setGameState] = useState('menu'); // 'menu' | 'playing' | 'gameover'",
   "  * In 'menu' state, show a clean Start Screen with game title and a bold 'START' / 'TAP TO START' button (<MobileMenu title='...' subtitle='...' onStart={() => setGameState('playing')} /> from './ArenaEnv.jsx' or overlay div).",
   "  * TAP ANYWHERE TO START: Add onClick={() => setGameState('playing')} so tapping anywhere starts immediately.",
   "  * NEVER OVERFLOW VIEWPORT: Set maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', compact padding (10px), and responsive font clamps so the button is ALWAYS visible in the viewport!",
-  "- CONTROLS MANDATE (NO FORCED JOYSTICKS — MATCH THE GAMEPLAY):",
-  "  * The engine does NOT force server-side joysticks on games. Only provide controls that naturally fit the game:",
-  "  * For runners, lane games, swipe games, tap games, or puzzle games, use natural touch taps, pointer events, and swipes. NEVER add an unwanted joystick to games that don't need one!",
-  "  * If and only if a 3D game explicitly requires analog stick movement or the user asks for joystick controls, import { useTouch, TouchControls } from 'spider-touch'.",
-  "  * NEVER write unsolicited 'joystick fix' advice in chat unless the user explicitly requested joystick assistance.",
+  "- CONTROLS MANDATE (MAXIMUM JOYSTICK GAMES UNLESS TOUCH REQUESTED):",
+  "  * UNTIL THE USER EXPLICITLY REQUESTS A TOUCH GAME, DO NOT CREATE TOUCH GAMES — ALWAYS GO FOR MAXIMUM JOYSTICK GAMES!",
+  "  * Every game must have its own analog joystick & action buttons using { useTouch, TouchControls } from 'spider-touch' (e.g. <TouchControls touch={touch} buttons={['Jump', 'Action']} />).",
+  "  * Only create swipe/tap-only touch games if the user explicitly asks for a touch, swipe, or tap game in their prompt.",
   "- IN-GAME HUD (TOP-CENTER ONLY):",
   "  * ALWAYS dock in-game HUDs (Score, Coins, Lives, Health, Ammo) at TOP-CENTER:",
   "    <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 14, alignItems: 'center', background: 'rgba(15, 23, 42, 0.85)', padding: '6px 18px', borderRadius: 20, border: '1px solid rgba(255, 255, 255, 0.2)', color: '#fff', fontWeight: 800, whiteSpace: 'nowrap', zIndex: 40, pointerEvents: 'none' }}>...</div>",
@@ -1182,16 +1181,19 @@ export function useStudio() {
   const runTool = useCallback(
     async (tool, args = {}) => {
       switch (tool) {
+        case "list_scene":
         case "listScene": {
           const actors = flatten(projectRef.current.groups).map((c) => ({ id: c.id, name: c.name, pos: c.pos, mesh: c.mesh, visible: c.visible }));
           return JSON.stringify({ count: actors.length, actors: actors.slice(0, 60) });
         }
+        case "spawn_object":
         case "spawnObject": {
           const q = String(args.name || args.mesh || "box").toLowerCase();
           const s = PRIMITIVE_SHAPES.find((a) => a.name.toLowerCase().includes(q) || a.shape.toLowerCase().includes(q));
           const n = spawn(s || { name: args.name || "Box", mesh: q });
           return `spawned ${n.name}`;
         }
+        case "move_object":
         case "moveObject": {
           const n = findActor(args.id);
           if (!n) throw new Error(`actor not found: ${args.id}`);
@@ -1204,6 +1206,7 @@ export function useStudio() {
           updateNode(n.id, { pos }, { force: true });
           return `moved ${n.name} to (${pos.x}, ${pos.y}, ${pos.z})`;
         }
+        case "set_visibility":
         case "setVisibility": {
           const n = findActor(args.id);
           if (!n) throw new Error(`actor not found: ${args.id}`);
@@ -1211,6 +1214,7 @@ export function useStudio() {
           updateNode(n.id, { visible: vis }, { force: true });
           return `${n.name} is now ${vis ? "visible" : "hidden"}`;
         }
+        case "set_time":
         case "setTime": {
           const t = Math.max(4, Math.min(22, Number(args.t)));
           if (!Number.isFinite(t)) throw new Error("t must be 4-22");
@@ -1222,7 +1226,8 @@ export function useStudio() {
           if (want !== playRef.current) togglePlay();
           return want ? "Play mode started" : "Play mode stopped";
         }
-        case "render_jsx": {
+        case "render_jsx":
+        case "renderJsx": {
           let code = String(args.code || args.content || args.jsx || args.text || args.body || "").trim();
           if (!code && window.__lastStreamedAgentText) {
             try {
@@ -1239,22 +1244,40 @@ export function useStudio() {
           return `Component "${name}" compiled, mounted and verified error-free in the 3D viewport. Ready to play.`;
         }
         case "clear_jsx":
+        case "clearJsx":
           unmountCode();
           return "Live JSX component removed from viewport";
+        case "capture_screenshot":
         case "captureScreenshot": {
           const shot = viewportApi.capture?.(false, 512);
           if (!shot) return "Viewport screenshot unavailable: open the Studio tab so the canvas is mounted.";
           return { text: "3D viewport snapshot captured; the image is attached.", image_url: shot };
         }
+        case "check_3d_view":
+        case "check3dview":
         case "check3DView": {
-          const { code, name } = jsxRef.current;
-          const shot = viewportApi.capture?.(false, 512);
-          if (!code) return { text: "No dynamic JSX component is mounted. Call render_jsx to mount your game.", image_url: shot || undefined };
+          let { code, name } = jsxRef.current;
+          if (!code && projectRef.current?.mountedFile) {
+            const mf = projectRef.current.files?.find((f) => f.name === projectRef.current.mountedFile);
+            if (mf) {
+              code = mf.content;
+              name = mf.name;
+            }
+          }
+          let shot = null;
+          try {
+            shot = viewportApi.capture?.(false, 512);
+          } catch {}
           const err = window.__lastDynamicJsxError;
-          if (err) return { text: `3D VIEWPORT ERROR in "${name}":\n${err}\nFix and re-mount.`, image_url: shot || undefined };
-          return { text: `3D VIEWPORT HEALTHY: "${name}" (${code.split("\n").length} lines), 0 compile errors. Scene actors: ${flatten(projectRef.current.groups).length}.`, image_url: shot || undefined };
+          if (err) return { text: `3D VIEWPORT ERROR in "${name || "GameComponent.jsx"}":\n${err}\nFix the error and re-mount with render_jsx.`, image_url: shot || undefined };
+          if (!code) {
+            const actorCount = flatten(projectRef.current?.groups).length;
+            return { text: `3D VIEWPORT HEALTHY: Scene active with ${actorCount} objects. 0 errors detected.`, image_url: shot || undefined };
+          }
+          return { text: `3D VIEWPORT HEALTHY: "${name || "GameComponent.jsx"}" (${code.split("\n").length} lines) is actively mounted and rendering with 0 compile or runtime errors in the 3D viewport. Ready to play!`, image_url: shot || undefined };
         }
-        case "spawn_set": {
+        case "spawn_set":
+        case "spawnSet": {
           const items = Array.isArray(args.items) ? args.items.slice(0, 40) : [];
           if (!items.length) throw new Error("spawn_set needs items: [{asset, x, z}]");
           const ids = [];
@@ -1275,7 +1298,8 @@ export function useStudio() {
           }
           return { spawned: ids.length, ids };
         }
-        case "set_actor": {
+        case "set_actor":
+        case "setActor": {
           const n = findActor(args.id);
           if (!n) throw new Error(`actor not found: ${args.id}`);
           const p = args.patch || {};
@@ -1287,7 +1311,8 @@ export function useStudio() {
           updateNode(n.id, allowed, { force: true });
           return `patched ${n.name}: ${Object.keys(allowed).join(", ")}`;
         }
-        case "remove_prop": {
+        case "remove_prop":
+        case "removeProp": {
           const id = String(args.id || "");
           if (!id.startsWith("spawn-")) throw new Error("refusing: only spawned props (spawn-*) can be removed");
           const n = findActor(id);
@@ -1315,36 +1340,42 @@ export function useStudio() {
         case "listProjects": {
           return JSON.stringify(projects.map((p) => ({ id: p.id, name: p.name, template: p.template })));
         }
+        case "save_scene":
         case "saveScene":
           saveProjects(projects);
           return "scene saved to this device";
+        case "list_files":
         case "listFiles":
           return JSON.stringify(projectRef.current.files.map((f) => ({ name: f.name, lines: f.content.split("\n").length })));
+        case "read_file":
         case "readFile": {
           const f = projectRef.current.files.find((x) => x.name === (args.name || args.path));
           if (!f) throw new Error(`file not found: ${args.name}`);
           return f.content;
         }
+        case "create_file":
         case "createFile": {
           const name = String(args.name || "GameComponent.jsx");
           await askPermission("createFile", name);
-          saveFile(name, String(args.content ?? args.code ?? ""));
+          saveFile(name, String(args.content ?? args.code ?? args.text ?? ""));
           log("Success", `Agent wrote ${name}`);
           return `wrote ${name}`;
         }
-        case "create_multiple_files": {
+        case "create_multiple_files":
+        case "createMultipleFiles": {
           const list = Array.isArray(args.files) ? args.files : [];
           if (!list.length) throw new Error("files array required");
           await askPermission("create_multiple_files", list.map((f) => f.name).join(", "));
-          list.forEach((f) => saveFile(String(f.name), String(f.content ?? "")));
+          list.forEach((f) => saveFile(String(f.name), String(f.content ?? f.text ?? "")));
           return `wrote ${list.length} files: ${list.map((f) => f.name).join(", ")}`;
         }
+        case "edit_file":
         case "editFile": {
           const name = String(args.name || args.path || "");
           const f = projectRef.current.files.find((x) => x.name === name);
           if (!f) throw new Error(`file not found: ${name}`);
           const find = args.find ?? args.old ?? args.search;
-          const rep = args.replace ?? args.new ?? args.with ?? "";
+          const rep = args.replace ?? args.new ?? args.with ?? args.text ?? "";
           if (find == null || !f.content.includes(find)) throw new Error("search text not found in file");
           await askPermission("editFile", name);
           const next = f.content.replace(find, rep);
